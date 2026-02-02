@@ -28,15 +28,6 @@ internal uint8_t* loadPNG
     return 0;
 }
 
-internal void writeQOIpixels
-(
-    uint8_t *image,
-    FILE    *file,
-    bool    discard,
-    bool    flip
-){
-}
-
 internal uint8_t* loadQOI
 (
     FILE        *file,
@@ -47,8 +38,6 @@ internal uint8_t* loadQOI
     char magic[5] = "qoif";
     *width  = 0;
     *height = 0;
-
-    fprintf(stderr, "\n\033[33;1;7mWIP: QOI loader under construction!\033[0m\n");
 
     int byte = 0;
     for(uint8_t i = 0; i < 4; ++i)
@@ -86,7 +75,7 @@ internal uint8_t* loadQOI
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte 12 corrupted.\033[0m\n");
     }
-    uint8_t channelcount = byte;
+    // uint8_t channelcount = byte;
 
     if((byte = fgetc(file)) == EOF)
     {
@@ -95,12 +84,47 @@ internal uint8_t* loadQOI
     }
     // uint8_t colourspace = byte;
 
+    uint32_t seenPixels[64] = {0};
+
+    bool discard = channels == IMGSURF_CHANNELS_RGB || channels == IMGSURF_CHANNELS_BGR;
+    bool flip    = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
+
     //TODO: figure out best user interface to free image
-    uint8_t* image = malloc(*width * *height * 4);
+    uint8_t* image = malloc(*width * *height * (discard ? 3 : 4));
+    if(!image)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Failed to allocate image. Requested: %u\033[0m\n", (*width * *height * (discard ? 3 : 4)));
+        return 0;
+    }
 
-    writeQOIpixels(image, file, channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_RGB,
-                                channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA);
+    if(discard && flip)
+    {
+        while((byte = fgetc(file)) != EOF)
+        {
+            //
+        }
+        return image;
+    }
+    else if(discard)
+    {
+        while((byte = fgetc(file)) != EOF)
+        {
+            //
+        }
+        return image;
+    }
+    else if(flip)
+    {
+        while((byte = fgetc(file)) != EOF)
+        {
+            //
+        }
+        return image;
+    }
 
+    while((byte = fgetc(file)) != EOF)
+    {
+    }
     return image;
 }
 
