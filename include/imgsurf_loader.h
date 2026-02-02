@@ -7,7 +7,6 @@
 #define global      static
 #define internal    static
 
-#define IMGSURF_CHANNELS_MIN  0
 #define IMGSURF_CHANNELS_RGBA 0
 #define IMGSURF_CHANNELS_RGB  1
 #define IMGSURF_CHANNELS_MAX  1

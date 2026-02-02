@@ -14,7 +14,9 @@ internal void findFormat
     const char* path,
     uint8_t     *format
 ){
-    //write back found format
+    //find last period in string
+    //from then on, parse via tree
+    //write format from enum into *format
 }
 
 uint8_t* imgsurf_load
@@ -31,7 +33,7 @@ uint8_t* imgsurf_load
         fprintf(stderr, "File format is not supported. Try a .png/.bmp/.webp/.avif/.qoi/.jxl file.\n");
     }
 
-    if(channels < IMGSURF_CHANNELS_MIN || channels > IMGSURF_CHANNELS_MIN)
+    if(channels > IMGSURF_CHANNELS_MAX)
     {
         fprintf(stderr, "Invalid colour channels specified.\n");
     }
@@ -46,5 +48,7 @@ uint8_t* imgsurf_load
         fprintf(stderr, "Only bit depths of 1, 2, 4, 8 or 16 are supported by .png!\n");
     }
 
-    //delegate loading based on parsed format
+    //delegate loading based on parsed format, after parameter checking
+
+    return 0;
 }
