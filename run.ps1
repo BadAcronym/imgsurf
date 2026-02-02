@@ -22,25 +22,13 @@ if(-Not(Test-Path ".\bin\"))
 function Get-Compileprep()
 {
     Write-Host ""
-    Write-Host "\033[36mcompiling imgsurf...\033[0m"
+    Write-Host "`033[36mcompiling imgsurf...`033[0m"
     Write-Host ""
     premake5 ecc
     premake5 vs2022
 }
 
-if($build -eq "debug")
-{
-    Get-Compileprep
-    pushd ".\build\"
-    &MSBuild imgsurf.sln -p:Configuration=$build -p:Platform=windows
-}
-elseif($build -eq "release")
-{
-    Get-Compileprep
-    pushd ".\build\"
-    &MSBuild imgsurf.sln -p:Configuration=$build -p:Platform=windows
-}
-elseif($build -eq "asan")
+if($build -eq "asan" -or $build -eq "debug" -or $build -eq "release")
 {
     Get-Compileprep
     pushd ".\build\"
@@ -48,18 +36,18 @@ elseif($build -eq "asan")
 }
 else
 {
-    Write-Host "\033[31m\nERROR: invalid make config: $build.\033[0m"
+    Write-Host "`033[31m\nERROR: invalid make config: $build.`033[0m"
     exit -2;
 }
 
 if(0 -ne $LASTEXITCODE)
 {
-    Write-Host "\033[31m\nERROR: failed to compile.\n\033[0m"
+    Write-Host "`033[31m`nERROR: failed to compile.`n`033[0m"
     popd
     exit -1
 }
 
-Write-Host "\n"
+Write-Host ""
 
 if($compile_only)
 {
