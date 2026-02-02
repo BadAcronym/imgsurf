@@ -383,7 +383,7 @@ uint8_t* imgsurf_load
     findFormat(path, &format);
     if(format == UINT8_MAX)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. Try a .png/.bmp/.webp/.avif/.qoi/.jxl file.\033[0m\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. Try a .qoi/.png/.bmp/.webp/.avif/.jxl file.\033[0m\n");
         return 0;
     }
 
@@ -432,6 +432,18 @@ uint8_t* imgsurf_load
     //TODO: more bit depth checking? maybe less strict, if it can load with wrong depth, let it
     switch(format)
     {
+        case IMGSURF_FILE_QOI:
+        {
+            if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
+            {
+                fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 or 16 are supported by .qoi!\033[0m\n");
+            }
+            else
+            {
+                image = loadQOI(file, channels, width, height);
+            }
+            break;
+        }
         case IMGSURF_FILE_PNG:
         {
             if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
@@ -457,18 +469,6 @@ uint8_t* imgsurf_load
         case IMGSURF_FILE_AVIF:
         {
             fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
-            break;
-        }
-        case IMGSURF_FILE_QOI:
-        {
-            if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
-            {
-                fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 or 16 are supported by .qoi!\033[0m\n");
-            }
-            else
-            {
-                image = loadQOI(file, channels, width, height);
-            }
             break;
         }
         case IMGSURF_FILE_JXL:
