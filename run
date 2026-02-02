@@ -22,30 +22,28 @@ echo ""
 premake5 ecc
 premake5 gmake
 
-pushd ./build/
-
 if [[ $1 = "debug" ]]
 then
+    pushd ./build/ > /dev/null
     make config=debug_linux
 elif [[ $1 = "release" ]]
 then
+    pushd ./build/ > /dev/null
     make config=release_linux
 elif [[ $1 = "asan" ]]
 then
+    pushd ./build/ > /dev/null
     make config=asan_linux
 else
     echo -e "\033[31m\nERROR: invalid make config: $1.\033[0m"
     exit -2;
 fi
 
-if [[ $1 = "--compile-only" ]] || [[ $2 = "--compile-only" ]]
-then
-    exit 0
-fi
+echo -e "\n"
 
 if [[ $? != 0 ]]
 then
-    echo -e "\033[31mERROR: failed to compile.\033[0m"
+    echo -e "\033[31m\nERROR: failed to compile.\n\033[0m"
     exit -1
 fi
 
@@ -54,7 +52,7 @@ then
     exit 0
 fi
 
-popd
+popd > /dev/null
 
-chmod +x ./bin/release/imgsurftest
-./bin/release/imgsurftest
+chmod +x ./bin/$1/imgsurftest
+./bin/$1/imgsurftest

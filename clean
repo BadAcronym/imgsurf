@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo -e "\033[33mcleaning up imgsurf builds...\033[0m"
+
 if [[ -d ./build/ ]]
 then
     rm ./build/ -rf
@@ -15,4 +17,4 @@ then
     rm ./build/ -rf
 fi
 
-echo -e "\033[32mcleaned imgsurf!\033[0m"
+echo -e "\033[32mcleaned imgsurf!\n\033[0m"
