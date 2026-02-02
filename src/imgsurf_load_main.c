@@ -306,7 +306,7 @@ internal uint8_t* loadQOI
             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
             {
                 #ifdef DEBUG
-                    fprintf(stderr, "\n\033[33;1;7mINFO: QOI end-of-stream reached.\033[0m\n\n");
+                    fprintf(stderr, "QOI end-of-stream reached.\n");
                 #endif
                 return image;
             }
