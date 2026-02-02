@@ -1,4 +1,4 @@
-#include "imgsurf_loader.h"
+#include "imgsurf_load.h"
 
 internal uint8_t* loadPNG
 (

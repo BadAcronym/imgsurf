@@ -77,8 +77,8 @@ project("imagesurf unit tests")
         defines("BUILD_LINUX")
         targetdir("bin/imgsurftest_linux/%{cfg.buildcfg}")
         objdir("obj/")
-        files({ "./include/imgsurf_loader.h",
-                "./src/imgsurf_loader_main.c",
+        files({ "./include/imgsurf_load.h",
+                "./src/imgsurf_load_main.c",
                 "./src/linux_imgsurftest*",
                 "./include/linux_imgsurftest*",
                 "./src/imgsurftest*",
@@ -91,8 +91,8 @@ project("imagesurf unit tests")
         defines("BUILD_WINDOWS")
         targetdir("bin/imgsurftest_win64/%{cfg.buildcfg}")
         objdir("obj/")
-        files({ "./include/imgsurf_loader.h",
-                "./src/imgsurf_loader_main.c",
+        files({ "./include/imgsurf_load.h",
+                "./src/imgsurf_load_main.c",
                 "./src/win32_imgsurftest*",
                 "./include/win32_imgsurftest*",
                 "./src/imgsurftest*",
