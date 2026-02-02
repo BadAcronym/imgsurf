@@ -16,7 +16,6 @@ project("imagesurf library")
 
     filter("configurations:debug")
         defines{"DEBUG"}
-        staticruntime("off")
         runtime("debug")
         symbols("On")
         optimize("Off")
@@ -55,8 +54,8 @@ project("imagesurf library")
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
-        buildoptions({"-g", "-fsanitize=address", "-static-libasan"})
-        linkoptions({"-fsanitize=address", "-static-libasan"})
+        buildoptions({"-gfull", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
+        linkoptions({"-gfull",  "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
 
 project("imagesurf unit tests")
     language("C")
@@ -106,5 +105,5 @@ project("imagesurf unit tests")
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
-        buildoptions({"-fsanitize=address", "-static-libasan"})
-        linkoptions({"-fsanitize=address", "-static-libasan"})
+        buildoptions({"-gfull", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
+        linkoptions({"-gfull",  "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
