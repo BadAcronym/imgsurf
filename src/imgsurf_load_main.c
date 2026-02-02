@@ -16,9 +16,87 @@ internal uint8_t* loadPNG
     uint32_t    *width,
     uint32_t    *height
 ){
+    //Wunused-parameter
+    (void)path;
+    (void)file;
+    (void)channels;
+    (void)width;
+    (void)height;
+
     //WIP: decode PNG, allocate size
     //write width and height into vars
     fprintf(stderr, "\n\033[33;1;7mWIP: PNG loader under construction!\033[0m\n");
+    return 0;
+}
+
+internal uint8_t* loadQOI
+(
+    const char  *path,
+    FILE        *file,
+    uint8_t     channels,
+    uint32_t    *width,
+    uint32_t    *height
+){
+    char magic[5] = "qoif";
+    *width  = 0;
+    *height = 0;
+
+    //WIP: decode QOI, allocate size
+    //write width and height into vars
+    fprintf(stderr, "\n\033[33;1;7mWIP: QOI loader under construction!\033[0m\n");
+
+    int byte = 0;
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((byte = fgetc(file)) != magic[i] || byte == EOF)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", i);
+            fprintf(stderr, "got: %b\n", byte);
+            fprintf(stderr, "expected: %b\n", magic[i]);
+            return 0;
+        }
+    }
+
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((byte = fgetc(file)) == EOF)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", 4 + i);
+            return 0;
+        }
+        *width += (byte << (3 - i) * 8);
+    }
+
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((byte = fgetc(file)) == EOF)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", 8 + i);
+            return 0;
+        }
+        *height += (byte << (3 - i) * 8);
+    }
+
+    switch(channels)
+    {
+        case IMGSURF_CHANNELS_RGB:
+        {
+            break;
+        }
+        case IMGSURF_CHANNELS_BGR:
+        {
+            break;
+        }
+        case IMGSURF_CHANNELS_RGBA:
+        {
+            break;
+        }
+        case IMGSURF_CHANNELS_BGRA:
+        {
+            break;
+        }
+    }
+
     return 0;
 }
 
@@ -40,13 +118,13 @@ internal void findFormat
 
     if(period == 0)
     {
-        fprintf(stderr, "\nPath doesn't look like a file.\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: Path doesn't look like a file.\033[0m\n");
         return;
     }
 
     if(period + 3 > i || i > period + 4)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: File extension doesn't look valid.\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: File extension doesn't look valid.\033[0m\n");
         return;
     }
 
@@ -126,11 +204,16 @@ uint8_t* imgsurf_load
         return 0;
     }
 
-    //TODAY: open file and pass on
-    FILE *file = fopen(path, "r");
+    FILE *file = fopen(path, "rb");
     if(!file)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s\033[0m\n", path);
+        return 0;
+    }
+
+    if(channels > IMGSURF_CHANNELS_MAX)
+    {
+        fprintf(stderr, "\n\033[33;1;7mERROR: unknown channel format!\033[0m\n");
         return 0;
     }
 
@@ -146,7 +229,6 @@ uint8_t* imgsurf_load
             else
             {
                 image = loadPNG(path, file, channels, width, height);
-                    // "\033[31;1;7m"
             }
             break;
         }
@@ -167,7 +249,14 @@ uint8_t* imgsurf_load
         }
         case IMGSURF_FILE_QOI:
         {
-            fprintf(stderr, "\nTODO: Format QOI not supported yet.\033[0m\n");
+            if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
+            {
+                fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 or 16 are supported by .qoi!\033[0m\n");
+            }
+            else
+            {
+                image = loadQOI(path, file, channels, width, height);
+            }
             break;
         }
         case IMGSURF_FILE_JXL:

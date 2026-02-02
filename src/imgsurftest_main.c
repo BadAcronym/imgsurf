@@ -33,4 +33,30 @@ int main()
         printf("G: %u", bmp[0]);
         printf("B: %u", bmp[0]);
     }
+
+    uint8_t* qoiRGBA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    if(!qoiRGBA)
+    {
+        fprintf(stderr, "imgsurf_load failed to load a qoi in RGBA.\n");
+    }
+    else
+    {
+        printf("QOI loaded!\n");
+        printf("R: %u", qoiRGBA[0]);
+        printf("G: %u", qoiRGBA[0]);
+        printf("B: %u", qoiRGBA[0]);
+    }
+
+    uint8_t* qoiBGRA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_BGRA, 8);
+    if(!qoiBGRA)
+    {
+        fprintf(stderr, "imgsurf_load failed to load a qoi in RGBA.\n");
+    }
+    else
+    {
+        printf("QOI loaded!\n");
+        printf("R: %u", qoiBGRA[0]);
+        printf("G: %u", qoiBGRA[0]);
+        printf("B: %u", qoiBGRA[0]);
+    }
 }

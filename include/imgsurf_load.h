@@ -7,8 +7,10 @@
 #define internal    static
 
 #define IMGSURF_CHANNELS_RGBA 0
-#define IMGSURF_CHANNELS_RGB  1
-#define IMGSURF_CHANNELS_MAX  1
+#define IMGSURF_CHANNELS_BGRA 1
+#define IMGSURF_CHANNELS_RGB  2
+#define IMGSURF_CHANNELS_BGR  3
+#define IMGSURF_CHANNELS_MAX  3
 
 #define IMGSURF_FILE_PNG  0
 #define IMGSURF_FILE_BMP  1
@@ -24,7 +26,6 @@
 #define IMGSURF_TYPE_OTHER     3
 #define IMGSURF_TYPE_MAX       3
 
-//TODO: provide some way to flip channels around in specified format
 extern uint8_t* imgsurf_load
 (
     const char *path,
