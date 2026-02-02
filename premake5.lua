@@ -65,6 +65,7 @@ project("imagesurf unit tests")
     warnings("Extra")
     targetname("imgsurftest")
     kind("ConsoleApp")
+    libdirs("./bin/**")
 
     filter("configurations:debug")
         defines{"DEBUG"}
@@ -84,12 +85,13 @@ project("imagesurf unit tests")
         defines("BUILD_LINUX")
         targetdir("bin/imgsurftest_linux/%{cfg.buildcfg}")
         objdir("obj/")
-        files({ "./src/linux_imgsurf*",
-                "./include/linux_imgsurf*",
-                "./src/imgsurf*",
-                "./include/imgsurf*" })
+        files({ "./src/linux_imgsurftest*",
+                "./include/linux_imgsurftest*",
+                "./src/imgsurftest*",
+                "./include/imgsurftest*" })
         includedirs({ "./include/", "/usr/include/"})
         buildoptions({"-Wextra", "-Wall", "-Werror"})
+        links("imgsurf:static")
         linkoptions({"-fuse-ld=mold"})
         toolset("clang")
 
@@ -102,7 +104,8 @@ project("imagesurf unit tests")
                 "./include/win32_imgsurf*",
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
-        includedirs({ "./include/"})
+        includedirs({"./include/"})
+        links("imgsurf.lib")
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
