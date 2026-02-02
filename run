@@ -19,16 +19,30 @@ premake5 ecc
 premake5 gmake
 
 pushd ./build/
-make
+
+if [[ $1 = "debug" ]]
+then
+    make config=debug_linux
+elif [[ $1 = "release" ]]
+then
+    make config=release_linux
+elif [[ $1 = "asan" ]]
+then
+    make config=asan_linux
+else
+    echo -e "\033[31mERROR: invalid make config: $1.\033[0m"
+    exit -2;
+fi
+
+if [[ $1 = "--compile-only" ]] || [[ $2 = "--compile-only" ]]
+then
+    exit 0
+fi
 
 if [[ $? != 0 ]]
 then
+    echo -e "\033[31mERROR: failed to compile.\033[0m"
     exit -1
-fi
-
-if [[ $1 = "--compile-only" ]]
-then
-    exit 0
 fi
 
 popd
