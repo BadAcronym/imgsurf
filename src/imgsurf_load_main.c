@@ -236,7 +236,6 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                //TESTING: verify this still works
                 uint8_t runlength = (byte & 0b00111111) + 1;
 
                 uint64_t index = y * loopWidth + x;
