@@ -19,6 +19,11 @@
 #define IMGSURF_FILE_JXL  5
 #define IMGSURF_FILE_MAX  5
 
+#define IMGSURF_TYPE_FILE      0
+#define IMGSURF_TYPE_DIRECTORY 1
+#define IMGSURF_TYPE_ERROR     2
+#define IMGSURF_TYPE_MAX       2
+
 //TODO: provide some way to flip channels around in specified format
 extern uint8_t* imgsurf_load
 (
