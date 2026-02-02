@@ -2,7 +2,7 @@
 require"vendor/premake-ecc/ecc"
 
 workspace("imgsurf")
-    configurations({ "debug", "release" })
+    configurations({"debug", "asan", "release"})
     platforms({"linux", "windows"})
     location("build")
     architecture("x86_64")
@@ -14,7 +14,7 @@ project("imagesurf library")
     targetname("imgsurf")
     kind("StaticLib")
 
-    filter("configurations:debug")
+    filter("configurations:debug or asan")
         defines{"DEBUG"}
         runtime("debug")
         symbols("On")
@@ -52,13 +52,20 @@ project("imagesurf library")
                 "./include/imgsurf_*" })
         includedirs({ "./include/"})
 
-    filter({"platforms:Linux", "configurations:debug"})
-        buildoptions({"-gfull", "-O0", "-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
+    filter({"platforms:Linux", "configurations:debug or asan"})
+        buildoptions({"-gfull", "-O0"})
+        linkoptions({"-gfull", "-O0"})
+
+    filter({"platforms:Linux", "configurations:asan"})
+        buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                       "-static-libasan"})
-        linkoptions({"-gfull", "-O0", "-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
+        linkoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                      "-static-libasan"})
 
-    filter({"platforms:Windows", "configurations:debug"})
+    filter({"platforms:Windows", "configurations:debug or asan"})
+        kind("ConsoleApp")
+
+    filter({"platforms:Windows", "configurations:asan"})
         editandcontinue("Off")
         debugformat("c7")
         buildoptions({"/fsanitize=address"})
@@ -73,7 +80,7 @@ project("imagesurf unit tests")
     targetname("imgsurftest")
     kind("ConsoleApp")
 
-    filter("configurations:debug")
+    filter("configurations:debug or asan")
         defines{"DEBUG"}
         staticruntime("off")
         runtime("debug")
@@ -115,14 +122,22 @@ project("imagesurf unit tests")
         libdirs("./bin/%{cfg.buildcfg}/")
         links("imgsurf.lib")
 
-    filter({"platforms:Linux", "configurations:debug"})
-        buildoptions({"-gfull", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
-        linkoptions({"-gfull",  "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
+    filter({"platforms:Linux", "configurations:debug or asan"})
+        buildoptions({"-gfull", "-O0"})
+        linkoptions({"-gfull", "-O0"})
 
-    filter({"platforms:Windows", "configurations:debug"})
+    filter({"platforms:Linux", "configurations:asan"})
+        buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
+                      "-static-libasan"})
+        linkoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
+                     "-static-libasan"})
+
+    filter({"platforms:Windows", "configurations:debug or asan"})
+        kind("ConsoleApp")
+
+    filter({"platforms:Windows", "configurations:asan"})
         editandcontinue("Off")
         debugformat("c7")
         buildoptions({"/fsanitize=address"})
-
     filter({"platforms:Windows", "configurations:release"})
         linkoptions({"/NODEFAULTLIB:MSVCRTD"})
