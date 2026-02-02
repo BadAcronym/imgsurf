@@ -37,7 +37,6 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*" })
         includedirs({ "./include/", "/usr/include/"})
-        buildoptions("-g")
         linkoptions("-fuse-ld=mold")
         toolset("clang")
 
@@ -55,7 +54,7 @@ project("imagesurf library")
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
-        buildoptions({"-fsanitize=address", "-static-libasan"})
+        buildoptions({"-g", "-fsanitize=address", "-static-libasan"})
         linkoptions({"-fsanitize=address", "-static-libasan"})
 
 project("imagesurf unit tests")
