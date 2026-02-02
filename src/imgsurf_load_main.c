@@ -70,7 +70,7 @@ internal uint8_t* loadQOI
             fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", 4 + i);
             return 0;
         }
-        *width += (byte << (3 - i) * 8);
+        *width += (uint32_t)(byte << (3 - i) * 8);
     }
 
     for(uint8_t i = 0; i < 4; ++i)
@@ -80,7 +80,7 @@ internal uint8_t* loadQOI
             fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", 8 + i);
             return 0;
         }
-        *height += (byte << (3 - i) * 8);
+        *height += (uint32_t)(byte << (3 - i) * 8);
     }
 
     if((byte = fgetc(file)) == EOF)
@@ -237,7 +237,8 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                uint8_t runlength = (byte % 64) + 1;
+                //TESTING: verify this still works
+                uint8_t runlength = (byte & 0b00111111) + 1;
 
                 uint64_t index = y * loopWidth + x;
 
