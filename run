@@ -39,13 +39,13 @@ else
     exit -2;
 fi
 
-echo -e "\n"
-
 if [[ $? != 0 ]]
 then
     echo -e "\033[31m\nERROR: failed to compile.\n\033[0m"
     exit -1
 fi
+
+echo -e "\n"
 
 if [[ $2 = "--compile-only" ]]
 then
