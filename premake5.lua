@@ -99,6 +99,8 @@ project("imagesurf unit tests")
     filter("platforms:Windows")
         system("Windows")
         defines("BUILD_WINDOWS")
+        language("C++")
+        cppdialect("C++23")
         targetdir("bin/imgsurftest_win64/%{cfg.buildcfg}")
         objdir("obj/")
         files({ "./src/win32_imgsurf*",
