@@ -6,8 +6,7 @@ param
 
 Write-Host "Building $build...`n"
 
-$Platforms = "Win64", "Linux"
-$Configurations = "debug", "release"
+$solution = "imgsurf"
 $targetname = "imgsurftest"
 $target = ""
 
@@ -54,7 +53,7 @@ elseIf($IsWindows)
 {
     &premake5 vs2022
 
-    &MSBuild ./build/imgsurf.sln -p:platform=windows -p:Configuration=$build
+    &MSBuild ./build/$solution.sln -p:platform=windows -p:Configuration=$build
 
     $target = "./bin/$targetname" + "_win64/$build/$targetname.exe"
 }
