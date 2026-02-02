@@ -60,7 +60,7 @@ project("imagesurf library")
                      "-static-libasan"})
 
     filter({"platforms:Windows", "configurations:debug"})
-        buildoptions({"/fsanitize=address,leak,undefined"})
+        buildoptions({"/fsanitize=address"})
 
 project("imagesurf unit tests")
     language("C")
@@ -116,4 +116,4 @@ project("imagesurf unit tests")
         linkoptions({"-gfull",  "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
 
     filter({"platforms:Windows", "configurations:debug"})
-        buildoptions({"/fsanitize=address,leak,undefined"})
+        buildoptions({"/fsanitize=address"})
