@@ -17,4 +17,16 @@ then
     rm ./build/ -rf
 fi
 
+pushd ./assets/ > /dev/null
+for written in *reconstructed*
+do
+    if [[ ! -f $written ]]
+    then
+        continue;
+    fi
+
+    rm $written
+done
+popd > /dev/null
+
 echo -e "\033[32mcleaned imgsurf!\n\033[0m"
