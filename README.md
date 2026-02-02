@@ -5,7 +5,6 @@
     - .bmp
     - .webp
     - .avif
-    - .svg
     - .qoi
     - .jxl
 
