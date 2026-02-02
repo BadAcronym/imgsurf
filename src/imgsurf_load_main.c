@@ -159,6 +159,11 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                //WIP: debug
+                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
+                {
+                    printf("INDEXING ERROR IN QOI_OP_RGB!\n");
+                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if(byte == QOI_OP_RGBA)
@@ -204,6 +209,11 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                //WIP: debug
+                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
+                {
+                    printf("INDEXING ERROR IN QOI_OP_RGB!\n");
+                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_DIFF)
@@ -225,13 +235,19 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                //WIP: debug
+                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
+                {
+                    printf("INDEXING ERROR IN QOI_OP_RGB!\n");
+                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
                 //WIP: debug
                 printf("op: QOI_OP_LUMA\n");
-                uint8_t diffGreen = byte & 0b00111111 - 32;
+                printf("before: R:%u, G:%u, B:%u, A:%u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
+                uint8_t diffGreen = byte & 0b00111111;
 
                 //WIP: debug
                 ++bytecount;
@@ -239,27 +255,31 @@ internal uint8_t* loadQOI
                 {
                     return image;
                 }
-                uint8_t diffRed  = byte & 0b11110000 - 8;
-                uint8_t diffBlue = byte & 0b00001111 - 8;
+                uint8_t diffRed  = byte & 0b11110000 >> 4;
+                uint8_t diffBlue = byte & 0b00001111;
 
-                prev_pixel.green += diffGreen;
-                prev_pixel.red   += diffRed  + diffGreen;
-                prev_pixel.blue  += diffBlue + diffGreen;
+                prev_pixel.green += diffGreen - 32;
+                prev_pixel.red   += diffRed  + diffGreen - 32 - 8;
+                prev_pixel.blue  += diffBlue + diffGreen - 32 - 8;
 
                 if(!discardAlpha)
                 {
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
-                printf("R:%u, G:%u, B:%u, A:%u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
+                printf("diffGreen: %u, diffRed: %u, diffBlue: %u\n", diffGreen, diffRed, diffBlue);
+                printf("after: R:%u, G:%u, B:%u, A:%u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
 
+                //WIP: debug
+                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
+                {
+                    printf("INDEXING ERROR IN QOI_OP_LUMA!\n");
+                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
                 uint8_t runlength = (byte % 64) + 1;
-                // //WIP: debug
-                // printf("op: QOI_OP_RUN x%u\n", runlength);
 
                 uint64_t index = y * loopWidth + x;
 
@@ -280,8 +300,6 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
-                //WIP: debug
-                // printf("op: QOI_OP_INDEX %u\n", byte % 64);
                 int byteBuffer[8];
                 uint8_t zeroCounter = 0;
 
@@ -306,6 +324,22 @@ internal uint8_t* loadQOI
                 }
 
                 prev_pixel = seen_pixels[byte % 64];
+
+                //WIP: debug
+                // if(prev_pixel.alpha == 0)
+                // {
+                //     fprintf(stderr, "\n\033[31;1;7mERROR: QOI indexing WRONG.\033[0m\n");
+                //     fprintf(stderr, "index: %u\n", byte % 64);
+                //     fprintf(stderr, "pixel at index: %u %u %u %u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
+                //
+                //     for(int i = 0; i < 64; ++i)
+                //     {
+                //         if(seen_pixels[i].red != 0 || seen_pixels[i].green != 0 || seen_pixels[i].blue != 0 || seen_pixels[i].alpha != 0)
+                //         {
+                //             fprintf(stderr, "pixel at %u: %u %u %u %u\n", i, seen_pixels[i].red, seen_pixels[i].green, seen_pixels[i].blue, seen_pixels[i].alpha);
+                //         }
+                //     }
+                // }
 
                 image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
