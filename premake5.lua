@@ -30,8 +30,8 @@ project("imagesurf library")
     filter("platforms:Linux")
         system("Linux")
         defines("BUILD_LINUX")
-        targetdir("bin/imgsurf_linux/%{cfg.buildcfg}")
-        objdir("obj/imgsurf/%{cfg.buildcfg}")
+        targetdir("bin/%{cfg.buildcfg}")
+        objdir("obj/imgsurf")
         files({ "./src/linux_imgsurf*",
                 "./include/linux_imgsurf*",
                 "./src/imgsurf_*",
@@ -44,7 +44,7 @@ project("imagesurf library")
     filter("platforms:Windows")
         system("Windows")
         defines("BUILD_WINDOWS")
-        targetdir("bin/imgsurf_win64/%{cfg.buildcfg}")
+        targetdir("bin/%{cfg.buildcfg}")
         objdir("obj/")
         files({ "./src/win32_imgsurf*",
                 "./include/win32_imgsurf*",
@@ -87,14 +87,14 @@ project("imagesurf unit tests")
     filter("platforms:Linux")
         system("Linux")
         defines("BUILD_LINUX")
-        targetdir("bin/imgsurftest_linux/%{cfg.buildcfg}")
-        objdir("obj/")
+        targetdir("bin/%{cfg.buildcfg}")
+        objdir("obj/imgsurftest/")
         files({ "./src/linux_imgsurftest*",
                 "./include/linux_imgsurftest*",
                 "./src/imgsurftest*",
                 "./include/imgsurftest*" })
         includedirs({ "./include/", "/usr/include/"})
-        libdirs("./bin/imgsurf_linux/%{cfg.buildcfg}/")
+        libdirs("./bin/%{cfg.buildcfg}/")
         buildoptions({"-Wextra", "-Wall", "-Werror", "-Wconversion", "-Wsign-conversion"})
         links("imgsurf:static")
         linkoptions({"-fuse-ld=mold"})
@@ -103,14 +103,14 @@ project("imagesurf unit tests")
     filter("platforms:Windows")
         system("Windows")
         defines("BUILD_WINDOWS")
-        targetdir("bin/imgsurftest_win64/%{cfg.buildcfg}")
+        targetdir("bin/%{cfg.buildcfg}")
         objdir("obj/")
         files({ "./src/win32_imgsurf*",
                 "./include/win32_imgsurf*",
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
         includedirs({"./include/"})
-        libdirs("./bin/imgsurf_win64/%{cfg.buildcfg}/")
+        libdirs("./bin/%{cfg.buildcfg}/")
         links("imgsurf.lib")
 
     filter({"platforms:Linux", "configurations:debug"})

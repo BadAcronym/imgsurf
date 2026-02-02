@@ -42,7 +42,7 @@ if($IsLinux)
     &make config=$makecfg
     Pop-Location
 
-    $target = "./bin/$targetname" + "_linux/$build/$targetname"
+    $target = "./bin/$build/$targetname"
 
     if(Test-Path $target)
     {
