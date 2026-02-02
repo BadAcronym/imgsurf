@@ -86,7 +86,7 @@ project("imagesurf unit tests")
                 "./include/linux_imgsurf*",
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
-        includedirs({ "./include/", "/usr/include/"})
+        includedirs({ "./include/", "/usr/include/", "./vendor/stb"})
         buildoptions({"-g"})
         linkoptions({"-fuse-ld=mold"})
         toolset("clang")
@@ -100,7 +100,7 @@ project("imagesurf unit tests")
                 "./include/win32_imgsurf*",
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
-        includedirs({ "./include/"})
+        includedirs({ "./include/", "./vendor/stb/"})
         buildoptions{"/wd4068", "/wd4100"}
         ignoredefaultlibraries({ "MSVCRT" })
 
