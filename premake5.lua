@@ -44,8 +44,6 @@ project("imagesurf library")
     filter("platforms:Windows")
         system("Windows")
         defines("BUILD_WINDOWS")
-        language("C++")
-        cppdialect("C++23")
         targetdir("bin/imgsurf_win64/%{cfg.buildcfg}")
         objdir("obj/")
         files({ "./src/win32_imgsurf*",
@@ -53,7 +51,7 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*" })
         includedirs({ "./include/"})
-        buildoptions{"/wd4068", "/wd4100"}
+        buildoptions{"/std:clatest"}
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
@@ -99,8 +97,6 @@ project("imagesurf unit tests")
     filter("platforms:Windows")
         system("Windows")
         defines("BUILD_WINDOWS")
-        language("C++")
-        cppdialect("C++23")
         targetdir("bin/imgsurftest_win64/%{cfg.buildcfg}")
         objdir("obj/")
         files({ "./src/win32_imgsurf*",
@@ -108,7 +104,7 @@ project("imagesurf unit tests")
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
         includedirs({ "./include/"})
-        buildoptions{"/wd4068", "/wd4100"}
+        buildoptions{"/std:clatest"}
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
