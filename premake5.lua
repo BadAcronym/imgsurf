@@ -54,8 +54,10 @@ project("imagesurf library")
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
-        buildoptions({"-gfull", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
-        linkoptions({"-gfull",  "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
+        buildoptions({"-gfull", "-O0", "-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
+                      "-static-libasan"})
+        linkoptions({"-gfull", "-O0", "-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
+                     "-static-libasan"})
 
 project("imagesurf unit tests")
     language("C")
