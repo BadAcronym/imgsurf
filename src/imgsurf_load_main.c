@@ -7,6 +7,7 @@
     #include "linux_imgsurf_platform.h"
 #elifdef BUILD_WINDOWS
     #include "win32_imgsurf_platform.h"
+    typedef int bool;
 #endif
 
 internal uint8_t* loadPNG

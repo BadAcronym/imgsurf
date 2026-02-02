@@ -14,12 +14,12 @@ uint8_t imgsurf_verifyPath
         return IMGSURF_TYPE_ERROR;
     }
 
-    if(_S_ISDIR(pathInfo.st_mode))
+    if(_S_IFDIR & pathInfo.st_mode)
     {
         return IMGSURF_TYPE_DIRECTORY;
     }
 
-    if(_S_ISREG(pathInfo.st_mode))
+    if(_S_IFREG & pathInfo.st_mode)
     {
         return IMGSURF_TYPE_FILE;
     }

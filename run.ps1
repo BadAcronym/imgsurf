@@ -56,7 +56,7 @@ elseIf($IsWindows)
 
     &MSBuild ./build/imgsurf.sln -p:platform=windows -p:Configuration=$build
 
-    $target = "./bin/$targetname_win64" + "/$build/$targetname.exe"
+    $target = "./bin/$targetname" + "_win64/$build/$targetname.exe"
 }
 
 if($isWindows -and 0 -eq $LASTEXITCODE -and $build -eq "debug")
