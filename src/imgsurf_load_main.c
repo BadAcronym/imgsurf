@@ -111,11 +111,6 @@ internal uint8_t* loadQOI
     pixel prev_pixel = {0, 0, 0, 255};
     pixel seen_pixels[64] = {};
 
-    //WIP: debug
-    uint64_t count = 0;
-    uint64_t bytecount = 14;
-    uint64_t filesize = 83575;
-
     uint64_t loopWidth  = *width * pixelwidth;
     uint64_t loopHeight = *height;
 
@@ -125,25 +120,18 @@ internal uint8_t* loadQOI
         {
             if(byte == QOI_OP_RGB)
             {
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
-                    //WIP: debug
-                    ++bytecount;
                     return image;
                 }
                 prev_pixel.red = byte;
 
-                //WIP: debug
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.green = byte;
 
-                //WIP: debug
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
@@ -159,41 +147,28 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
-                //WIP: debug
-                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
-                {
-                    printf("INDEXING ERROR IN QOI_OP_RGB!\n");
-                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if(byte == QOI_OP_RGBA)
             {
-                //WIP: debug
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.red = byte;
 
-                //WIP: debug
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.green = byte;
 
-                //WIP: debug
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.blue = byte;
 
-                //WIP: debug
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
@@ -209,11 +184,6 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
-                //WIP: debug
-                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
-                {
-                    printf("INDEXING ERROR IN QOI_OP_RGB!\n");
-                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_DIFF)
@@ -235,22 +205,12 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
-                //WIP: debug
-                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
-                {
-                    printf("INDEXING ERROR IN QOI_OP_RGB!\n");
-                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
-                //WIP: debug
-                printf("op: QOI_OP_LUMA\n");
-                printf("before: R:%u, G:%u, B:%u, A:%u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
                 uint8_t diffGreen = byte & 0b00111111;
 
-                //WIP: debug
-                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
@@ -267,14 +227,6 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
-                printf("diffGreen: %u, diffRed: %u, diffBlue: %u\n", diffGreen, diffRed, diffBlue);
-                printf("after: R:%u, G:%u, B:%u, A:%u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
-
-                //WIP: debug
-                if(IMGSURF_QOI_INDEX == 4 || IMGSURF_QOI_INDEX == 18)
-                {
-                    printf("INDEXING ERROR IN QOI_OP_LUMA!\n");
-                }
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_RUN)
@@ -325,22 +277,6 @@ internal uint8_t* loadQOI
 
                 prev_pixel = seen_pixels[byte % 64];
 
-                //WIP: debug
-                // if(prev_pixel.alpha == 0)
-                // {
-                //     fprintf(stderr, "\n\033[31;1;7mERROR: QOI indexing WRONG.\033[0m\n");
-                //     fprintf(stderr, "index: %u\n", byte % 64);
-                //     fprintf(stderr, "pixel at index: %u %u %u %u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
-                //
-                //     for(int i = 0; i < 64; ++i)
-                //     {
-                //         if(seen_pixels[i].red != 0 || seen_pixels[i].green != 0 || seen_pixels[i].blue != 0 || seen_pixels[i].alpha != 0)
-                //         {
-                //             fprintf(stderr, "pixel at %u: %u %u %u %u\n", i, seen_pixels[i].red, seen_pixels[i].green, seen_pixels[i].blue, seen_pixels[i].alpha);
-                //         }
-                //     }
-                // }
-
                 image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
                 image[y * loopWidth + x + 2] = flipRnB ? prev_pixel.red  : prev_pixel.blue;
@@ -356,23 +292,13 @@ internal uint8_t* loadQOI
                 fprintf(stderr, "byte: %b\033[0m\n", byte);
                 return image;
             }
-            //WIP: debug
-            ++bytecount;
-            count = (y * loopWidth + x + pixelwidth) / pixelwidth;
-            // printf("y: %lu ", y);
-            // printf("x: %lu, ", x / pixelwidth);
-            // printf("raw x: %lu\n", x);
         }
     }
-
-    fprintf(stderr, "\n\033[33;1;7m parsed %lu of %lu pixels.\033[0m\n\n", count, pixelcount);
-    fprintf(stderr, "\n\033[33;1;7m parsed %lu of %lu bytes.\033[0m\n\n", bytecount, filesize);
 
     int byteBuffer[8];
     uint8_t zeroCounter = 0;
     for(uint8_t i = 0; i < 7 && (byteBuffer[i] = fgetc(file)) == 0x00; ++i)
     {
-        ++bytecount;
         if(++zeroCounter == 7)
         {
             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
