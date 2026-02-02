@@ -97,9 +97,9 @@ internal uint8_t* loadQOI
     bool discardAlpha = channels == IMGSURF_CHANNELS_RGB || channels == IMGSURF_CHANNELS_BGR;
     bool flipRnB      = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
 
-    //TODO: figure out best user interface to free image
     uint64_t pixelcount = *width * *height;
 
+    //TODO: figure out best user interface to free image
     uint8_t* image = malloc(pixelcount * (discardAlpha ? 3 : 4));
     if(!image)
     {
