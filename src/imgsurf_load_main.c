@@ -112,22 +112,13 @@ internal uint8_t* loadQOI
         return 0;
     }
 
-    pixel prev_pixel = {0};
-    prev_pixel.alpha = 255;
-
+    pixel prev_pixel = {0, 0, 0, 255};
     pixel seen_pixels[64] = {0};
-
-    //check for end of stream (7x 0x00, 1x 0x01) necessary?
-    //would be annoying to check a byte in adv
-    //pixelcount prevents us from reading past the image pointer.
-    //EOF prevents us from reading past the file pointer.
-    //So we'll write two extra black pixels if the image ends early - but then it's cropped weird anyways?
-    //I'll leave it at that.
 
     //WIP: debug
     uint64_t count = 0;
 
-    //FIXME: loop count
+    //FIXME: loop count & indexing broken
     for(uint32_t y = 0; y < *height; ++y)
     {
         for(uint32_t x = 0; x < *width && ((byte = fgetc(file)) != EOF); ++x)
@@ -294,6 +285,12 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
+                int nextByte = ungetc(fgetc(file), file);
+                if(byte == QOI_EOS_part1 && nextByte == QOI_EOS_part2)
+                {
+                    return image;
+                }
+
                 prev_pixel = seen_pixels[byte & 0b00111111];
 
                 image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
@@ -313,12 +310,6 @@ internal uint8_t* loadQOI
                 {
                     image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
                 }
-
-                int nextByte = ungetc(fgetc(file), file);
-                if(nextByte == QOI_EOS_part2)
-                {
-                    return image;
-                }
             }
             else
             {
@@ -333,7 +324,7 @@ internal uint8_t* loadQOI
     }
 
     fprintf(stderr, "\nINFO: parsed %lu of %lu.\n", count, pixelcount);
-    fprintf(stderr, "diff: %lu\n", count - pixelcount);
+    fprintf(stderr, "diff: %lu too many\n", count - pixelcount);
 
     return image;
 }
