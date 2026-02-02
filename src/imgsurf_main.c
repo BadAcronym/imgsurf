@@ -433,7 +433,7 @@ uint8_t* imgsurf_load
 
     if(channels > IMGSURF_CHANNELS_MAX)
     {
-        fprintf(stderr, "\n\033[33;1;7mERROR: unknown channel format!\033[0m\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: unknown channel format!\033[0m\n");
         return 0;
     }
 
