@@ -37,7 +37,7 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*" })
         includedirs({ "./include/", "/usr/include/"})
-        buildoptions({"-Wextra", "-Wall", "-Werror"})
+        buildoptions({"-Wextra", "-Wall", "-Werror", "-Wconversion", "-Wsign-conversion"})
         linkoptions("-fuse-ld=mold")
         toolset("clang")
 
@@ -90,7 +90,7 @@ project("imagesurf unit tests")
                 "./src/imgsurftest*",
                 "./include/imgsurftest*" })
         includedirs({ "./include/", "/usr/include/"})
-        buildoptions({"-Wextra", "-Wall", "-Werror"})
+        buildoptions({"-Wextra", "-Wall", "-Werror", "-Wconversion", "-Wsign-conversion"})
         links("imgsurf:static")
         linkoptions({"-fuse-ld=mold"})
         toolset("clang")
