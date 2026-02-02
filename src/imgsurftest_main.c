@@ -1,158 +1,103 @@
 #include "imgsurf_main.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 
-// TODO: validate files not with other image loaders (if avoidable),
-// but by loading the file, saving it, then comparing the data between files
+#define STBI_ONLY_PNG
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+int verifyImage
+(
+    const char *name_qoi,
+    const char *name_png
+){
+    fprintf(stderr, "trying to verify image: %s\n", name_qoi);
+
+    uint32_t width  = 0;
+    uint32_t height = 0;
+
+    int stb_width    = 0;
+    int stb_height   = 0;
+    int stb_channels = 0;
+
+    uint8_t *testRGBA = imgsurf_load(name_qoi, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    if(!testRGBA)
+    {
+        fprintf(stderr, "\x1b[1;31mimgsurf_load failed.\033[0m\n");
+        return 1;
+    }
+    uint8_t *test_stb = stbi_load(name_png, &stb_width, &stb_height, &stb_channels, STBI_rgb_alpha);
+    if(!test_stb)
+    {
+        fprintf(stderr, "\x1b[1;31mstb_image failed: %s\n", stbi_failure_reason());
+        return -1;
+    }
+
+    if(width != stb_width)
+    {
+        fprintf(stderr, "\x1b[1;31mimgsurf_load failed to correctly load width. Expected: %u, got: %u.\033[0m\n", stb_width, width);
+        return 2;
+    }
+
+    if(height != stb_height)
+    {
+        fprintf(stderr, "\x1b[1;31mimgsurf_load failed to correctly load height. Expected: %u, got: %u.\033[0m\n", stb_height, height);
+        return 3;
+    }
+
+    for(uint64_t i = 0; i < width * height * 4; i += 4)
+    {
+        if(testRGBA[i] != test_stb[i])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.red, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
+            return -2;
+        }
+        if(testRGBA[i + 1] != test_stb[i + 1])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.green, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
+            return -3;
+        }
+        if(testRGBA[i + 2] != test_stb[i + 2])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.blue, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
+            return -4;
+        }
+        if(testRGBA[i + 3] != test_stb[i + 3])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.alpha, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
+            return -5;
+        }
+    }
+
+    // TODO: write .qoi and test reconstructed image against original stb data
+
+    return 0;
+}
 
 int main
 (
     void
 ){
-    uint32_t width  = 0;
-    uint32_t height = 0;
+    int result = 0;
 
-    uint32_t expectedWidth  = 10;
-    uint32_t expectedHeight = 10;
-
-    uint8_t* smallTestRGBA = imgsurf_load("assets/smallTest.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
-    if(!smallTestRGBA)
+    if((result = verifyImage("assets/smallTest.qoi", "assets/smallTest.png")))
     {
-        fprintf(stderr, "imgsurf_load failed to load small test image.\n");
-        return -1;
-    }
-    uint8_t result = imgsurf_write_file("assets/smallTest_reconstructed.qoi", smallTestRGBA, width, height, IMGSURF_CHANNELS_RGBA, 8, IMGSURF_FILE_QOI);
-    if(result)
-    {
-        fprintf(stderr, "imgsurf_load failed to write back small test image.\n");
+        fprintf(stderr, "\x1b[1;31mERROR: unit test not passed with image assets/smallTest!\n");
         return result;
     }
-    uint8_t *smallTestRGBA_verify = imgsurf_load("assets/smallTest_reconstructed.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    fprintf(stderr, "\033[32;1;1mSUCCESS: unit test passed with image assets/smallTest!\033[0m\n");
 
-    for(uint8_t i = 0; i < width * height * 4; i += 4)
+    if((result = verifyImage("assets/black.qoi", "assets/black.png")))
     {
-        if(smallTestRGBA_verify[i] != smallTestRGBA[i])
-        {
-            fprintf(stderr, "\x1b[1;31munit test failed @ pixel %u.red, expected: %u, got: %u\n", i / 4, smallTestRGBA[i], smallTestRGBA_verify[i]);
-            return -1;
-        }
-        if(smallTestRGBA_verify[i + 1] != smallTestRGBA[i + 1])
-        {
-            fprintf(stderr, "\x1b[1;31munit test failed @ pixel %u.green, expected: %u, got: %u\n", i / 4, smallTestRGBA[i], smallTestRGBA_verify[i]);
-            return -1;
-        }
-        if(smallTestRGBA_verify[i + 2] != smallTestRGBA[i + 2])
-        {
-            fprintf(stderr, "\x1b[1;31munit test failed @ pixel %u.blue, expected: %u, got: %u\n", i / 4, smallTestRGBA[i], smallTestRGBA_verify[i]);
-            return -1;
-        }
-        if(smallTestRGBA_verify[i + 3] != smallTestRGBA[i + 3])
-        {
-            fprintf(stderr, "\x1b[1;31munit test failed @ pixel %u.alpha, expected: %u, got: %u\n", i / 4, smallTestRGBA[i], smallTestRGBA_verify[i]);
-            return -1;
-        }
-    }
-
-    //TESTING: returning early for ease-of-use
-    return 0;
-
-    width  = 0;
-    height = 0;
-
-    expectedWidth  = 1584;
-    expectedHeight = 1920;
-
-    uint8_t* qoiRGBA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
-    if(!qoiRGBA)
-    {
-        fprintf(stderr, "imgsurf_load failed to load a qoi in RGBA.\n");
-        return -1;
-    }
-    printf("\nQOI in RGBA loaded!\n");
-    if(width != expectedWidth || height != expectedHeight)
-    {
-        fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
-        return -1;
-    }
-
-    //TODO: verify that the format actually just saves as that format, not reads
-    result = imgsurf_write_file("assets/tux_reconstructed.qoi", qoiRGBA, width, height, IMGSURF_CHANNELS_RGBA, 8, IMGSURF_FILE_QOI);
-    if(result)
-    {
-        fprintf(stderr, "imgsurf_load failed to write back tux test image.\n");
+        fprintf(stderr, "\x1b[1;31mERROR: unit test not passed with image assets/black!\033[0m\n");
         return result;
     }
+    fprintf(stderr, "\033[32;1;1mSUCCESS: unit test passed with image assets/black!\033[0m\n");
 
-    free(qoiRGBA);
-    qoiRGBA = imgsurf_load("assets/tux_reconstructed.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
-    if(!qoiRGBA)
+    if((result = verifyImage("assets/tux.qoi", "assets/tux.png")))
     {
-        fprintf(stderr, "imgsurf_load failed to load reconstructed RGBA QOI.\n");
-        return -2;
+        fprintf(stderr, "\x1b[1;31mERROR: unit tux not passed with image assets/tux!\033[0m\n");
+        return result;
     }
-    printf("\nQOI in RGBA loaded!\n");
-    if(width != expectedWidth || height != expectedHeight)
-    {
-        fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from reconstructed QOI header.\033[0m\n");
-        return -3;
-    }
-
-    // for(uint32_t y = 0; y < height; ++y)
-    // {
-    //     for(uint32_t x = 0; x < width * 4; x += 4)
-    //     {
-            // if(qoiRGBA[y * width * 4 + x] != unitTest[y * width * 4 + x])
-            // {
-            //     fprintf(stderr, "\x1b[1;31mERROR: red channel at y:%u, x:%u mismatch.\n", y, x);
-            //     goto errmsg;
-            // }
-            // else if(qoiRGBA[y * width * 4 + x + 1] != unitTest[y * width * 4 + x + 1])
-            // {
-            //     fprintf(stderr, "\x1b[1;31mERROR: green channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-            //     goto errmsg;
-            // }
-            // else if(qoiRGBA[y * width * 4 + x + 2] != unitTest[y * width * 4 + x + 2])
-            // {
-            //     fprintf(stderr, "\x1b[1;31mERROR: blue channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-            //     goto errmsg;
-            // }
-            // else if(qoiRGBA[y * width * 4 + x + 3] != unitTest[y * width * 4 + x + 3])
-            // {
-            //     fprintf(stderr, "\x1b[1;31mERROR: alpha channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-            //     goto errmsg;
-            // }
-            // else
-            // {
-            //     continue;
-            // }
-
-// errmsg:
-            // fprintf(stderr, "got: \nR:%u ",      qoiRGBA[y * width * 4 + x]);
-            // fprintf(stderr, "G:%u ",             qoiRGBA[y * width * 4 + x + 1]);
-            // fprintf(stderr, "B:%u ",             qoiRGBA[y * width * 4 + x + 2]);
-            // fprintf(stderr, "A:%u\n",            qoiRGBA[y * width * 4 + x + 3]);
-
-            // fprintf(stderr, "expected: \nR:%u ", unitTest[y * width * 4 + x]);
-            // fprintf(stderr, "G:%u ",             unitTest[y * width * 4 + x + 1]);
-            // fprintf(stderr, "B:%u ",             unitTest[y * width * 4 + x + 2]);
-            // fprintf(stderr, "A:%u\033[0m\n",     unitTest[y * width * 4 + x + 3]);
-            // free(qoiRGBA);
-            // return -1;
-//         }
-//     }
-    free(qoiRGBA);
-
-    uint8_t* qoiBGRA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_BGRA, 8);
-    if(!qoiBGRA)
-    {
-        fprintf(stderr, "imgsurf_load failed to load a qoi in BGRA.\n");
-        return -4;
-    }
-    printf("\nQOI in BGRA loaded!\n");
-
-    // TODO: (imgsurf #1) validate against qoiRGBA, then other formats
-    free(qoiBGRA);
-
-    return 0;
+    fprintf(stderr, "\033[32;1;1mSUCCESS: unit test passed with image assets/tux!\033[0m\n");
 }
