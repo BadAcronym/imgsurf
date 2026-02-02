@@ -46,25 +46,42 @@ internal uint8_t* loadQOI
     *width  = 0;
     *height = 0;
 
-    int byte = 0;
+    size_t elements  = 0;
+    char   magicByte = 0;
+
     for(uint8_t i = 0; i < 4; ++i)
     {
-        if((byte = fgetc(file)) != magic[i] || byte == EOF)
+        if((elements = fread(&magicByte, 1, 1, file)) != 1)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", i);
-            fprintf(stderr, "got: %i\n", byte);
-            fprintf(stderr, "expected: %i\n", (uint8_t)magic[i]);
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read header at byte %u.\033[0m\n", i);
+            if(feof(file))
+            {
+                fprintf(stderr, "\n\033[31;1;7munexpected end of file.\033[0m\n");
+            }
+            else if(ferror(file))
+            {
+                fprintf(stderr, "\n\033[31;1;7mcould not read file.\033[0m\n");
+            }
+
+            return 0;
+        }
+
+        if(magicByte != magic[i])
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %u corrupted.\033[0m\n", i);
+            fprintf(stderr, "got: %u\n", (uint8_t)magicByte);
+            fprintf(stderr, "expected: %u\n", (uint8_t)magic[i]);
             return 0;
         }
     }
 
-    // BACKLOG: use fread wherever it makes sense...
-
+    // TODO: replace fgetc with fread everywhere
+    int byte = 0;
     for(uint8_t i = 0; i < 4; ++i)
     {
         if((byte = fgetc(file)) == EOF)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", 4 + i);
+            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %u corrupted.\033[0m\n", 4 + i);
             return 0;
         }
         *width += (uint32_t)(byte << (3 - i) * 8);
@@ -74,7 +91,7 @@ internal uint8_t* loadQOI
     {
         if((byte = fgetc(file)) == EOF)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", 8 + i);
+            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %u corrupted.\033[0m\n", 8 + i);
             return 0;
         }
         *height += (uint32_t)(byte << (3 - i) * 8);
@@ -428,7 +445,7 @@ uint8_t* imgsurf_load
     FILE *file = fopen(path, "rb");
     if(!file)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s\033[0m\n", path);
+        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s for reading!\033[0m\n", path);
         return 0;
     }
 
@@ -513,33 +530,39 @@ internal uint8_t writeQOI
         return -1;
     }
 
-    // BACKLOG: figure out colorspace field
-    uint8_t colourspace = 0xFF;
+    // colourspace ignored
+    uint8_t colourspace = 0;
     size_t  elements    = 0;
 
     // FIXME: not writing the header correctly
     // ERROR: QOI header at byte 0 corrupted.
     // got: -1
     // expected: 113
-    //
-    // FIXME: width & height endianness incorrect, write byte-by-byte instead.
 
-    if((elements = fwrite("qoif", 1, 4, file)) != 4)
+    if((elements = fwrite("qoif", 4, 1, file)) != 1)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes.\033[0m\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes of header.\033[0m\n");
         return -2;
     }
 
-    if((elements = fwrite(&width, 1, 4, file)) != 4)
+    for(int8_t i = 3; i > -1; --i)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write width.\033[0m\n");
-        return -2;
+        uint8_t width_shifted = (width >> (i * 8)) & 0xFF;
+        if((elements = fwrite(&width_shifted, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: failed to write width @ byte: %u.\033[0m\n", i);
+            return -2;
+        }
     }
 
-    if((elements = fwrite(&height, 1, 4, file)) != 4)
+    for(int8_t i = 3; i > -1; --i)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write height.\033[0m\n");
-        return -2;
+        uint8_t height_shifted = (height >> (i * 8)) & 0xFF;
+        if((elements = fwrite(&height_shifted, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: failed to write height @ byte: %u.\033[0m\n", i);
+            return -2;
+        }
     }
 
     if((elements = fwrite(&channelcount, 1, 1, file)) != 1)
@@ -748,7 +771,7 @@ uint8_t imgsurf_write_file
     FILE *file = fopen(path, "wb");
     if(!file)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s\033[0m\n", path);
+        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s for writing!\033[0m\n", path);
         return 0;
     }
 
