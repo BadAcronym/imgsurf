@@ -222,6 +222,10 @@ internal uint8_t* loadQOI
                 prev_pixel.red   += diffGreen + diffRed - 40;
                 prev_pixel.blue  += diffGreen + diffBlue - 40;
 
+                image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
+                image[y * loopWidth + x + 1] = prev_pixel.green;
+                image[y * loopWidth + x + 2] = flipRnB ? prev_pixel.red  : prev_pixel.blue;
+
                 if(!discardAlpha)
                 {
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
