@@ -59,6 +59,9 @@ project("imagesurf library")
         linkoptions({"-gfull", "-O0", "-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                      "-static-libasan"})
 
+    filter({"platforms:Windows", "configurations:debug"})
+        buildoptions({"/fsanitize=address,leak,undefined"})
+
 project("imagesurf unit tests")
     language("C")
     cdialect("C99")
@@ -111,3 +114,6 @@ project("imagesurf unit tests")
     filter({"platforms:Linux", "configurations:debug"})
         buildoptions({"-gfull", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
         linkoptions({"-gfull",  "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
+
+    filter({"platforms:Windows", "configurations:debug"})
+        buildoptions({"/fsanitize=address,leak,undefined"})
