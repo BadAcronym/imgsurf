@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main()
-{
+int main
+(
+    void
+){
     uint32_t width  = 0;
     uint32_t height = 0;
 
