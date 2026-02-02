@@ -111,6 +111,11 @@ internal uint8_t* loadQOI
     pixel prev_pixel = {0, 0, 0, 255};
     pixel seen_pixels[64] = {};
 
+    //WIP: debug
+    uint64_t count = 0;
+    uint64_t bytecount = 14;
+    uint64_t filesize = 83575;
+
     uint64_t loopWidth  = *width * pixelwidth;
     uint64_t loopHeight = *height;
 
@@ -120,36 +125,34 @@ internal uint8_t* loadQOI
         {
             if(byte == QOI_OP_RGB)
             {
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
+                    //WIP: debug
+                    ++bytecount;
                     return image;
                 }
                 prev_pixel.red = byte;
 
+                //WIP: debug
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.green = byte;
 
+                //WIP: debug
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.blue = byte;
 
+                image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
-
-                if(flipRnB)
-                {
-                    image[y * loopWidth + x]     = prev_pixel.blue;
-                    image[y * loopWidth + x + 2] = prev_pixel.red;
-                }
-                else
-                {
-                    image[y * loopWidth + x]     = prev_pixel.red;
-                    image[y * loopWidth + x + 2] = prev_pixel.blue;
-                }
+                image[y * loopWidth + x + 2] = flipRnB ? prev_pixel.red  : prev_pixel.blue;
 
                 if(!discardAlpha)
                 {
@@ -160,42 +163,41 @@ internal uint8_t* loadQOI
             }
             else if(byte == QOI_OP_RGBA)
             {
+                //WIP: debug
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.red = byte;
 
+                //WIP: debug
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.green = byte;
 
+                //WIP: debug
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.blue = byte;
 
+                //WIP: debug
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
                 prev_pixel.alpha = byte;
 
+                image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
-
-                if(flipRnB)
-                {
-                    image[y * loopWidth + x]     = prev_pixel.blue;
-                    image[y * loopWidth + x + 2] = prev_pixel.red;
-                }
-                else
-                {
-                    image[y * loopWidth + x]     = prev_pixel.red;
-                    image[y * loopWidth + x + 2] = prev_pixel.blue;
-                }
+                image[y * loopWidth + x + 2] = flipRnB ? prev_pixel.red  : prev_pixel.blue;
 
                 if(!discardAlpha)
                 {
@@ -214,18 +216,9 @@ internal uint8_t* loadQOI
                 prev_pixel.green += diffGreen;
                 prev_pixel.blue  += diffBlue;
 
+                image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
-
-                if(flipRnB)
-                {
-                    image[y * loopWidth + x]     = prev_pixel.blue;
-                    image[y * loopWidth + x + 2] = prev_pixel.red;
-                }
-                else
-                {
-                    image[y * loopWidth + x]     = prev_pixel.red;
-                    image[y * loopWidth + x + 2] = prev_pixel.blue;
-                }
+                image[y * loopWidth + x + 2] = flipRnB ? prev_pixel.red  : prev_pixel.blue;
 
                 if(!discardAlpha)
                 {
@@ -236,8 +229,12 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
+                //WIP: debug
+                printf("op: QOI_OP_LUMA\n");
                 uint8_t diffGreen = byte & 0b00111111 - 32;
 
+                //WIP: debug
+                ++bytecount;
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
@@ -254,66 +251,65 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                printf("R:%u, G:%u, B:%u, A:%u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
+
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                uint8_t runlength = (byte & 0b00111111) + 1;
+                uint8_t runlength = (byte % 64) + 1;
+                // //WIP: debug
+                // printf("op: QOI_OP_RUN x%u\n", runlength);
 
-                for(uint8_t j = 0; j < runlength; ++j)
+                uint64_t index = y * loopWidth + x;
+
+                for(uint8_t j = 0; j < runlength && index + j * pixelwidth < loopHeight * loopWidth; ++j)
                 {
-                    //FIXME: reading one byte too many
-                    //just the one. just the last pixel.
-                    image[y * loopWidth + x + 1] = prev_pixel.green;
-
-                    if(flipRnB)
-                    {
-                        image[y * loopWidth + x]     = prev_pixel.blue;
-                        image[y * loopWidth + x + 2] = prev_pixel.red;
-                    }
-                    else
-                    {
-                        image[y * loopWidth + x]     = prev_pixel.red;
-                        image[y * loopWidth + x + 2] = prev_pixel.blue;
-                    }
+                    image[index + j * pixelwidth]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
+                    image[index + j * pixelwidth + 1] = prev_pixel.green;
+                    image[index + j * pixelwidth + 2] = flipRnB ? prev_pixel.red  : prev_pixel.blue;
 
                     if(!discardAlpha)
                     {
-                        image[y * loopWidth + x + 3] = prev_pixel.alpha;
-                    }
-                    x += pixelwidth;
-
-                    if(x > loopWidth)
-                    {
-                        x %= loopWidth;
-                        ++y;
+                        image[index + j * pixelwidth + 3] = prev_pixel.alpha;
                     }
                 }
+                x += (runlength - 1) * pixelwidth;
+                y += x / loopWidth;
+                x %= loopWidth;
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
-                int nextByte = ungetc(fgetc(file), file);
-                if(byte == 0 && nextByte == 0)
+                //WIP: debug
+                // printf("op: QOI_OP_INDEX %u\n", byte % 64);
+                int byteBuffer[8];
+                uint8_t zeroCounter = 0;
+
+                if(byte == 0x00)
                 {
-                    //technically not the end, but we can assume so,
-                    //because no two consecutive index calls are valid, esp after 0 byte
-                    return image;
+                    for(uint8_t i = 0; i < 6 && (byteBuffer[i] = fgetc(file)) == 0x00; ++i)
+                    {
+                        if(++zeroCounter == 6)
+                        {
+                            if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
+                            {
+                                fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream reached early.\n");
+                                fprintf(stderr, "byte: %b\033[0m\n", byte);
+                                return image;
+                            }
+                        }
+                    }
+                    for(uint8_t i = 0; i < zeroCounter + 1; ++i)
+                    {
+                        ungetc(byteBuffer[zeroCounter - i], file);
+                    }
                 }
 
-                prev_pixel = seen_pixels[byte & 0b00111111];
+                prev_pixel = seen_pixels[byte % 64];
 
+                image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
-
-                if(flipRnB)
-                {
-                    image[y * loopWidth + x]     = prev_pixel.blue;
-                    image[y * loopWidth + x + 2] = prev_pixel.red;
-                }
-                else
-                {
-                    image[y * loopWidth + x]     = prev_pixel.red;
-                    image[y * loopWidth + x + 2] = prev_pixel.blue;
-                }
+                image[y * loopWidth + x + 2] = flipRnB ? prev_pixel.red  : prev_pixel.blue;
 
                 if(!discardAlpha)
                 {
@@ -326,9 +322,33 @@ internal uint8_t* loadQOI
                 fprintf(stderr, "byte: %b\033[0m\n", byte);
                 return image;
             }
+            //WIP: debug
+            ++bytecount;
+            count = (y * loopWidth + x + pixelwidth) / pixelwidth;
+            // printf("y: %lu ", y);
+            // printf("x: %lu, ", x / pixelwidth);
+            // printf("raw x: %lu\n", x);
         }
     }
 
+    fprintf(stderr, "\n\033[33;1;7m parsed %lu of %lu pixels.\033[0m\n\n", count, pixelcount);
+    fprintf(stderr, "\n\033[33;1;7m parsed %lu of %lu bytes.\033[0m\n\n", bytecount, filesize);
+
+    int byteBuffer[8];
+    uint8_t zeroCounter = 0;
+    for(uint8_t i = 0; i < 7 && (byteBuffer[i] = fgetc(file)) == 0x00; ++i)
+    {
+        ++bytecount;
+        if(++zeroCounter == 7)
+        {
+            if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
+            {
+                return image;
+            }
+        }
+    }
+
+    fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream never reached.\033[0m\n\n");
     return image;
 }
 
