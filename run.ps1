@@ -1,72 +1,76 @@
 param
 (
-    $build = "debug",
-    [switch]$dontrun = $false
+    $build = "release",
+    [switch]$compile_only = $false
 )
 
-Write-Host "Building $build...`n"
-
-$solution = "imgsurf"
-$targetname = "imgsurftest"
-$target = ""
-
-if(-Not(Test-Path "./obj/"))
+if(-Not(Test-Path ".\obj\"))
 {
-    &mkdir "./obj/"
+    &mkdir .\obj\
 }
 
-if(-Not(Test-Path "./bin/"))
+if(-Not(Test-Path ".\build\"))
 {
-    &mkdir "./bin/"
+    &mkdir .\build\
 }
 
-if(-Not(Test-Path "./build/"))
+if(-Not(Test-Path ".\bin\"))
 {
-    &mkdir "./build/"
+    &mkdir .\bin\
 }
 
-if(-Not(Test-Path "./log/"))
+function Get-Compileprep()
 {
-    &mkdir "./log/"
+    Write-Host ""
+    Write-Host "\033[36mcompiling imgsurf...\033[0m"
+    Write-Host ""
+    premake5 ecc
+    premake5 vs2022
 }
 
-&premake5 ecc
-
-if($IsLinux)
+if($build -eq "debug")
 {
-    &premake5 gmake
-
-    $makecfg = $build + "_linux"
-
-    Push-Location "./build/"
-    &make config=$makecfg
-    Pop-Location
-
-    $target = "./bin/$build/$targetname"
-
-    if(Test-Path $target)
-    {
-        &chmod +x $target
-    }
+    Get-Compileprep
+    pushd ".\build\"
+    &MSBuild imgsurf.sln -p:Configuration=$build -p:Platform=windows
 }
-elseIf($IsWindows)
+elseif($build -eq "release")
 {
-    &premake5 vs2022
-
-    &MSBuild ./build/$solution.sln -p:platform=windows -p:Configuration=$build
-
-    $target = "./bin/$build/$targetname.exe"
+    Get-Compileprep
+    pushd ".\build\"
+    &MSBuild imgsurf.sln -p:Configuration=$build -p:Platform=windows
+}
+elseif($build -eq "asan")
+{
+    Get-Compileprep
+    pushd ".\build\"
+    &MSBuild imgsurf.sln -p:Configuration=$build -p:Platform=windows
+}
+else
+{
+    Write-Host "\033[31m\nERROR: invalid make config: $build.\033[0m"
+    exit -2;
 }
 
-if($isWindows -and 0 -eq $LASTEXITCODE -and $build -eq "debug")
+if(0 -ne $LASTEXITCODE)
 {
-    Write-Host "`ngenerating rdi debug info..."
-
-    Invoke-Expression "radbin --rdi $target"
+    Write-Host "\033[31m\nERROR: failed to compile.\n\033[0m"
+    popd
+    exit -1
 }
 
-if(0 -eq $LASTEXITCODE -and -not $dontrun)
+Write-Host "\n"
+
+if($compile_only)
 {
+    exit 0
+}
+
+popd
+
+if(0 -eq $LASTEXITCODE -and -not $compile_only)
+{
+    $target = ".\bin\$build\imgsurftest.exe"
     Write-Host "`nrunning $target..."
     Invoke-Expression $target
 }
