@@ -45,7 +45,7 @@ internal uint8_t* loadQOI
     uint32_t    *width,
     uint32_t    *height
 ){
-    char magic[5] = "qoif";
+    char magic[4] = "qoif";
     *width  = 0;
     *height = 0;
 
@@ -122,19 +122,19 @@ internal uint8_t* loadQOI
             {
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 prev_pixel.red = byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 prev_pixel.green = byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 prev_pixel.blue = byte;
 
@@ -153,25 +153,25 @@ internal uint8_t* loadQOI
             {
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 prev_pixel.red = byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 prev_pixel.green = byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 prev_pixel.blue = byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 prev_pixel.alpha = byte;
 
@@ -188,13 +188,13 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_DIFF)
             {
-                uint8_t diffRed   = ((0b00110000 & byte) >> 4) - 2;
-                uint8_t diffGreen = ((0b00001100 & byte) >> 2) - 2;
-                uint8_t diffBlue  = (0b00000011 & byte) - 2;
+                uint8_t diffRed   = (0b00110000 & byte) >> 4;
+                uint8_t diffGreen = (0b00001100 & byte) >> 2;
+                uint8_t diffBlue  =  0b00000011 & byte;
 
-                prev_pixel.red   += diffRed;
-                prev_pixel.green += diffGreen;
-                prev_pixel.blue  += diffBlue;
+                prev_pixel.red   += diffRed   - 2;
+                prev_pixel.green += diffGreen - 2;
+                prev_pixel.blue  += diffBlue  - 2;
 
                 image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
@@ -213,14 +213,14 @@ internal uint8_t* loadQOI
 
                 if((byte = fgetc(file)) == EOF)
                 {
-                    return image;
+                    goto endoffunction;
                 }
                 uint8_t diffRed  = (byte & 0b11110000) >> 4;
                 uint8_t diffBlue = (byte & 0b00001111);
 
                 prev_pixel.green += diffGreen - 32;
-                prev_pixel.red   += diffRed  + diffGreen - 32 - 8;
-                prev_pixel.blue  += diffBlue + diffGreen - 32 - 8;
+                prev_pixel.red   += diffGreen + diffRed - 40;
+                prev_pixel.blue  += diffGreen + diffBlue - 40;
 
                 if(!discardAlpha)
                 {
@@ -252,11 +252,10 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
-                int byteBuffer[8];
-                uint8_t zeroCounter = 0;
-
                 if(byte == 0x00)
                 {
+                    int byteBuffer[8];
+                    uint8_t zeroCounter = 0;
                     for(uint8_t i = 0; i < 6 && (byteBuffer[i] = fgetc(file)) == 0x00; ++i)
                     {
                         if(++zeroCounter == 6)
@@ -310,9 +309,8 @@ internal uint8_t* loadQOI
         }
     }
 
-    #ifdef DEBUG
-        fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream never reached.\033[0m\n\n");
-    #endif
+endoffunction:
+    fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream never reached.\033[0m\n\n");
     return image;
 }
 
