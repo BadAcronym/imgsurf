@@ -215,8 +215,8 @@ internal uint8_t* loadQOI
                 {
                     return image;
                 }
-                uint8_t diffRed  = byte & 0b11110000 >> 4;
-                uint8_t diffBlue = byte & 0b00001111;
+                uint8_t diffRed  = (byte & 0b11110000) >> 4;
+                uint8_t diffBlue = (byte & 0b00001111);
 
                 prev_pixel.green += diffGreen - 32;
                 prev_pixel.red   += diffRed  + diffGreen - 32 - 8;
@@ -263,8 +263,7 @@ internal uint8_t* loadQOI
                         {
                             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
                             {
-                                fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream reached early.\n");
-                                fprintf(stderr, "byte: %b\033[0m\n", byte);
+                                fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream reached early.\033[0m\n");
                                 return image;
                             }
                         }
@@ -303,12 +302,17 @@ internal uint8_t* loadQOI
         {
             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
             {
+                #ifdef DEBUG
+                    fprintf(stderr, "\n\033[33;1;7mINFO: QOI end-of-stream reached.\033[0m\n\n");
+                #endif
                 return image;
             }
         }
     }
 
-    fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream never reached.\033[0m\n\n");
+    #ifdef DEBUG
+        fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream never reached.\033[0m\n\n");
+    #endif
     return image;
 }
 
@@ -435,9 +439,9 @@ uint8_t* imgsurf_load
     {
         case IMGSURF_FILE_QOI:
         {
-            if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
+            if(bitdepth != 8)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 or 16 are supported by .qoi!\033[0m\n");
+                fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is supported by .qoi!\033[0m\n");
             }
             else
             {
