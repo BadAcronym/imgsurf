@@ -68,6 +68,8 @@ internal void findFormat
 uint8_t* imgsurf_load
 (
     const char* path,
+    uint32_t    *width,
+    uint32_t    *height,
     uint8_t     channels,
     uint8_t     bitdepth
 ){
