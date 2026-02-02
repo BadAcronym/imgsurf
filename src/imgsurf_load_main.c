@@ -30,6 +30,7 @@ internal uint8_t* loadPNG
 
 #define IMGSURF_QOI_INDEX (red * 3 + green * 5 + blue * 7 + alpha * 11) % 64
 
+#define QOI_OP_RGB   0b11111110
 #define QOI_OP_RGBA  0b11111111
 
 #define QOI_OP_INDEX 0b00
@@ -93,8 +94,6 @@ internal uint8_t* loadQOI
     }
     // uint8_t colourspace = byte;
 
-    uint32_t seenPixels[64] = {0};
-
     bool discardAlpha = channels == IMGSURF_CHANNELS_RGB || channels == IMGSURF_CHANNELS_BGR;
     bool flipRnB      = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
 
@@ -114,8 +113,55 @@ internal uint8_t* loadQOI
     uint8_t blue  = 0;
     uint8_t alpha = 255;
 
+    uint32_t prev_pixels[64] = {0};
+
     for(uint64_t i = 0; (byte = fgetc(file)) != EOF && i < pixelcount; ++i)
     {
+        if(byte == QOI_OP_RGB)
+        {
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            red = byte;
+
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            green = byte;
+
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            blue = byte;
+
+            image[i + 1] = green;
+
+            if(flipRnB)
+            {
+                image[i]     = blue;
+                image[i + 2] = red;
+            }
+            else
+            {
+                image[i]     = red;
+                image[i + 2] = blue;
+            }
+            uint32_t index = IMGSURF_QOI_INDEX;
+
+            //FIXME: verify BE/LE
+            prev_pixels[index] += red;
+            prev_pixels[index] += green << 8;
+            prev_pixels[index] += blue  << 16;
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = 255;
+                prev_pixels[index] += alpha << 24;
+            }
+        }
         if(byte == QOI_OP_RGBA)
         {
             if((byte = fgetc(file)) == EOF)
@@ -154,15 +200,27 @@ internal uint8_t* loadQOI
                 image[i]     = red;
                 image[i + 2] = blue;
             }
+            uint32_t index = IMGSURF_QOI_INDEX;
+
+            //FIXME: verify BE/LE
+            prev_pixels[index] += red;
+            prev_pixels[index] += green << 8;
+            prev_pixels[index] += blue  << 16;
 
             if(!discardAlpha)
             {
                 image[i + 3] = alpha;
+                prev_pixels[index] += alpha << 24;
             }
         }
         else if((byte >> 6) == QOI_OP_INDEX)
         {
-            //
+            uint32_t index = byte % 64;
+
+            red   = prev_pixels[index];
+            green = prev_pixels[index >> 8];
+            blue  = prev_pixels[index >> 16];
+            alpha = prev_pixels[index >> 24];
         }
         else if((byte >> 6) == QOI_OP_DIFF)
         {
@@ -170,7 +228,7 @@ internal uint8_t* loadQOI
         }
         else if((byte >> 6) == QOI_OP_LUMA)
         {
-            uint8_t diffGreen = byte % 0b100000;
+            uint8_t diffGreen = byte % 64;
             if((byte = fgetc(file)) == EOF)
             {
                 return image;
@@ -188,22 +246,6 @@ internal uint8_t* loadQOI
             fprintf(stderr, "byte: %b\n", byte);
             fprintf(stderr, "byte >> 6: %b\033[0m\n", byte >> 6);
             return image;
-        }
-
-        //check for 2-bit tag
-
-        if(discardAlpha && flipRnB)
-        {
-        }
-        else if(discardAlpha)
-        {
-        }
-        else if(flipRnB)
-        {
-        }
-        else
-        {
-            image[i] = 0;
         }
     }
 
