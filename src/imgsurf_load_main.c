@@ -28,7 +28,7 @@ internal uint8_t* loadPNG
     return 0;
 }
 
-#define IMGSURF_QOI_INDEX (red * 3 + green * 5 + blue * 7 + alpha * 11) % 64
+#define IMGSURF_QOI_INDEX (prev_pixel.red * 3 + prev_pixel.green * 5 + prev_pixel.blue * 7 + prev_pixel.alpha * 11) % 64
 
 #define QOI_OP_RGB   0b11111110
 #define QOI_OP_RGBA  0b11111111
@@ -109,12 +109,10 @@ internal uint8_t* loadQOI
         return 0;
     }
 
-    uint8_t  red   = 0;
-    uint8_t  green = 0;
-    uint8_t  blue  = 0;
-    uint8_t  alpha = 255;
+    pixel prev_pixel = {0};
+    prev_pixel.alpha = 255;
 
-    uint32_t prev_pixels[64] = {0};
+    pixel seen_pixels[64] = {0};
 
     //check for end of stream (7x 0x00, 1x 0x01) necessary?
     //would be annoying to check a byte in adv
@@ -131,31 +129,31 @@ internal uint8_t* loadQOI
             {
                 return image;
             }
-            red = byte;
+            prev_pixel.red = byte;
 
             if((byte = fgetc(file)) == EOF)
             {
                 return image;
             }
-            green = byte;
+            prev_pixel.green = byte;
 
             if((byte = fgetc(file)) == EOF)
             {
                 return image;
             }
-            blue = byte;
+            prev_pixel.blue = byte;
 
-            image[i + 1] = green;
+            image[i + 1] = prev_pixel.green;
 
             if(flipRnB)
             {
-                image[i]     = blue;
-                image[i + 2] = red;
+                image[i]     = prev_pixel.blue;
+                image[i + 2] = prev_pixel.red;
             }
             else
             {
-                image[i]     = red;
-                image[i + 2] = blue;
+                image[i]     = prev_pixel.red;
+                image[i + 2] = prev_pixel.blue;
             }
 
             if(!discardAlpha)
@@ -163,13 +161,7 @@ internal uint8_t* loadQOI
                 image[i + 3] = 255;
             }
 
-            uint32_t index = IMGSURF_QOI_INDEX;
-
-            //FIXME: verify BE/LE
-            prev_pixels[index] += red;
-            prev_pixels[index] += green << 8;
-            prev_pixels[index] += blue  << 16;
-            prev_pixels[index] += alpha << 24;
+            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
         }
         if(byte == QOI_OP_RGBA)
         {
@@ -177,94 +169,93 @@ internal uint8_t* loadQOI
             {
                 return image;
             }
-            red = byte;
+            prev_pixel.red = byte;
 
             if((byte = fgetc(file)) == EOF)
             {
                 return image;
             }
-            green = byte;
+            prev_pixel.green = byte;
 
             if((byte = fgetc(file)) == EOF)
             {
                 return image;
             }
-            blue = byte;
+            prev_pixel.blue = byte;
 
             if((byte = fgetc(file)) == EOF)
             {
                 return image;
             }
-            alpha = byte;
+            prev_pixel.alpha = byte;
 
-            image[i + 1] = green;
+            image[i + 1] = prev_pixel.green;
 
             if(flipRnB)
             {
-                image[i]     = blue;
-                image[i + 2] = red;
+                image[i]     = prev_pixel.blue;
+                image[i + 2] = prev_pixel.red;
             }
             else
             {
-                image[i]     = red;
-                image[i + 2] = blue;
+                image[i]     = prev_pixel.red;
+                image[i + 2] = prev_pixel.blue;
             }
 
             if(!discardAlpha)
             {
-                image[i + 3] = alpha;
+                image[i + 3] = prev_pixel.alpha;
             }
 
-            uint32_t index = IMGSURF_QOI_INDEX;
-
-            //FIXME: verify BE/LE
-            prev_pixels[index] += red;
-            prev_pixels[index] += green << 8;
-            prev_pixels[index] += blue  << 16;
-            prev_pixels[index] += alpha << 24;
+            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
         }
         else if((byte >> 6) == QOI_OP_INDEX)
         {
-            uint32_t index = byte % 64;
+            prev_pixel = seen_pixels[byte % 64];
 
-            //FIXME: verify indexing
-            red   = prev_pixels[index];
-            green = prev_pixels[index >> 8];
-            blue  = prev_pixels[index >> 16];
-            alpha = prev_pixels[index >> 24];
-        }
-        else if((byte >> 6) == QOI_OP_DIFF)
-        {
-            red   += ((0b00110000 & byte) >> 4) - 2;
-            green += ((0b00001100 & byte) >> 2) - 2;
-            blue  +=  (0b00000011 & byte) - 2;
-
-            image[i + 1] = green;
+            image[i + 1] = prev_pixel.green;
 
             if(flipRnB)
             {
-                image[i]     = blue;
-                image[i + 2] = red;
+                image[i]     = prev_pixel.blue;
+                image[i + 2] = prev_pixel.red;
             }
             else
             {
-                image[i]     = red;
-                image[i + 2] = blue;
+                image[i]     = prev_pixel.red;
+                image[i + 2] = prev_pixel.blue;
             }
 
             if(!discardAlpha)
             {
-                image[i + 3] = alpha;
+                image[i + 3] = prev_pixel.alpha;
+            }
+        }
+        else if((byte >> 6) == QOI_OP_DIFF)
+        {
+            prev_pixel.red   += ((0b00110000 & byte) >> 4) - 2;
+            prev_pixel.green += ((0b00001100 & byte) >> 2) - 2;
+            prev_pixel.blue  +=  (0b00000011 & byte) - 2;
+
+            image[i + 1] = prev_pixel.green;
+
+            if(flipRnB)
+            {
+                image[i]     = prev_pixel.blue;
+                image[i + 2] = prev_pixel.red;
+            }
+            else
+            {
+                image[i]     = prev_pixel.red;
+                image[i + 2] = prev_pixel.blue;
             }
 
-            uint32_t index = IMGSURF_QOI_INDEX;
+            if(!discardAlpha)
+            {
+                image[i + 3] = prev_pixel.alpha;
+            }
 
-            //FIXME: verify BE/LE
-            prev_pixels[index] += red;
-            prev_pixels[index] += green << 8;
-            prev_pixels[index] += blue  << 16;
-            prev_pixels[index] += alpha << 24;
-
+            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
         }
         else if((byte >> 6) == QOI_OP_LUMA)
         {
@@ -276,24 +267,18 @@ internal uint8_t* loadQOI
             }
             uint8_t diffRest = byte;
 
-            green = green - 32 + diffGreen;
+            prev_pixel.green = prev_pixel.green - 32 + diffGreen;
 
-            red  = red - 32 + diffGreen - 8 + (diffRest >> 4);
+            prev_pixel.red  = prev_pixel.red - 32 + diffGreen - 8 + (diffRest >> 4);
 
-            blue = blue - 32 + diffGreen - 8 + (diffRest & 0b00001111);
+            prev_pixel.blue = prev_pixel.blue - 32 + diffGreen - 8 + (diffRest & 0b00001111);
 
             if(!discardAlpha)
             {
-                image[i + 3] = alpha;
+                image[i + 3] = prev_pixel.alpha;
             }
 
-            uint32_t index = IMGSURF_QOI_INDEX;
-
-            //FIXME: verify BE/LE
-            prev_pixels[index] += red;
-            prev_pixels[index] += green << 8;
-            prev_pixels[index] += blue  << 16;
-            prev_pixels[index] += alpha << 24;
+            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
         }
         else if((byte >> 6) == QOI_OP_RUN)
         {
@@ -301,22 +286,22 @@ internal uint8_t* loadQOI
 
             for(uint8_t j = 0; j < runlength; ++j)
             {
-                image[i + 1] = green;
+                image[i + 1] = prev_pixel.green;
 
                 if(flipRnB)
                 {
-                    image[i]     = blue;
-                    image[i + 2] = red;
+                    image[i]     = prev_pixel.blue;
+                    image[i + 2] = prev_pixel.red;
                 }
                 else
                 {
-                    image[i]     = red;
-                    image[i + 2] = blue;
+                    image[i]     = prev_pixel.red;
+                    image[i + 2] = prev_pixel.blue;
                 }
 
                 if(!discardAlpha)
                 {
-                    image[i + 3] = alpha;
+                    image[i + 3] = prev_pixel.alpha;
                 }
                 i += j;
             }

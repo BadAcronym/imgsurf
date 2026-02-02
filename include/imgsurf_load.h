@@ -26,6 +26,15 @@
 #define IMGSURF_TYPE_OTHER     3
 #define IMGSURF_TYPE_MAX       3
 
+typedef struct pixel
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+    uint8_t alpha;
+}
+pixel;
+
 extern uint8_t* imgsurf_load
 (
     const char *path,
