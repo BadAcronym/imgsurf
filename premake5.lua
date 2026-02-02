@@ -19,6 +19,7 @@ project("imagesurf library")
         staticruntime("off")
         runtime("debug")
         symbols("On")
+        optimize("Off")
 
     filter("configurations:release")
         defines{"NDEBUG"}
