@@ -98,13 +98,14 @@ internal uint8_t* loadQOI
     bool flipRnB      = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
 
     uint64_t pixelcount = *width * *height;
+    uint8_t pixelwidth = discardAlpha ? 3 : 4;
 
     //TODO: figure out best user interface to free image
-    uint8_t* image = malloc(pixelcount * (discardAlpha ? 3 : 4));
+    uint8_t* image = malloc(pixelcount * pixelwidth);
     if(!image)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Failed to allocate image.");
-        fprintf(stderr, "Requested Bytes: %lu\033[0m\n", (pixelcount * (discardAlpha ? 3 : 4)));
+        fprintf(stderr, "Requested Bytes: %lu\033[0m\n", (pixelcount * pixelwidth));
         return 0;
     }
 
@@ -122,8 +123,7 @@ internal uint8_t* loadQOI
     //So we'll write two extra black pixels if the image ends early - but then it's cropped weird anyways?
     //I'll leave it at that.
 
-    //TODO: verify all OPs
-    for(uint64_t i = 0; (byte = fgetc(file)) != EOF && i < pixelcount; ++i)
+    for(uint64_t i = 0; ((byte = fgetc(file)) != EOF) && i < pixelcount * pixelwidth; i += 4)
     {
         if(byte == QOI_OP_RGB)
         {
@@ -157,18 +157,19 @@ internal uint8_t* loadQOI
                 image[i]     = red;
                 image[i + 2] = blue;
             }
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = 255;
+            }
+
             uint32_t index = IMGSURF_QOI_INDEX;
 
             //FIXME: verify BE/LE
             prev_pixels[index] += red;
             prev_pixels[index] += green << 8;
             prev_pixels[index] += blue  << 16;
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = 255;
-                prev_pixels[index] += alpha << 24;
-            }
+            prev_pixels[index] += alpha << 24;
         }
         if(byte == QOI_OP_RGBA)
         {
@@ -208,18 +209,19 @@ internal uint8_t* loadQOI
                 image[i]     = red;
                 image[i + 2] = blue;
             }
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = alpha;
+            }
+
             uint32_t index = IMGSURF_QOI_INDEX;
 
             //FIXME: verify BE/LE
             prev_pixels[index] += red;
             prev_pixels[index] += green << 8;
             prev_pixels[index] += blue  << 16;
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = alpha;
-                prev_pixels[index] += alpha << 24;
-            }
+            prev_pixels[index] += alpha << 24;
         }
         else if((byte >> 6) == QOI_OP_INDEX)
         {
@@ -249,18 +251,20 @@ internal uint8_t* loadQOI
                 image[i]     = red;
                 image[i + 2] = blue;
             }
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = alpha;
+            }
+
             uint32_t index = IMGSURF_QOI_INDEX;
 
             //FIXME: verify BE/LE
             prev_pixels[index] += red;
             prev_pixels[index] += green << 8;
             prev_pixels[index] += blue  << 16;
+            prev_pixels[index] += alpha << 24;
 
-            if(!discardAlpha)
-            {
-                image[i + 3] = alpha;
-                prev_pixels[index] += alpha << 24;
-            }
         }
         else if((byte >> 6) == QOI_OP_LUMA)
         {
@@ -276,7 +280,12 @@ internal uint8_t* loadQOI
 
             red  = red - 32 + diffGreen - 8 + (diffRest >> 4);
 
-            blue = blue - 32 + diffGreen - 8 + (diffRest % 8);
+            blue = blue - 32 + diffGreen - 8 + (diffRest & 0b00001111);
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = alpha;
+            }
 
             uint32_t index = IMGSURF_QOI_INDEX;
 
@@ -284,12 +293,7 @@ internal uint8_t* loadQOI
             prev_pixels[index] += red;
             prev_pixels[index] += green << 8;
             prev_pixels[index] += blue  << 16;
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = alpha;
-                prev_pixels[index] += alpha << 24;
-            }
+            prev_pixels[index] += alpha << 24;
         }
         else if((byte >> 6) == QOI_OP_RUN)
         {

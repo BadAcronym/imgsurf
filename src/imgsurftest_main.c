@@ -7,35 +7,6 @@ int main()
     uint32_t width  = 0;
     uint32_t height = 0;
 
-    uint8_t* png = imgsurf_load("assets/tux.png", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
-    if(!png)
-    {
-        fprintf(stderr, "imgsurf_load failed to load a png.\n");
-    }
-    else
-    {
-        printf("\nPNG loaded!\n");
-        printf("First pixel:\n");
-        printf("R:%u ",  png[0]);
-        printf("G:%u ",  png[1]);
-        printf("B:%u ",  png[2]);
-        printf("A:%u\n", png[3]);
-    }
-
-    uint8_t* bmp = imgsurf_load("assets/tux.bmp", &width, &height, IMGSURF_CHANNELS_RGB, 8);
-    if(!bmp)
-    {
-        fprintf(stderr, "imgsurf_load failed to load a bmp.\n");
-    }
-    else
-    {
-        printf("\nBMP loaded!\n");
-        printf("First pixel:\n");
-        printf("R:%u ",  bmp[0]);
-        printf("G:%u ",  bmp[1]);
-        printf("B:%u\n", bmp[2]);
-    }
-
     uint8_t* qoiRGBA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
     if(!qoiRGBA)
     {
@@ -93,4 +64,18 @@ int main()
         printf("G:%u ",  qoiBGR[1]);
         printf("R:%u\n", qoiBGR[2]);
     }
+
+    // uint8_t* bmp = imgsurf_load("assets/tux.bmp", &width, &height, IMGSURF_CHANNELS_RGB, 8);
+    // if(!bmp)
+    // {
+    //     fprintf(stderr, "imgsurf_load failed to load a bmp.\n");
+    // }
+    // else
+    // {
+    //     printf("\nBMP loaded!\n");
+    //     printf("First pixel:\n");
+    //     printf("R:%u ",  bmp[0]);
+    //     printf("G:%u ",  bmp[1]);
+    //     printf("B:%u\n", bmp[2]);
+    // }
 }
