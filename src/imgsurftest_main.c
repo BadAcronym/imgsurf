@@ -18,6 +18,8 @@ int main()
     //     fprintf(stderr, "\x1b[1;31mstb_image failed to load the image!\033[0m\n");
     //     return -1;
     // }
+    expectedWidth  = 1584;
+    expectedHeight = 1920;
 
     uint8_t* qoiRGBA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
     if(!qoiRGBA)
@@ -72,6 +74,7 @@ int main()
                 // fprintf(stderr, "G:%u ",             unitTest[y * width * 4 + x + 1]);
                 // fprintf(stderr, "B:%u ",             unitTest[y * width * 4 + x + 2]);
                 // fprintf(stderr, "A:%u\033[0m\n",     unitTest[y * width * 4 + x + 3]);
+                free(qoiRGBA);
                 return -1;
             }
         }
