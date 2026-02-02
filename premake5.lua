@@ -51,7 +51,6 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*" })
         includedirs({ "./include/"})
-        buildoptions{"/std:clatest"}
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
@@ -104,7 +103,6 @@ project("imagesurf unit tests")
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
         includedirs({ "./include/"})
-        buildoptions{"/std:clatest"}
         ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
