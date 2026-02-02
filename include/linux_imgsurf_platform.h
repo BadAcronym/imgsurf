@@ -4,5 +4,5 @@
 
 extern uint8_t imgsurf_verifyPath
 (
-    const char* path
+    const char *path
 );

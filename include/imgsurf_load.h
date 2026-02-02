@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <stdio.h>
 
 #define persistent  static
 #define global      static
@@ -22,14 +21,15 @@
 #define IMGSURF_TYPE_FILE      0
 #define IMGSURF_TYPE_DIRECTORY 1
 #define IMGSURF_TYPE_ERROR     2
-#define IMGSURF_TYPE_MAX       2
+#define IMGSURF_TYPE_OTHER     3
+#define IMGSURF_TYPE_MAX       3
 
 //TODO: provide some way to flip channels around in specified format
 extern uint8_t* imgsurf_load
 (
-    const char* path,
-    uint32_t    *width,
-    uint32_t    *height,
-    uint8_t     channels,
-    uint8_t     bitdepth
+    const char *path,
+    uint32_t   *width,
+    uint32_t   *height,
+    uint8_t    channels,
+    uint8_t    bitdepth
 );
