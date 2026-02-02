@@ -15,6 +15,8 @@ then
     mkdir ./bin/
 fi
 
+echo "compiling imgsurf..."
+
 premake5 ecc
 premake5 gmake
 
@@ -43,6 +45,11 @@ if [[ $? != 0 ]]
 then
     echo -e "\033[31mERROR: failed to compile.\033[0m"
     exit -1
+fi
+
+if [[ $2 = "--compile-only" ]]
+then
+    exit 0
 fi
 
 popd
