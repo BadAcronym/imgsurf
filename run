@@ -15,7 +15,9 @@ then
     mkdir ./bin/
 fi
 
-echo "compiling imgsurf..."
+echo ""
+echo -e "\033[36mcompiling imgsurf...\033[0m"
+echo ""
 
 premake5 ecc
 premake5 gmake
@@ -32,7 +34,7 @@ elif [[ $1 = "asan" ]]
 then
     make config=asan_linux
 else
-    echo -e "\033[31mERROR: invalid make config: $1.\033[0m"
+    echo -e "\033[31m\nERROR: invalid make config: $1.\033[0m"
     exit -2;
 fi
 
