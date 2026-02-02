@@ -74,10 +74,9 @@ internal uint8_t* loadQOI
         *height += (byte << (3 - i) * 8);
     }
 
-    if((byte = fgetc(file)) == EOF || (byte != 3 && byte != 4))
+    if((byte = fgetc(file)) == EOF)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte 12 corrupted.\033[0m\n");
-        return 0;
     }
     uint8_t channelcount = byte;
 
@@ -92,24 +91,12 @@ internal uint8_t* loadQOI
     {
         case IMGSURF_CHANNELS_RGB:
         {
-            if(channelcount == 4)
-            {
-                //discard alpha channel
-                break;
-            }
-
-            //normal
+            //discard alpha
             break;
         }
         case IMGSURF_CHANNELS_BGR:
         {
-            if(channelcount == 4)
-            {
-                //discard alpha channel
-                break;
-            }
-
-            //normal
+            //discard alpha, flip r/b
             break;
         }
         case IMGSURF_CHANNELS_RGBA:
@@ -127,11 +114,11 @@ internal uint8_t* loadQOI
         {
             if(channelcount == 3)
             {
-                //set alpha to 1
+                //set alpha to 1, flip r/b
                 break;
             }
 
-            //normal
+            //normal, flip r/b
             break;
         }
     }
