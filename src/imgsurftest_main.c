@@ -84,32 +84,9 @@ int main
     else
     {
         printf("\nQOI in BGRA loaded!\n");
-        //TODO: validate against qoiRGBA
+        //TODO: (imgsurf #1) validate against qoiRGBA, then other formats
     }
     free(qoiBGRA);
 
-    uint8_t* qoiRGB = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGB, 8);
-    if(!qoiRGB)
-    {
-        fprintf(stderr, "imgsurf_load failed to load a qoi in RGBA.\n");
-    }
-    else
-    {
-        printf("\nQOI in RGB loaded!\n");
-        //TODO: validate against qoiRGBA
-    }
-    free(qoiRGB);
-
-    uint8_t* qoiBGR = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_BGR, 8);
-    if(!qoiBGR)
-    {
-        fprintf(stderr, "imgsurf_load failed to load a qoi in RGBA.\n");
-    }
-    else
-    {
-        printf("\nQOI in BGR loaded!\n");
-        //TODO: validate against qoiRGBA
-    }
-    free(qoiBGR);
     return 0;
 }

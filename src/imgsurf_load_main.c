@@ -17,27 +17,24 @@ internal uint8_t* loadPNG
     uint32_t    *width,
     uint32_t    *height
 ){
-    //Wunused-parameter
     (void)file;
     (void)channels;
     (void)width;
     (void)height;
 
-    //TODO: decode PNG, allocate size
-    //write width and height into vars
     fprintf(stderr, "\n\033[33;1;7mWIP: PNG loader under construction!\033[0m\n");
     return 0;
 }
 
 #define IMGSURF_QOI_INDEX (prev_pixel.red * 3 + prev_pixel.green * 5 + prev_pixel.blue * 7 + prev_pixel.alpha * 11) % 64
 
-#define QOI_OP_RGB    254 //0b11111110
-#define QOI_OP_RGBA   255 //0b11111111
+#define QOI_OP_RGB    254
+#define QOI_OP_RGBA   255
 
-#define QOI_OP_INDEX  0   //0b00
-#define QOI_OP_DIFF   1   //0b01
-#define QOI_OP_LUMA   2   //0b10
-#define QOI_OP_RUN    3   //0b11
+#define QOI_OP_INDEX  0
+#define QOI_OP_DIFF   1
+#define QOI_OP_LUMA   2
+#define QOI_OP_RUN    3
 
 internal uint8_t* loadQOI
 (
@@ -375,7 +372,7 @@ internal void findFormat
     }
 }
 
-//TODO: write back format to River2D_Image
+//TODO: (imgsurf #3) write back format to River2D_Image
 uint8_t* imgsurf_load
 (
     const char *path,
@@ -436,7 +433,6 @@ uint8_t* imgsurf_load
         return 0;
     }
 
-    //TODO: more bit depth checking? maybe less, if it can load with wrong depth, let it
     switch(format)
     {
         case IMGSURF_FILE_QOI:
