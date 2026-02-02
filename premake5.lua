@@ -51,7 +51,6 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*" })
         includedirs({ "./include/"})
-        ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
         buildoptions({"-gfull", "-O0", "-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
@@ -62,13 +61,15 @@ project("imagesurf library")
     filter({"platforms:Windows", "configurations:debug"})
         buildoptions({"/Z7", "/DEBUG", "/fsanitize=address"})
 
+    filter({"platforms:Windows", "configurations:release"})
+        linkoptions({"/NODEFAULTLIB:MSVCRTD"})
+
 project("imagesurf unit tests")
     language("C")
     cdialect("C99")
     warnings("Extra")
     targetname("imgsurftest")
     kind("ConsoleApp")
-    libdirs("./bin/**")
 
     filter("configurations:debug")
         defines{"DEBUG"}
@@ -93,6 +94,7 @@ project("imagesurf unit tests")
                 "./src/imgsurftest*",
                 "./include/imgsurftest*" })
         includedirs({ "./include/", "/usr/include/"})
+        libdirs("./bin/imgsurf_linux/%{cfg.buildcfg}/")
         buildoptions({"-Wextra", "-Wall", "-Werror", "-Wconversion", "-Wsign-conversion"})
         links("imgsurf:static")
         linkoptions({"-fuse-ld=mold"})
@@ -108,8 +110,8 @@ project("imagesurf unit tests")
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
         includedirs({"./include/"})
+        libdirs("./bin/imgsurf_win64/%{cfg.buildcfg}/")
         links("imgsurf.lib")
-        ignoredefaultlibraries({ "MSVCRT" })
 
     filter({"platforms:Linux", "configurations:debug"})
         buildoptions({"-gfull", "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
@@ -117,3 +119,6 @@ project("imagesurf unit tests")
 
     filter({"platforms:Windows", "configurations:debug"})
         buildoptions({"/Z7", "/DEBUG", "/fsanitize=address"})
+
+    filter({"platforms:Windows", "configurations:release"})
+        linkoptions({"/NODEFAULTLIB:MSVCRTD"})
