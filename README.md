@@ -1,6 +1,11 @@
+## State:
+
+- Currently working on the loader. Working formats:
+    - .qoi, loaded in RGBA, BGRA, RGB or BGR
+
 ## Planned Features:
 
-- Support for all major lossless image formats, in priority order:
+- Support for more major lossless image formats, in priority order:
     - .qoi
     - .bmp
     - .webp
@@ -8,10 +13,6 @@
     - .avif
     - .jxl
 
-- Support for the following operations:
-    - load from file into RAM
-    - save from RAM to file in format
-    - convert formats between each other
-
-- Support for all permutations of channels across a format, with no additional processing (RGBA/BGRA etc)
-- Simple to access functions with no header macro shenanigans
+- Support for the following additional operations:
+    - save from RAM to file in specified format
+    - convert formats between each other (really just a wrapper around load/write)
