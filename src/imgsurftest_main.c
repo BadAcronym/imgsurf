@@ -3,26 +3,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define STBI_NO_LINEAR
-#define STBI_NO_HDR
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 int main()
 {
     uint32_t width  = 0;
     uint32_t height = 0;
 
-    int stb_width  = 0;
-    int stb_height = 0;
-    int stb_channels = 0;
+    uint32_t expectedWidth = 0;
+    uint32_t expectedHeight = 0;
 
-    uint8_t* stbTest = stbi_load("assets/tux.png", &stb_width, &stb_height, &stb_channels, STBI_rgb_alpha);
-    if(!stbTest)
-    {
-        fprintf(stderr, "\x1b[1;31mstb_image failed to load the image!\033[0m\n");
-        return -1;
-    }
+    //TODO: find something other than stb_image because it shoots up compile times
+    // uint8_t* unitTest = stbi_load("assets/tux.png", &stb_width, &stb_height, &stb_channels, STBI_rgb_alpha);
+    // if(!unitTest)
+    // {
+    //     fprintf(stderr, "\x1b[1;31mstb_image failed to load the image!\033[0m\n");
+    //     return -1;
+    // }
 
     uint8_t* qoiRGBA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
     if(!qoiRGBA)
@@ -32,7 +27,7 @@ int main()
     else
     {
         printf("\nQOI in RGBA loaded!\n");
-        if(width != (uint32_t)stb_width || height != (uint32_t)stb_height)
+        if(width != expectedWidth || height != expectedHeight)
         {
             fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
             return -1;
@@ -42,30 +37,30 @@ int main()
         {
             for(uint32_t x = 0; x < width * 4; x += 4)
             {
-                if(qoiRGBA[y * width * 4 + x] != stbTest[y * width * 4 + x])
-                {
-                    fprintf(stderr, "\x1b[1;31mERROR: red channel at y:%u, x:%u mismatch.\n", y, x);
-                    goto errmsg;
-                }
-                else if(qoiRGBA[y * width * 4 + x + 1] != stbTest[y * width * 4 + x + 1])
-                {
-                    fprintf(stderr, "\x1b[1;31mERROR: green channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-                    goto errmsg;
-                }
-                else if(qoiRGBA[y * width * 4 + x + 2] != stbTest[y * width * 4 + x + 2])
-                {
-                    fprintf(stderr, "\x1b[1;31mERROR: blue channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-                    goto errmsg;
-                }
-                else if(qoiRGBA[y * width * 4 + x + 3] != stbTest[y * width * 4 + x + 3])
-                {
-                    fprintf(stderr, "\x1b[1;31mERROR: alpha channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-                    goto errmsg;
-                }
-                else
-                {
-                    continue;
-                }
+                // if(qoiRGBA[y * width * 4 + x] != unitTest[y * width * 4 + x])
+                // {
+                //     fprintf(stderr, "\x1b[1;31mERROR: red channel at y:%u, x:%u mismatch.\n", y, x);
+                //     goto errmsg;
+                // }
+                // else if(qoiRGBA[y * width * 4 + x + 1] != unitTest[y * width * 4 + x + 1])
+                // {
+                //     fprintf(stderr, "\x1b[1;31mERROR: green channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
+                //     goto errmsg;
+                // }
+                // else if(qoiRGBA[y * width * 4 + x + 2] != unitTest[y * width * 4 + x + 2])
+                // {
+                //     fprintf(stderr, "\x1b[1;31mERROR: blue channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
+                //     goto errmsg;
+                // }
+                // else if(qoiRGBA[y * width * 4 + x + 3] != unitTest[y * width * 4 + x + 3])
+                // {
+                //     fprintf(stderr, "\x1b[1;31mERROR: alpha channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
+                //     goto errmsg;
+                // }
+                // else
+                // {
+                //     continue;
+                // }
 
 errmsg:
                 fprintf(stderr, "got: \nR:%u ",      qoiRGBA[y * width * 4 + x]);
@@ -73,10 +68,10 @@ errmsg:
                 fprintf(stderr, "B:%u ",             qoiRGBA[y * width * 4 + x + 2]);
                 fprintf(stderr, "A:%u\n",            qoiRGBA[y * width * 4 + x + 3]);
 
-                fprintf(stderr, "expected: \nR:%u ", stbTest[y * width * 4 + x]);
-                fprintf(stderr, "G:%u ",             stbTest[y * width * 4 + x + 1]);
-                fprintf(stderr, "B:%u ",             stbTest[y * width * 4 + x + 2]);
-                fprintf(stderr, "A:%u\033[0m\n",     stbTest[y * width * 4 + x + 3]);
+                // fprintf(stderr, "expected: \nR:%u ", unitTest[y * width * 4 + x]);
+                // fprintf(stderr, "G:%u ",             unitTest[y * width * 4 + x + 1]);
+                // fprintf(stderr, "B:%u ",             unitTest[y * width * 4 + x + 2]);
+                // fprintf(stderr, "A:%u\033[0m\n",     unitTest[y * width * 4 + x + 3]);
                 return -1;
             }
         }
@@ -91,11 +86,7 @@ errmsg:
     else
     {
         printf("\nQOI in BGRA loaded!\n");
-        if(width != (uint32_t)stb_width || height != (uint32_t)stb_height)
-        {
-            fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
-        }
-        //TODO: validate against stb_image
+        //TODO: validate against qoiRGBA
     }
     free(qoiBGRA);
 
@@ -107,11 +98,7 @@ errmsg:
     else
     {
         printf("\nQOI in RGB loaded!\n");
-        if(width != (uint32_t)stb_width || height != (uint32_t)stb_height)
-        {
-            fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
-        }
-        //TODO: validate against stb_image
+        //TODO: validate against qoiRGBA
     }
     free(qoiRGB);
 
@@ -123,11 +110,7 @@ errmsg:
     else
     {
         printf("\nQOI in BGR loaded!\n");
-        if(width != (uint32_t)stb_width || height != (uint32_t)stb_height)
-        {
-            fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
-        }
-        //TODO: validate against stb_image
+        //TODO: validate against qoiRGBA
     }
     free(qoiBGR);
 
@@ -140,6 +123,4 @@ errmsg:
     // {
     //     printf("\nBMP loaded!\n");
     // }
-
-    stbi_image_free(stbTest);
 }
