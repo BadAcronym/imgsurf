@@ -20,4 +20,18 @@ premake5 gmake
 
 pushd ./build/
 make
+
+if [[ $? != 0 ]]
+then
+    exit -1
+fi
+
+if [[ $1 = "--compile-only" ]]
+then
+    exit 0
+fi
+
 popd
+
+chmod +x ./bin/release/imgsurftest
+./bin/release/imgsurftest
