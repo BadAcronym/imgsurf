@@ -8,7 +8,7 @@ Write-Host "Building $build...`n"
 
 $Platforms = "Win64", "Linux"
 $Configurations = "debug", "release"
-$targetname = "islescape"
+$targetname = "imgsurf"
 $target = ""
 
 if(-Not(Test-Path "./obj/"))
