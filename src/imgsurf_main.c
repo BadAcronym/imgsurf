@@ -52,8 +52,8 @@ internal uint8_t* loadQOI
         if((byte = fgetc(file)) != magic[i] || byte == EOF)
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", i);
-            fprintf(stderr, "got: %u\n", (uint8_t)byte);
-            fprintf(stderr, "expected: %u\n", (uint8_t)magic[i]);
+            fprintf(stderr, "got: %i\n", byte);
+            fprintf(stderr, "expected: %i\n", (uint8_t)magic[i]);
             return 0;
         }
     }
@@ -496,16 +496,6 @@ uint8_t* imgsurf_load
     return image;
 }
 
-// TODO: move this to loader as well
-typedef struct header
-{
-    uint32_t width;
-    uint32_t height;
-    uint8_t  channelcount;
-    uint8_t  colorspace;
-}
-Header;
-
 // TODO: return error codes.
 internal uint8_t writeQOI
 (
@@ -515,13 +505,6 @@ internal uint8_t writeQOI
     uint32_t height,
     uint8_t  channels
 ){
-    Header header = {0};
-    char *magic = malloc(4);
-    magic[0] = 'q';
-    magic[1] = 'o';
-    magic[2] = 'i';
-    magic[3] = 'f';
-
     uint8_t channelcount = (channels == IMGSURF_CHANNELS_RGBA || channels == IMGSURF_CHANNELS_BGRA) ? 4 : 3;
 
     if(channelcount != 3 && channelcount != 4)
@@ -531,22 +514,36 @@ internal uint8_t writeQOI
     }
 
     // BACKLOG: figure out colorspace field
-    header.width        = width;
-    header.height       = height;
-    header.colorspace   = 0;
-    header.channelcount = channelcount;
+    uint8_t colourspace = 0xFF;
+    size_t  elements    = 0;
 
-    size_t elements = 0;
-
-    if((elements = fwrite(&magic, 1, 4, file)) != 4)
+    if((elements = fwrite("qoif", 1, 4, file)) != 4)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes.\033[0m\n");
         return -2;
     }
 
-    if((elements = fwrite(&header, sizeof(header), 1, file)) != 1)
+    if((elements = fwrite(&width, 1, 4, file)) != 4)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write header.\033[0m\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write width.\033[0m\n");
+        return -2;
+    }
+
+    if((elements = fwrite(&height, 1, 4, file)) != 4)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write height.\033[0m\n");
+        return -2;
+    }
+
+    if((elements = fwrite(&channelcount, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write channelcount.\033[0m\n");
+        return -2;
+    }
+
+    if((elements = fwrite(&colourspace, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write colourspace.\033[0m\n");
         return -2;
     }
 
@@ -688,11 +685,18 @@ internal uint8_t writeQOI
         }
     }
 
-    uint64_t EOS = 0x01;
-    if((elements = fwrite(&EOS, 8, 1, file)) != 1)
+    uint64_t EOS0 = 0x00;
+    if((elements = fwrite(&EOS0, 7, 1, file)) != 1)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS tag.\033[0m\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x00 tag.\033[0m\n");
         return -11;
+    }
+
+    uint8_t EOS1 = 0x01;
+    if((elements = fwrite(&EOS1, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x01 tag.\033[0m\n");
+        return -12;
     }
 
     return 0;
