@@ -31,13 +31,13 @@ internal uint8_t* loadPNG
 
 #define IMGSURF_QOI_INDEX (prev_pixel.red * 3 + prev_pixel.green * 5 + prev_pixel.blue * 7 + prev_pixel.alpha * 11) % 64
 
-#define QOI_OP_RGB    0b11111110
-#define QOI_OP_RGBA   0b11111111
+#define QOI_OP_RGB    254 //0b11111110
+#define QOI_OP_RGBA   255 //0b11111111
 
-#define QOI_OP_INDEX  0b00
-#define QOI_OP_DIFF   0b01
-#define QOI_OP_LUMA   0b10
-#define QOI_OP_RUN    0b11
+#define QOI_OP_INDEX  0   //0b00
+#define QOI_OP_DIFF   1   //0b01
+#define QOI_OP_LUMA   2   //0b10
+#define QOI_OP_RUN    3   //0b11
 
 internal uint8_t* loadQOI
 (
@@ -110,7 +110,7 @@ internal uint8_t* loadQOI
     }
 
     pixel prev_pixel = {0, 0, 0, 255};
-    pixel seen_pixels[64] = {};
+    pixel seen_pixels[64] = {0};
 
     uint64_t loopWidth  = *width * pixelwidth;
     uint64_t loopHeight = *height;
@@ -189,9 +189,9 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_DIFF)
             {
-                uint8_t diffRed   = (0b00110000 & byte) >> 4;
-                uint8_t diffGreen = (0b00001100 & byte) >> 2;
-                uint8_t diffBlue  =  0b00000011 & byte;
+                uint8_t diffRed   = (48 & byte) >> 4; //(0b00110000 & byte) >> 4
+                uint8_t diffGreen = (12 & byte) >> 2; //(0b00001100 & byte) >> 2
+                uint8_t diffBlue  =   3 & byte;       // 0b00000011 & byte
 
                 prev_pixel.red   += diffRed   - 2;
                 prev_pixel.green += diffGreen - 2;
@@ -210,14 +210,14 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
-                uint8_t diffGreen = byte & 0b00111111;
+                uint8_t diffGreen = byte & 63; //0b00111111
 
                 if((byte = fgetc(file)) == EOF)
                 {
                     goto endoffunction;
                 }
-                uint8_t diffRed  = (byte & 0b11110000) >> 4;
-                uint8_t diffBlue = (byte & 0b00001111);
+                uint8_t diffRed  = (240 & byte) >> 4; //(byte & 0b11110000) >> 4
+                uint8_t diffBlue =   15 & byte;       //(byte & 0b00001111)
 
                 prev_pixel.green += diffGreen - 32;
                 prev_pixel.red   += diffGreen + diffRed - 40;
@@ -236,7 +236,7 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                uint8_t runlength = (byte & 0b00111111) + 1;
+                uint8_t runlength = (byte & 63) + 1;
 
                 uint64_t index = y * loopWidth + x;
 
