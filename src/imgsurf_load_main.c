@@ -108,13 +108,14 @@ internal uint8_t* loadQOI
         return 0;
     }
 
-    uint8_t red   = 0;
-    uint8_t green = 0;
-    uint8_t blue  = 0;
-    uint8_t alpha = 255;
+    uint8_t  red   = 0;
+    uint8_t  green = 0;
+    uint8_t  blue  = 0;
+    uint8_t  alpha = 255;
 
     uint32_t prev_pixels[64] = {0};
 
+    //TODO: verify all OPs
     for(uint64_t i = 0; (byte = fgetc(file)) != EOF && i < pixelcount; ++i)
     {
         if(byte == QOI_OP_RGB)
@@ -217,6 +218,7 @@ internal uint8_t* loadQOI
         {
             uint32_t index = byte % 64;
 
+            //FIXME: verify indexing
             red   = prev_pixels[index];
             green = prev_pixels[index >> 8];
             blue  = prev_pixels[index >> 16];
@@ -224,7 +226,34 @@ internal uint8_t* loadQOI
         }
         else if((byte >> 6) == QOI_OP_DIFF)
         {
-            //
+            red   += ((0b00110000 & byte) >> 4) - 2;
+            green += ((0b00001100 & byte) >> 2) - 2;
+            blue  +=  (0b00000011 & byte) - 2;
+
+            image[i + 1] = green;
+
+            if(flipRnB)
+            {
+                image[i]     = blue;
+                image[i + 2] = red;
+            }
+            else
+            {
+                image[i]     = red;
+                image[i + 2] = blue;
+            }
+            uint32_t index = IMGSURF_QOI_INDEX;
+
+            //FIXME: verify BE/LE
+            prev_pixels[index] += red;
+            prev_pixels[index] += green << 8;
+            prev_pixels[index] += blue  << 16;
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = alpha;
+                prev_pixels[index] += alpha << 24;
+            }
         }
         else if((byte >> 6) == QOI_OP_LUMA)
         {
@@ -234,10 +263,55 @@ internal uint8_t* loadQOI
                 return image;
             }
             uint8_t diffRest  = byte;
+
+            //TODO: luma op
         }
         else if((byte >> 6) == QOI_OP_RUN)
         {
-            //
+            uint8_t runlength = byte % 64;
+
+            if(flipRnB && discardAlpha)
+            {
+                for(uint8_t j = 0; j < runlength; ++j)
+                {
+                    image[i]     = blue;
+                    image[i + 1] = green;
+                    image[i + 2] = red;
+                    i += j;
+                }
+            }
+            else if(flipRnB)
+            {
+                for(uint8_t j = 0; j < runlength; ++j)
+                {
+                    image[i]     = blue;
+                    image[i + 1] = green;
+                    image[i + 2] = red;
+                    image[i + 3] = alpha;
+                    i += j;
+                }
+            }
+            else if(discardAlpha)
+            {
+                for(uint8_t j = 0; j < runlength; ++j)
+                {
+                    image[i]     = red;
+                    image[i + 1] = green;
+                    image[i + 2] = blue;
+                    i += j;
+                }
+            }
+            else
+            {
+                for(uint8_t j = 0; j < runlength; ++j)
+                {
+                    image[i]     = red;
+                    image[i + 1] = green;
+                    image[i + 2] = blue;
+                    image[i + 3] = alpha;
+                    i += j;
+                }
+            }
         }
         else
         {
