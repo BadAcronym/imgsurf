@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [[ -d ./build/ ]]
+then
+    rm ./build/ -rf
+fi
+
+if [[ -d ./bin/ ]]
+then
+    rm ./bin/ -rf
+fi
+
+if [[ -d ./build/ ]]
+then
+    rm ./build/ -rf
+fi
+
+echo -e "\033[32mall done!\033[0m"
