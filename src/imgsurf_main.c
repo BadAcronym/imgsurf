@@ -609,6 +609,7 @@ internal uint8_t writeQOI
             uint8_t index = (curr_pixel.red  * 3 + curr_pixel.green * 5
                            + curr_pixel.blue * 7 + curr_pixel.alpha * 11) % 64;
 
+            // FIXME: something is not working at all here in RLE
             if(same_pixel(curr_pixel, prev_pixel))
             {
                 uint8_t *runPixel  = data;
@@ -637,12 +638,14 @@ internal uint8_t writeQOI
                     {
                         break;
                     }
+
+                    curr_pixel = next_pixel;
                 }
 
                 // LOOKUP: maybe this is off-by-one
                 data = runPixel;
 
-                uint8_t byte = 192 | runlength;
+                uint8_t byte = 0xC0 | runlength;
                 if((elements = fwrite(&byte, 1, 1, file)) != 1)
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_RUN.\033[0m\n");
@@ -669,44 +672,51 @@ internal uint8_t writeQOI
             }
             else if(dg < 64 && dr_dg < 16 && db_dg < 16)
             {
-                uint16_t twobyte = 0x8000 | (dg << 8) | (dr_dg << 4) | db_dg;
+                uint8_t tag  = 0x80;
+                uint8_t data = (dg << 8) | (dr_dg << 4) | db_dg;
 
-                if((elements = fwrite(&twobyte, 2, 1, file)) != 1)
+                if((elements = fwrite(&data, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_LUMA.\033[0m\n");
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_LUMA.\033[0m\n");
+                    return -6;
+                }
+
+                if((elements = fwrite(&tag, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_LUMA.\033[0m\n");
                     return -6;
                 }
             }
             else
             {
-                if(channelcount == 3 || prev_pixel.alpha == curr_pixel.alpha)
+                if(channelcount == 3 || curr_pixel.alpha == prev_pixel.alpha)
                 {
+                    if((elements = fwrite(&data, 1, 3, file)) != 3)
+                    {
+                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGBA.\033[0m\n");
+                        return -7;
+                    }
+
                     uint8_t tag  = 0xFE;
                     if((elements = fwrite(&tag, 1, 1, file)) != 1)
                     {
                         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
-                        return -9;
-                    }
-
-                    if((elements = fwrite(&data, 1, 3, file)) != 3)
-                    {
-                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGBA.\033[0m\n");
-                        return -10;
+                        return -8;
                     }
                     continue;
+                }
+
+                if((elements = fwrite(&data, 1, 4, file)) != 4)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGB.\033[0m\n");
+                    return -9;
                 }
 
                 uint8_t tag  = 0xFF;
                 if((elements = fwrite(&tag, 1, 1, file)) != 1)
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
-                    return -7;
-                }
-
-                if((elements = fwrite(&data, 1, 4, file)) != 4)
-                {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGB.\033[0m\n");
-                    return -8;
+                    return -10;
                 }
             }
 
@@ -791,7 +801,12 @@ uint8_t imgsurf_write_file
             }
             else
             {
-                return writeQOI(file, data, width, height, channels);
+                uint8_t result = writeQOI(file, data, width, height, channels);
+                if(result)
+                {
+                    fclose(file);
+                    return result;
+                }
             }
             break;
         }
