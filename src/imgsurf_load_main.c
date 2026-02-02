@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "imgsurf_load.h"
 
@@ -105,7 +106,7 @@ internal uint8_t* loadQOI
     if(!image)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Failed to allocate image.");
-        fprintf(stderr, "Requested Bytes: %lu\033[0m\n", (pixelcount * pixelwidth));
+        fprintf(stderr, "Requested Bytes: %" PRIu64 "\033[0m\n", (pixelcount * pixelwidth));
         return 0;
     }
 
@@ -125,19 +126,19 @@ internal uint8_t* loadQOI
                 {
                     goto endoffunction;
                 }
-                prev_pixel.red = byte;
+                prev_pixel.red = (uint8_t)byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
                     goto endoffunction;
                 }
-                prev_pixel.green = byte;
+                prev_pixel.green = (uint8_t)byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
                     goto endoffunction;
                 }
-                prev_pixel.blue = byte;
+                prev_pixel.blue = (uint8_t)byte;
 
                 image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
@@ -156,25 +157,25 @@ internal uint8_t* loadQOI
                 {
                     goto endoffunction;
                 }
-                prev_pixel.red = byte;
+                prev_pixel.red = (uint8_t)byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
                     goto endoffunction;
                 }
-                prev_pixel.green = byte;
+                prev_pixel.green = (uint8_t)byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
                     goto endoffunction;
                 }
-                prev_pixel.blue = byte;
+                prev_pixel.blue = (uint8_t)byte;
 
                 if((byte = fgetc(file)) == EOF)
                 {
                     goto endoffunction;
                 }
-                prev_pixel.alpha = byte;
+                prev_pixel.alpha = (uint8_t)byte;
 
                 image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
@@ -292,7 +293,6 @@ internal uint8_t* loadQOI
             else
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
-                fprintf(stderr, "byte: %b\033[0m\n", byte);
                 return image;
             }
         }
