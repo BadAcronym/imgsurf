@@ -47,7 +47,7 @@ if(0 -ne $LASTEXITCODE)
     exit -1
 }
 
-Write-Host ""
+Write-Host "`n"
 
 if($compile_only)
 {
