@@ -6,9 +6,8 @@
 
 #ifdef BUILD_LINUX
     #include "linux_imgsurf_platform.h"
-#elifdef BUILD_WINDOWS
+#elif defined(BUILD_WINDOWS)
     #include "win32_imgsurf_platform.h"
-    typedef int bool;
 #endif
 
 internal uint8_t* loadPNG
@@ -96,8 +95,8 @@ internal uint8_t* loadQOI
     }
     // uint8_t colourspace = byte;
 
-    bool discardAlpha = channels == IMGSURF_CHANNELS_RGB || channels == IMGSURF_CHANNELS_BGR;
-    bool flipRnB      = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
+    uint8_t discardAlpha = channels == IMGSURF_CHANNELS_RGB || channels == IMGSURF_CHANNELS_BGR;
+    uint8_t flipRnB      = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
 
     uint64_t pixelcount = *width * *height;
     uint8_t  pixelwidth = discardAlpha ? 3 : 4;
