@@ -38,9 +38,6 @@ internal uint8_t* loadPNG
 #define QOI_OP_LUMA   0b10
 #define QOI_OP_RUN    0b11
 
-#define QOI_EOS_part1 0b00000000
-#define QOI_EOS_part2 0b00000001
-
 internal uint8_t* loadQOI
 (
     FILE        *file,
@@ -112,15 +109,11 @@ internal uint8_t* loadQOI
     }
 
     pixel prev_pixel = {0, 0, 0, 255};
-    pixel seen_pixels[64] = {0};
-
-    //WIP: debug
-    uint64_t count = 0;
+    pixel seen_pixels[64] = {};
 
     uint64_t loopWidth  = *width * pixelwidth;
     uint64_t loopHeight = *height;
 
-    //FIXME: loop count & indexing broken
     for(uint64_t y = 0; y < loopHeight; y++)
     {
         for(uint64_t x = 0; x < loopWidth && ((byte = fgetc(file)) != EOF); x += pixelwidth)
@@ -213,9 +206,13 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_DIFF)
             {
-                prev_pixel.red   += ((0b00110000 & byte) >> 4) - 2;
-                prev_pixel.green += ((0b00001100 & byte) >> 2) - 2;
-                prev_pixel.blue  +=  (byte % 4) - 2;
+                uint8_t diffRed   = ((0b00110000 & byte) >> 4) - 2;
+                uint8_t diffGreen = ((0b00001100 & byte) >> 2) - 2;
+                uint8_t diffBlue  = (0b00000011 & byte) - 2;
+
+                prev_pixel.red   += diffRed;
+                prev_pixel.green += diffGreen;
+                prev_pixel.blue  += diffBlue;
 
                 image[y * loopWidth + x + 1] = prev_pixel.green;
 
@@ -239,17 +236,18 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
-                uint8_t diffGreen = byte % 64;
+                uint8_t diffGreen = byte & 0b00111111 - 32;
 
                 if((byte = fgetc(file)) == EOF)
                 {
                     return image;
                 }
-                uint8_t diffRest = byte;
+                uint8_t diffRed  = byte & 0b11110000 - 8;
+                uint8_t diffBlue = byte & 0b00001111 - 8;
 
-                prev_pixel.green = prev_pixel.green - 32 + diffGreen;
-                prev_pixel.red   = prev_pixel.red   - 32 + diffGreen - 8 + (diffRest >> 4);
-                prev_pixel.blue  = prev_pixel.blue  - 32 + diffGreen - 8 + (diffRest % 16);
+                prev_pixel.green += diffGreen;
+                prev_pixel.red   += diffRed  + diffGreen;
+                prev_pixel.blue  += diffBlue + diffGreen;
 
                 if(!discardAlpha)
                 {
@@ -260,11 +258,12 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                //FIXME: verify runlength
-                uint8_t runlength = (byte % 64);
+                uint8_t runlength = (byte & 0b00111111) + 1;
 
                 for(uint8_t j = 0; j < runlength; ++j)
                 {
+                    //FIXME: reading one byte too many
+                    //just the one. just the last pixel.
                     image[y * loopWidth + x + 1] = prev_pixel.green;
 
                     if(flipRnB)
@@ -283,13 +282,21 @@ internal uint8_t* loadQOI
                         image[y * loopWidth + x + 3] = prev_pixel.alpha;
                     }
                     x += pixelwidth;
+
+                    if(x > loopWidth)
+                    {
+                        x %= loopWidth;
+                        ++y;
+                    }
                 }
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
                 int nextByte = ungetc(fgetc(file), file);
-                if(byte == QOI_EOS_part1 && nextByte == QOI_EOS_part2)
+                if(byte == 0 && nextByte == 0)
                 {
+                    //technically not the end, but we can assume so,
+                    //because no two consecutive index calls are valid, esp after 0 byte
                     return image;
                 }
 
@@ -316,18 +323,11 @@ internal uint8_t* loadQOI
             else
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
-                fprintf(stderr, "byte: %b\n", byte);
-                fprintf(stderr, "byte >> 6: %b\033[0m\n", byte >> 6);
+                fprintf(stderr, "byte: %b\033[0m\n", byte);
                 return image;
             }
-            //WIP: debug
-            // count = y * *width;
-            // fprintf(stderr, "\nINFO: parsed %lu.\n", y * loopWidth + x);
         }
     }
-
-    fprintf(stderr, "\nINFO: parsed %lu of %lu.\n", count, pixelcount);
-    fprintf(stderr, "diff: %lu too many\n", count - pixelcount);
 
     return image;
 }
