@@ -8,6 +8,7 @@ obj/
 compile_commands*
 compile_flags*
 *.raddbg
+*.gf
 *.log
 PowerShellEditorServices.json
 *reconstructed.*
