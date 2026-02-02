@@ -55,7 +55,7 @@ elseIf($IsWindows)
 
     &MSBuild ./build/$solution.sln -p:platform=windows -p:Configuration=$build
 
-    $target = "./bin/$targetname" + "_win64/$build/$targetname.exe"
+    $target = "./bin/$build/$targetname.exe"
 }
 
 if($isWindows -and 0 -eq $LASTEXITCODE -and $build -eq "debug")
