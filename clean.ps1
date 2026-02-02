@@ -3,7 +3,6 @@ $toDelete =
     "./bin/",
     "./obj/",
     "./log/",
-    "./compile_commands.json"
 
 Write-Host "cleaning the build..."
 
