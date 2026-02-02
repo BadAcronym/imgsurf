@@ -15,4 +15,4 @@ then
     rm ./build/ -rf
 fi
 
-echo -e "\033[32mall done!\033[0m"
+echo -e "\033[32mcleaned imgsurf!\033[0m"
