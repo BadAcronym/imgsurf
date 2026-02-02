@@ -11,13 +11,6 @@ int main()
     uint32_t expectedWidth = 0;
     uint32_t expectedHeight = 0;
 
-    //TODO: find something other than stb_image because it shoots up compile times
-    // uint8_t* unitTest = stbi_load("assets/tux.png", &stb_width, &stb_height, &stb_channels, STBI_rgb_alpha);
-    // if(!unitTest)
-    // {
-    //     fprintf(stderr, "\x1b[1;31mstb_image failed to load the image!\033[0m\n");
-    //     return -1;
-    // }
     expectedWidth  = 1584;
     expectedHeight = 1920;
 
@@ -35,10 +28,10 @@ int main()
             return -1;
         }
 
-        for(uint32_t y = 0; y < height; ++y)
-        {
-            for(uint32_t x = 0; x < width * 4; x += 4)
-            {
+        // for(uint32_t y = 0; y < height; ++y)
+        // {
+        //     for(uint32_t x = 0; x < width * 4; x += 4)
+        //     {
                 // if(qoiRGBA[y * width * 4 + x] != unitTest[y * width * 4 + x])
                 // {
                 //     fprintf(stderr, "\x1b[1;31mERROR: red channel at y:%u, x:%u mismatch.\n", y, x);
@@ -76,8 +69,8 @@ int main()
                 // fprintf(stderr, "A:%u\033[0m\n",     unitTest[y * width * 4 + x + 3]);
                 // free(qoiRGBA);
                 // return -1;
-            }
-        }
+    //         }
+    //     }
     }
     free(qoiRGBA);
 
@@ -116,14 +109,4 @@ int main()
         //TODO: validate against qoiRGBA
     }
     free(qoiBGR);
-
-    // uint8_t* bmp = imgsurf_load("assets/tux.bmp", &width, &height, IMGSURF_CHANNELS_RGB, 8);
-    // if(!bmp)
-    // {
-    //     fprintf(stderr, "imgsurf_load failed to load a bmp.\n");
-    // }
-    // else
-    // {
-    //     printf("\nBMP loaded!\n");
-    // }
 }
