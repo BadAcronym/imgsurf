@@ -77,8 +77,13 @@ project("imagesurf unit tests")
     targetname("imgsurftest")
     kind("ConsoleApp")
 
-    filter("configurations:debug or asan")
+    filter("configurations:asan")
+        defines{"ASAN"}
+
+    filter("configurations:debug")
         defines{"DEBUG"}
+
+    filter("configurations:debug or asan")
         staticruntime("off")
         runtime("debug")
         symbols("On")
