@@ -47,7 +47,7 @@ internal uint8_t* loadQOI
     uint32_t    *width,
     uint32_t    *height
 ){
-    char magic[4] = "qoif";
+    char magic[5] = "qoif";
     *width  = 0;
     *height = 0;
 
@@ -57,8 +57,8 @@ internal uint8_t* loadQOI
         if((byte = fgetc(file)) != magic[i] || byte == EOF)
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", i);
-            fprintf(stderr, "got: %b\n", byte);
-            fprintf(stderr, "expected: %b\n", magic[i]);
+            fprintf(stderr, "got: %u\n", byte);
+            fprintf(stderr, "expected: %u\n", magic[i]);
             return 0;
         }
     }
