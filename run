@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# BACKLOG: switch to CMake. it can natively export compile commands!
+
 if [[ ! -d "./obj/" ]]
 then
     mkdir ./obj/
@@ -15,33 +17,35 @@ then
     mkdir ./bin/
 fi
 
-echo ""
-echo -e "\033[36mcompiling imgsurf...\033[0m"
-echo ""
-
-premake5 ecc
-premake5 gmake
-
-if [[ $1 = "debug" ]]
+if [[ $1 = "" ]]
 then
-    pushd ./build/ > /dev/null
-    make config=debug_linux
-elif [[ $1 = "release" ]]
-then
-    pushd ./build/ > /dev/null
-    make config=release_linux
-elif [[ $1 = "asan" ]]
-then
-    pushd ./build/ > /dev/null
-    make config=asan_linux
+    build="release"
 else
-    echo -e "\033[31m\nERROR: invalid make config: $1.\033[0m"
+    build=$1
+fi
+
+compileprep()
+{
+    echo ""
+    echo -e "\033[36mcompiling imgsurf...\033[0m"
+    echo ""
+    premake5 ecc
+    premake5 gmake
+}
+
+if [[ $build = "asan" ]] || [[ $build = "debug" ]] || [[ $build = "release" ]]
+then
+    compileprep
+    pushd ./build/ > /dev/null
+    make config=$build\_linux
+else
+    echo -e "\033[31m\nERROR: invalid make config: $build.\033[0m"
     exit -2;
 fi
 
 if [[ $? != 0 ]]
 then
-    echo -e "\033[31m\nERROR: failed to compile.\n\033[0m"
+    echo -e "\033[31m\nERROR: failed to compile imgsurf.\n\033[0m"
     exit -1
 fi
 
@@ -54,5 +58,5 @@ fi
 
 popd > /dev/null
 
-chmod +x ./bin/$1/imgsurftest
-./bin/$1/imgsurftest
+chmod +x ./bin/$build/imgsurftest
+./bin/$build/imgsurftest
