@@ -93,7 +93,7 @@ errmsg:
         {
             fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
         }
-        //TODAY: validate against stb_image
+        //TODO: validate against stb_image
     }
     free(qoiBGRA);
 
@@ -109,7 +109,7 @@ errmsg:
         {
             fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
         }
-        //TODAY: validate against stb_image
+        //TODO: validate against stb_image
     }
     free(qoiRGB);
 
@@ -125,7 +125,7 @@ errmsg:
         {
             fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
         }
-        //TODAY: validate against stb_image
+        //TODO: validate against stb_image
     }
     free(qoiBGR);
 
