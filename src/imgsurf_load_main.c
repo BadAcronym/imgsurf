@@ -10,14 +10,12 @@
 
 internal uint8_t* loadPNG
 (
-    const char  *path,
     FILE        *file,
     uint8_t     channels,
     uint32_t    *width,
     uint32_t    *height
 ){
     //Wunused-parameter
-    (void)path;
     (void)file;
     (void)channels;
     (void)width;
@@ -31,7 +29,6 @@ internal uint8_t* loadPNG
 
 internal uint8_t* loadQOI
 (
-    const char  *path,
     FILE        *file,
     uint8_t     channels,
     uint32_t    *width,
@@ -77,22 +74,64 @@ internal uint8_t* loadQOI
         *height += (byte << (3 - i) * 8);
     }
 
+    if((byte = fgetc(file)) == EOF || (byte != 3 && byte != 4))
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte 12 corrupted.\033[0m\n");
+        return 0;
+    }
+    uint8_t channelcount = byte;
+
+    if((byte = fgetc(file)) == EOF)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte 13 corrupted.\033[0m\n");
+        return 0;
+    }
+    // uint8_t colourspace = byte;
+
     switch(channels)
     {
         case IMGSURF_CHANNELS_RGB:
         {
+            if(channelcount == 4)
+            {
+                //discard alpha channel
+                break;
+            }
+
+            //normal
             break;
         }
         case IMGSURF_CHANNELS_BGR:
         {
+            if(channelcount == 4)
+            {
+                //discard alpha channel
+                break;
+            }
+
+            //normal
             break;
         }
         case IMGSURF_CHANNELS_RGBA:
         {
+            if(channelcount == 3)
+            {
+                //set alpha to 1
+                break;
+            }
+
+            //normal
             break;
         }
         case IMGSURF_CHANNELS_BGRA:
         {
+            if(channelcount == 3)
+            {
+                //set alpha to 1
+                break;
+            }
+
+            //normal
             break;
         }
     }
@@ -228,7 +267,7 @@ uint8_t* imgsurf_load
             }
             else
             {
-                image = loadPNG(path, file, channels, width, height);
+                image = loadPNG(file, channels, width, height);
             }
             break;
         }
@@ -255,7 +294,7 @@ uint8_t* imgsurf_load
             }
             else
             {
-                image = loadQOI(path, file, channels, width, height);
+                image = loadQOI(file, channels, width, height);
             }
             break;
         }
