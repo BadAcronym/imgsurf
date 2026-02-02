@@ -289,7 +289,8 @@ internal uint8_t* loadQOI
                 x %= loopWidth;
 
                 ++run_count;
-                fprintf(stderr, "CURRENT READ OP: QOI_OP_RUN with pixel: %u, %u, %u and runlength %hhu\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, runlength);
+                fprintf(stderr, "info byte: %x\n", byte);
+                fprintf(stderr, "CURRENT READ OP: QOI_OP_RUN with pixel: %u, %u, %u and runlength %hhu\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, runlength - 1);
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
@@ -655,41 +656,33 @@ internal uint8_t writeQOI
         // FIXME: runlength is... still... wrong...
         if(same_pixel(curr_pixel, prev_pixel))
         {
-            uint8_t  runlength   = 0;
-            pixel    next_pixel  = prev_pixel;
-            uint8_t  *data_start = data;
+            fprintf(stderr, "data ptr start: %lu\n", data);
+            uint8_t runlength = 0;
 
-            if(data_start > data_end)
+            for(; same_pixel(curr_pixel, prev_pixel) && runlength < 62; ++runlength)
             {
-                break;
-            }
+                if(data + 1 > data_end)
+                {
+                    break;
+                }
+                data += channelcount;
 
-            for(; data_start < data_end && same_pixel(next_pixel, prev_pixel) && runlength < 63; ++runlength, data_start += channelcount)
-            {
-                uint8_t og_r = *data_start;
-                uint8_t og_b = *(data_start + 2);
+                uint8_t og_r = *data;
+                uint8_t og_b = *(data + 2);
 
-                next_pixel.red   = flipRnB ? og_b : og_r;
-                next_pixel.green = *(data_start + 1);
-                next_pixel.blue  = flipRnB ? og_r : og_b;
+                curr_pixel.red   = flipRnB ? og_b : og_r;
+                curr_pixel.green = *(data + 1);
+                curr_pixel.blue  = flipRnB ? og_r : og_b;
                 if(useAlpha)
                 {
-                    next_pixel.alpha = *(data_start + 3);
+                    curr_pixel.alpha = *(data + 3);
                 }
             }
-
-            // FIXME: do something like this...?
-            // x += (runlength - 1) * pixelwidth;
-            // y += x / loopWidth;
-            // x %= loopWidth;
-            // FIXME: why does decrementing at the end, just once, not work?
-            // FIXME: maybe keep track of x and y again, but just use it for runlength... lol
-
-            data = data_start - channelcount * 2;
-
             --runlength;
 
-            uint8_t byte = 0xC0 | (runlength - 1);
+            fprintf(stderr, "data ptr end: %lu\n", data);
+
+            uint8_t byte = 0xC0 | runlength;
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RUN.\033[0m\n");
@@ -697,9 +690,9 @@ internal uint8_t writeQOI
             }
 
             ++run_count;
-            pixelcount += runlength + 1;
+            pixelcount += runlength;
             lastOp = QOI_OP_RUN;
-            fprintf(stderr, "CURRENT WRITE OP: QOI_OP_RUN with pixel: %u, %u, %u, %u for %hhu pixels\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha, runlength);
+            fprintf(stderr, "CURRENT WRITE OP: QOI_OP_RUN with pixel: %u, %u, %u, %u, runlength: %hhu\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha, runlength);
         }
         else if(same_pixel(curr_pixel, seen_pixels[index]) && lastOp != QOI_OP_INDEX)
         {
