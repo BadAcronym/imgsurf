@@ -606,7 +606,7 @@ internal uint8_t writeQOI
             uint8_t dr_dg = (curr_pixel.red  - prev_pixel.red)  - dg;
             uint8_t db_dg = (curr_pixel.blue - prev_pixel.blue) - dg;
 
-            uint8_t index = (curr_pixel.red * 3  + curr_pixel.green * 5
+            uint8_t index = (curr_pixel.red  * 3 + curr_pixel.green * 5
                            + curr_pixel.blue * 7 + curr_pixel.alpha * 11) % 64;
 
             if(same_pixel(curr_pixel, prev_pixel))
@@ -679,34 +679,34 @@ internal uint8_t writeQOI
             }
             else
             {
-                if(channelcount == 4)
+                if(channelcount == 3 || prev_pixel.alpha == curr_pixel.alpha)
                 {
-                    uint8_t tag  = 0xFF;
+                    uint8_t tag  = 0xFE;
                     if((elements = fwrite(&tag, 1, 1, file)) != 1)
                     {
                         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
-                        return -7;
+                        return -9;
                     }
 
-                    if((elements = fwrite(&data, 1, 4, file)) != 4)
+                    if((elements = fwrite(&data, 1, 3, file)) != 3)
                     {
-                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGB.\033[0m\n");
-                        return -8;
+                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGBA.\033[0m\n");
+                        return -10;
                     }
                     continue;
                 }
 
-                uint8_t tag  = 0xFE;
+                uint8_t tag  = 0xFF;
                 if((elements = fwrite(&tag, 1, 1, file)) != 1)
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
-                    return -9;
+                    return -7;
                 }
 
-                if((elements = fwrite(&data, 1, 3, file)) != 3)
+                if((elements = fwrite(&data, 1, 4, file)) != 4)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGBA.\033[0m\n");
-                    return -10;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGB.\033[0m\n");
+                    return -8;
                 }
             }
 
