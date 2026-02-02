@@ -24,18 +24,15 @@ else
     build=$1
 fi
 
-compileprep()
-{
+if [[ $build = "asan" ]] || [[ $build = "debug" ]] || [[ $build = "release" ]]
+then
+
     echo ""
     echo -e "\033[36mcompiling imgsurf...\033[0m"
     echo ""
     premake5 ecc
     premake5 gmake
-}
 
-if [[ $build = "asan" ]] || [[ $build = "debug" ]] || [[ $build = "release" ]]
-then
-    compileprep
     pushd ./build/ > /dev/null
     make config=$build\_linux
 else
