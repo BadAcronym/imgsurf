@@ -137,7 +137,7 @@ internal uint8_t* loadQOI
     uint64_t rgb_count   = 0;
     uint64_t rgba_count  = 0;
 
-    //FIXME: rename for consistency, prev_pixel should be curr_pixel here
+    // BACKLOG: rename for consistency, prev_pixel should be curr_pixel here
 
     for(uint64_t y = 0; y < loopHeight; y++)
     {
@@ -173,6 +173,7 @@ internal uint8_t* loadQOI
                 }
 
                 ++rgb_count;
+                fprintf(stderr, "CURRENT READ OP: QOI_OP_RGB with new pixel: %u, %u, %u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue);
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if(byte == QOI_OP_RGBA)
@@ -211,6 +212,7 @@ internal uint8_t* loadQOI
                 }
 
                 ++rgba_count;
+                fprintf(stderr, "CURRENT READ OP: QOI_OP_RGBA with new pixel: %u, %u, %u, %u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_DIFF)
@@ -234,6 +236,7 @@ internal uint8_t* loadQOI
 
                 ++diff_count;
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
+                fprintf(stderr, "CURRENT READ OP: QOI_OP_DIFF with diff: %u, %u, %u\n", diffRed, diffGreen, diffBlue);
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
@@ -261,6 +264,8 @@ internal uint8_t* loadQOI
 
                 ++luma_count;
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
+                fprintf(stderr, "CURRENT READ OP: QOI_OP_LUMA with diff: %u, %u, %u\n", diffGreen - 32, diffGreen + diffRed - 40, diffGreen + diffBlue - 40);
+
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
@@ -284,6 +289,7 @@ internal uint8_t* loadQOI
                 x %= loopWidth;
 
                 ++run_count;
+                fprintf(stderr, "CURRENT READ OP: QOI_OP_RUN with pixel: %u, %u, %u and runlength %hhu\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, runlength);
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
@@ -309,7 +315,7 @@ internal uint8_t* loadQOI
                     }
                 }
 
-                prev_pixel = seen_pixels[byte % 64];
+                prev_pixel = seen_pixels[byte % 0x40];
 
                 image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
                 image[y * loopWidth + x + 1] = prev_pixel.green;
@@ -319,6 +325,7 @@ internal uint8_t* loadQOI
                 {
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
+                fprintf(stderr, "CURRENT READ OP: QOI_OP_INDEX with index: %u\n", byte % 0x40);
             }
             else
             {
@@ -557,11 +564,6 @@ internal uint8_t writeQOI
     uint8_t colourspace = 0;
     size_t  elements    = 0;
 
-    // FIXME: not writing the header correctly
-    // ERROR: QOI header at byte 0 corrupted.
-    // got: -1
-    // expected: 113
-
     if((elements = fwrite("qoif", 4, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes of header.\033[0m\n");
@@ -618,9 +620,9 @@ internal uint8_t writeQOI
     uint64_t rgba_count  = 0;
 
     uint8_t *data_end = data + width * height * channelcount;
-    uint8_t lastOp = UINT8_MAX;
+    uint8_t lastOp    = UINT8_MAX;
 
-    for(uint64_t i = 0; data < data_end; data += channelcount)
+    for(; data < data_end; data += channelcount)
     {
         pixel curr_pixel = {0, 0, 0, 255};
 
@@ -635,17 +637,18 @@ internal uint8_t writeQOI
             curr_pixel.alpha = *(data + 3);
         }
 
-        uint8_t dr = curr_pixel.red   - prev_pixel.red;
-        uint8_t dg = curr_pixel.green - prev_pixel.green;
-        uint8_t db = curr_pixel.blue  - prev_pixel.blue;
+        uint8_t diff_dr = curr_pixel.red   - prev_pixel.red   + 2;
+        uint8_t diff_dg = curr_pixel.green - prev_pixel.green + 2;
+        uint8_t diff_db = curr_pixel.blue  - prev_pixel.blue  + 2;
 
-        uint8_t dr_dg = (curr_pixel.red  - prev_pixel.red)  - dg;
-        uint8_t db_dg = (curr_pixel.blue - prev_pixel.blue) - dg;
+        // FIXME: somehow dr_dg and db_dg are still wrong...?
+        uint8_t luma_dg = (curr_pixel.green - prev_pixel.green) + 32;
+        uint8_t dr_dg   = (curr_pixel.red   - prev_pixel.red)   - luma_dg + 8;
+        uint8_t db_dg   = (curr_pixel.blue  - prev_pixel.blue)  - luma_dg + 8;
 
         uint8_t index = (curr_pixel.red  * 3 + curr_pixel.green * 5
                        + curr_pixel.blue * 7 + curr_pixel.alpha * 11) % 64;
 
-        // FIXME: verify that we're updating prev_pixel in the correct place
         if(same_pixel(curr_pixel, seen_pixels[index]) && lastOp != QOI_OP_INDEX)
         {
             if((elements = fwrite(&index, 1, 1, file)) != 1)
@@ -656,9 +659,10 @@ internal uint8_t writeQOI
 
             ++pixelcount;
             ++index_count;
-            lastOp     = QOI_OP_INDEX;
+            lastOp = QOI_OP_INDEX;
+            fprintf(stderr, "CURRENT WRITE OP: QOI_OP_INDEX into seen_pixels[%u]\n", index);
         }
-        // FIXME: wrong runlength... still, somehow.
+        // FIXME: runlength is... still... wrong...
         else if(same_pixel(curr_pixel, prev_pixel))
         {
             uint8_t  runlength  = 0;
@@ -669,13 +673,8 @@ internal uint8_t writeQOI
                 break;
             }
 
-            for(; data < data_end && same_pixel(next_pixel, prev_pixel); ++runlength, data += channelcount)
+            for(; data < data_end && same_pixel(next_pixel, prev_pixel) && runlength < 63; ++runlength, data += channelcount)
             {
-                if(runlength > 62)
-                {
-                    break;
-                }
-
                 uint8_t og_r = *data;
                 uint8_t og_b = *(data + 2);
 
@@ -688,7 +687,10 @@ internal uint8_t writeQOI
                 }
             }
 
-            uint8_t byte = 0xC0 | (runlength - 2);
+            --runlength;
+            data -= channelcount;
+
+            uint8_t byte = 0xC0 | (runlength - 1);
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RUN.\033[0m\n");
@@ -698,10 +700,11 @@ internal uint8_t writeQOI
             ++run_count;
             pixelcount += runlength;
             lastOp = QOI_OP_RUN;
+            fprintf(stderr, "CURRENT WRITE OP: QOI_OP_RUN with pixel: %u, %u, %u, %u for %hhu pixels\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha, runlength);
         }
-        else if(curr_pixel.alpha == prev_pixel.alpha && dr < 4 && dg < 4 && db < 4)
+        else if(curr_pixel.alpha == prev_pixel.alpha && diff_dr < 4 && diff_dg < 4 && diff_db < 4)
         {
-            uint8_t byte = 0x40 | (dr << 4) | (dg << 2) | db;
+            uint8_t byte = 0x40 | (diff_dr << 4) | (diff_dg << 2) | diff_db;
 
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
@@ -712,13 +715,15 @@ internal uint8_t writeQOI
             ++diff_count;
             ++pixelcount;
             lastOp = QOI_OP_DIFF;
-            seen_pixels[index] = curr_pixel;
+            // seen_pixels[index] = curr_pixel;
+            fprintf(stderr, "CURRENT WRITE OP: QOI_OP_DIFF and diff: %i, %i, %i\n", diff_dr, diff_dg, diff_db);
         }
-        // FIXME: we're not luma-ing in the test img
-        else if(dg < 0x40 && dr_dg < 0x10 && db_dg < 0x10)
+        // FIXME: we're not luma-ing at all
+        // correctly, something's off
+        else if(curr_pixel.alpha == prev_pixel.alpha && luma_dg < 0x40 && dr_dg < 0x10 && db_dg < 0x10)
         {
             uint8_t tag      = 0x80;
-            uint8_t lumaData = (dg << 8) | (dr_dg << 4) | db_dg;
+            uint8_t lumaData = (luma_dg << 8) | (dr_dg << 4) | db_dg;
 
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
@@ -735,7 +740,11 @@ internal uint8_t writeQOI
             ++pixelcount;
             ++luma_count;
             lastOp = QOI_OP_LUMA;
-            seen_pixels[index] = curr_pixel;
+
+            fprintf(stderr, "prev_pixel is: %u, %u, %u\n", prev_pixel.red, prev_pixel.green, prev_pixel.blue);
+            fprintf(stderr, "curr_pixel is: %u, %u, %u\n", curr_pixel.red, curr_pixel.green, curr_pixel.blue);
+
+            fprintf(stderr, "CURRENT WRITE OP: QOI_OP_LUMA and diffs: %u, %u, %u\n", luma_dg - 32, dr_dg - 8, db_dg - 8);
         }
         else
         {
@@ -750,15 +759,26 @@ internal uint8_t writeQOI
                     return -7;
                 }
 
-                if((elements = fwrite(data, 1, 3, file)) != 3)
+                if((elements = fwrite(&curr_pixel.red, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RGB.\033[0m\n");
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ QOI_OP_RGB.\033[0m\n");
+                    return -8;
+                }
+                if((elements = fwrite(&curr_pixel.green, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ QOI_OP_RGB.\033[0m\n");
+                    return -8;
+                }
+                if((elements = fwrite(&curr_pixel.blue, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ QOI_OP_RGB.\033[0m\n");
                     return -8;
                 }
 
                 ++rgb_count;
                 lastOp = QOI_OP_RGB;
-                seen_pixels[index] = curr_pixel;
+                // seen_pixels[index] = curr_pixel;
+                fprintf(stderr, "CURRENT WRITE OP: QOI_OP_RGB with new pixel: %u, %u, %u\n", curr_pixel.red, curr_pixel.green, curr_pixel.blue);
             }
             else
             {
@@ -769,18 +789,34 @@ internal uint8_t writeQOI
                     return -10;
                 }
 
-                if((elements = fwrite(data, 1, 4, file)) != 4)
+                if((elements = fwrite(&curr_pixel.red, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RGBA.\033[0m\n");
-                    return -7;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ QOI_OP_RGBA.\033[0m\n");
+                    return -8;
+                }
+                if((elements = fwrite(&curr_pixel.green, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ QOI_OP_RGBA.\033[0m\n");
+                    return -8;
+                }
+                if((elements = fwrite(&curr_pixel.blue, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ QOI_OP_RGBA.\033[0m\n");
+                    return -8;
+                }
+                if((elements = fwrite(&curr_pixel.alpha, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write alpha @ QOI_OP_RGBA.\033[0m\n");
+                    return -8;
                 }
 
                 ++rgba_count;
                 lastOp = QOI_OP_RGBA;
-                seen_pixels[index] = curr_pixel;
+                fprintf(stderr, "CURRENT WRITE OP: QOI_OP_RGBA with new pixel: %u, %u, %u, %u\n", curr_pixel.red, curr_pixel.green, curr_pixel.blue, curr_pixel.alpha);
             }
         }
         prev_pixel = curr_pixel;
+        seen_pixels[index] = curr_pixel;
     }
 
     fprintf(stderr, "\n\n");
