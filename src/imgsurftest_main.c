@@ -62,7 +62,7 @@ int main()
                 //     continue;
                 // }
 
-errmsg:
+// errmsg:
                 fprintf(stderr, "got: \nR:%u ",      qoiRGBA[y * width * 4 + x]);
                 fprintf(stderr, "G:%u ",             qoiRGBA[y * width * 4 + x + 1]);
                 fprintf(stderr, "B:%u ",             qoiRGBA[y * width * 4 + x + 2]);
