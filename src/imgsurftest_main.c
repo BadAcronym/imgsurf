@@ -1,6 +1,7 @@
 #include "imgsurf_load.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int main()
 {
@@ -21,6 +22,7 @@ int main()
         printf("B:%u ",  qoiRGBA[2]);
         printf("A:%u\n", qoiRGBA[3]);
     }
+    free(qoiRGBA);
 
     uint8_t* qoiBGRA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_BGRA, 8);
     if(!qoiBGRA)
@@ -36,6 +38,7 @@ int main()
         printf("R:%u ",  qoiBGRA[2]);
         printf("A:%u\n", qoiBGRA[3]);
     }
+    free(qoiBGRA);
 
     uint8_t* qoiRGB = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGB, 8);
     if(!qoiRGB)
@@ -50,6 +53,7 @@ int main()
         printf("G:%u ",  qoiRGB[1]);
         printf("B:%u\n", qoiRGB[2]);
     }
+    free(qoiRGB);
 
     uint8_t* qoiBGR = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_BGR, 8);
     if(!qoiBGR)
@@ -64,6 +68,7 @@ int main()
         printf("G:%u ",  qoiBGR[1]);
         printf("R:%u\n", qoiBGR[2]);
     }
+    free(qoiBGR);
 
     // uint8_t* bmp = imgsurf_load("assets/tux.bmp", &width, &height, IMGSURF_CHANNELS_RGB, 8);
     // if(!bmp)
