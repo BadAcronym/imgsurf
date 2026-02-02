@@ -119,7 +119,7 @@ internal uint8_t* loadQOI
     //would be annoying to check a byte in adv
     //pixelcount prevents us from reading past the image pointer.
     //EOF prevents us from reading past the file pointer.
-    //So we'll write two extra black pixels if the image ends early - but it's cropped weird anyways?
+    //So we'll write two extra black pixels if the image ends early - but then it's cropped weird anyways?
     //I'll leave it at that.
 
     //TODO: verify all OPs

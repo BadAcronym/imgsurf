@@ -1,11 +1,11 @@
 ## Planned Features:
 
-- Support for all major image formats, in priority order:
-    - .png
+- Support for all major lossless image formats, in priority order:
+    - .qoi
     - .bmp
     - .webp
+    - .png
     - .avif
-    - .qoi
     - .jxl
 
 - Support for the following operations:
