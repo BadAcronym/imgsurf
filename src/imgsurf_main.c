@@ -581,20 +581,26 @@ internal uint8_t writeQOI
     bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  || channels == IMGSURF_CHANNELS_BGRA;
     bool useAlpha = channels == IMGSURF_CHANNELS_RGBA || channels == IMGSURF_CHANNELS_BGRA;
 
+    // FIXME: sxiv crashes trying to load the image. I'm missing some integrity check.
+    // imagemagick says not enough pixel data! that's prob it.
+    // TODO: check that we actually have wrote & read the correct amount of pixels
     // TODO: verify all of the ops manually.
 
     for(uint32_t y = 0; y < height; ++y)
     {
-        for(uint32_t x = 0; x < width; ++x, data += channelcount)
+        for(uint32_t x = 0; x < width; ++x)
         {
             pixel curr_pixel = {0, 0, 0, 255};
 
-            curr_pixel.red   = flipRnB ? *(data + 2) : *data;
-            curr_pixel.green = *(data + 1);
-            curr_pixel.blue  = flipRnB ? *data       : *(data + 2);
+            uint8_t og_r = data[(y * width + x) * channelcount];
+            uint8_t og_b = data[(y * width + x) * channelcount + 2];
+
+            curr_pixel.red   = flipRnB ? og_b : og_r;
+            curr_pixel.green = data[(y * width + x) * channelcount + 1];
+            curr_pixel.blue  = flipRnB ? og_r : og_b;
             if(useAlpha)
             {
-                curr_pixel.alpha = *(data + 3);
+                curr_pixel.alpha = data[(y * width + x) * channelcount + 3];
             }
 
             uint8_t dr = curr_pixel.red   - prev_pixel.red;
@@ -607,7 +613,6 @@ internal uint8_t writeQOI
             uint8_t index = (curr_pixel.red  * 3 + curr_pixel.green * 5
                            + curr_pixel.blue * 7 + curr_pixel.alpha * 11) % 64;
 
-            // FIXME: something is not working at all here in RLE
             if(same_pixel(curr_pixel, prev_pixel))
             {
                 uint32_t startX = x;
@@ -616,21 +621,21 @@ internal uint8_t writeQOI
                 uint8_t runlength  = 1;
                 pixel   next_pixel = curr_pixel;
 
-                for(; same_pixel(curr_pixel, next_pixel) && y < height; ++x)
+                for(; same_pixel(curr_pixel, next_pixel); ++x)
                 {
                     if(x > width)
                     {
                         x = 0;
+                        if(++y > height)
+                        {
+                            break;
+                        }
                     }
-
-                    // WIP: DEBUG
-                    // fprintf(stderr, "y: %u, x: %u\n", y, x);
 
                     if(++runlength > 61)
                     {
                         break;
                     }
-                    //ASAN: how in the fuck are we overflowing here?
                     uint8_t og_r = data[(y * width + x) * channelcount];
                     uint8_t og_b = data[(y * width + x) * channelcount + 2];
 
