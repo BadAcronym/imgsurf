@@ -3,6 +3,8 @@
 internal uint8_t* loadPNG
 (
 ){
+    //WIP: decode PNG, allocate size and write back!
+    fprintf(stderr, "PNG loader under construction!\n");
     return 0;
 }
 
