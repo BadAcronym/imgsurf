@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# BACKLOG: switch to CMake. it can natively export compile commands!
-
 if [[ ! -d "./obj/" ]]
 then
     mkdir ./obj/
@@ -30,7 +28,6 @@ then
     echo ""
     echo -e "\033[36mcompiling imgsurf...\033[0m"
     echo ""
-    premake5 ecc
     premake5 gmake
 
     pushd ./build/ > /dev/null

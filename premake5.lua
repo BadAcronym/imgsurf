@@ -1,5 +1,4 @@
 ---@diagnostic disable: undefined-global, undefined-field
-require"vendor/premake-ecc/ecc"
 
 workspace("imgsurf")
     configurations({"debug", "asan", "release"})
