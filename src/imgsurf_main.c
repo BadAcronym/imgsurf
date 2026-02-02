@@ -59,6 +59,8 @@ internal uint8_t* loadQOI
         }
     }
 
+    // BACKLOG: use fread wherever it makes sense.
+
     for(uint8_t i = 0; i < 4; ++i)
     {
         if((byte = fgetc(file)) == EOF)
