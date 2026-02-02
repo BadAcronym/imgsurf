@@ -115,6 +115,13 @@ internal uint8_t* loadQOI
 
     uint32_t prev_pixels[64] = {0};
 
+    //check for end of stream (7x 0x00, 1x 0x01) necessary?
+    //would be annoying to check a byte in adv
+    //pixelcount prevents us from reading past the image pointer.
+    //EOF prevents us from reading past the file pointer.
+    //So we'll write two extra black pixels if the image ends early - but it's cropped weird anyways?
+    //I'll leave it at that.
+
     //TODO: verify all OPs
     for(uint64_t i = 0; (byte = fgetc(file)) != EOF && i < pixelcount; ++i)
     {
@@ -264,58 +271,36 @@ internal uint8_t* loadQOI
             }
             uint8_t diffRest  = byte;
 
-            //TODO: luma op
+            //TODAY: luma op
         }
         else if((byte >> 6) == QOI_OP_RUN)
         {
             uint8_t runlength = byte % 64;
 
-            if(flipRnB && discardAlpha)
+            for(uint8_t j = 0; j < runlength; ++j)
             {
-                for(uint8_t j = 0; j < runlength; ++j)
+                image[i + 1] = green;
+
+                if(flipRnB)
                 {
                     image[i]     = blue;
-                    image[i + 1] = green;
                     image[i + 2] = red;
-                    i += j;
                 }
-            }
-            else if(flipRnB)
-            {
-                for(uint8_t j = 0; j < runlength; ++j)
-                {
-                    image[i]     = blue;
-                    image[i + 1] = green;
-                    image[i + 2] = red;
-                    image[i + 3] = alpha;
-                    i += j;
-                }
-            }
-            else if(discardAlpha)
-            {
-                for(uint8_t j = 0; j < runlength; ++j)
+                else
                 {
                     image[i]     = red;
-                    image[i + 1] = green;
                     image[i + 2] = blue;
-                    i += j;
                 }
-            }
-            else
-            {
-                for(uint8_t j = 0; j < runlength; ++j)
+
+                if(!discardAlpha)
                 {
-                    image[i]     = red;
-                    image[i + 1] = green;
-                    image[i + 2] = blue;
                     image[i + 3] = alpha;
-                    i += j;
                 }
+                i += j;
             }
         }
         else
         {
-            //TODO: check for end of stream (7x 0x00, 1x 0x01)
             fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
             fprintf(stderr, "byte: %b\n", byte);
             fprintf(stderr, "byte >> 6: %b\033[0m\n", byte >> 6);
