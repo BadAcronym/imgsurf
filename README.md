@@ -6,7 +6,6 @@
 ## Planned Features:
 
 - Support for more major lossless image formats, in priority order:
-    - .qoi
     - .bmp
     - .webp
     - .png
