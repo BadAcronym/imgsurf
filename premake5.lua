@@ -59,7 +59,9 @@ project("imagesurf library")
                      "-static-libasan"})
 
     filter({"platforms:Windows", "configurations:debug"})
-        buildoptions({"/Z7", "/DEBUG", "/fsanitize=address"})
+        editandcontinue("Off")
+        debugformat("c7")
+        buildoptions({"/fsanitize=address"})
 
     filter({"platforms:Windows", "configurations:release"})
         linkoptions({"/NODEFAULTLIB:MSVCRTD"})
@@ -118,7 +120,9 @@ project("imagesurf unit tests")
         linkoptions({"-gfull",  "-O0", "-fsanitize=address", "-fno-omit-frame-pointer", "-static-libasan"})
 
     filter({"platforms:Windows", "configurations:debug"})
-        buildoptions({"/Z7", "/DEBUG", "/fsanitize=address"})
+        editandcontinue("Off")
+        debugformat("c7")
+        buildoptions({"/fsanitize=address"})
 
     filter({"platforms:Windows", "configurations:release"})
         linkoptions({"/NODEFAULTLIB:MSVCRTD"})
