@@ -517,6 +517,13 @@ internal uint8_t writeQOI
     uint8_t colourspace = 0xFF;
     size_t  elements    = 0;
 
+    // FIXME: not writing the header correctly
+    // ERROR: QOI header at byte 0 corrupted.
+    // got: -1
+    // expected: 113
+    //
+    // FIXME: width & height endianness incorrect, write byte-by-byte instead.
+
     if((elements = fwrite("qoif", 1, 4, file)) != 4)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes.\033[0m\n");
