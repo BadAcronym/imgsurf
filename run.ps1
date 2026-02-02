@@ -1,13 +1,14 @@
 param
 (
-    $build = "debug"
+    $build = "debug",
+    [switch]$dontrun = $false
 )
 
 Write-Host "Building $build...`n"
 
 $Platforms = "Win64", "Linux"
 $Configurations = "debug", "release"
-$targetname = "imgsurf"
+$targetname = "imgsurftest"
 $target = ""
 
 if(-Not(Test-Path "./obj/"))
@@ -18,25 +19,6 @@ if(-Not(Test-Path "./obj/"))
 if(-Not(Test-Path "./bin/"))
 {
     &mkdir "./bin/"
-}
-
-foreach($platform in $Platforms)
-{
-    foreach($config in $Configurations)
-    {
-
-        $objPath = "./obj/$platform" + "_$config"
-        if(-Not(Test-Path $objPath))
-        {
-            &mkdir $objPath
-        }
-
-        $binPath = "./bin/$platform" + "_$config"
-        if(-Not(Test-Path $binPath))
-        {
-            &mkdir $binPath
-        }
-    }
 }
 
 if(-Not(Test-Path "./build/"))
@@ -61,7 +43,7 @@ if($IsLinux)
     &make config=$makecfg
     Pop-Location
 
-    $target = "./bin/Linux" + "_$build/$targetname"
+    $target = "./bin/$targetname" + "_linux/$build/$targetname"
 
     if(Test-Path $target)
     {
@@ -74,7 +56,7 @@ elseIf($IsWindows)
 
     &MSBuild ./build/$targetname.sln -p:Configuration=$build
 
-    $target = "./bin/Win64" + "_$build/$targetname.exe"
+    $target = "./bin/$targetname_win64" + "/$build/$targetname.exe"
 }
 
 if($isWindows -and 0 -eq $LASTEXITCODE -and $build -eq "debug")
@@ -82,4 +64,10 @@ if($isWindows -and 0 -eq $LASTEXITCODE -and $build -eq "debug")
     Write-Host "`ngenerating rdi debug info..."
 
     Invoke-Expression "radbin --rdi $target"
+}
+
+if(0 -eq $LASTEXITCODE -and -not $dontrun)
+{
+    Write-Host "`nrunning $target..."
+    Invoke-Expression $target
 }
