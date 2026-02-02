@@ -1,4 +1,4 @@
-#include "imgsurf_load.h"
+#include "imgsurf_main.h"
 
 #include <stdio.h>
 #include <stdlib.h>

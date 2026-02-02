@@ -1,9 +1,8 @@
-#include "imgsurf_load.h"
+#include "imgsurf_main.h"
 #include "linux_imgsurf_platform.h"
 
 #include <sys/stat.h>
 
-// TODO: (imgsurf #2) expand paths to absolute location
 uint8_t imgsurf_verifyPath
 (
     const char *path

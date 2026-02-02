@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "imgsurf_load.h"
+#include "imgsurf_main.h"
 
 #ifdef BUILD_LINUX
     #include "linux_imgsurf_platform.h"
@@ -370,9 +370,13 @@ internal void findFormat
     {
         *format = IMGSURF_FILE_JXL;
     }
+    else
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: invalid file extension in path: %s.\033[0m\n", path);
+        return;
+    }
 }
 
-// TODO: (imgsurf #3) write back format to River2D_Image
 uint8_t* imgsurf_load
 (
     const char *path,
@@ -489,4 +493,29 @@ uint8_t* imgsurf_load
     fclose(file);
 
     return image;
+}
+
+// TODO: allow writing to a file
+uint8_t imgsurf_write
+(
+    const char *path,
+    uint32_t   width,
+    uint32_t   height,
+    uint8_t    channels,
+    uint8_t    bitdepth
+){
+
+    // return error codes by value, why not
+    return 0;
+}
+
+// TODO: allow writing to a pre-allocated region in memory
+void imgsurf_write_ptr
+(
+    void     *mem,
+    uint32_t width,
+    uint32_t height,
+    uint8_t  channels,
+    uint8_t  bitdepth
+){
 }
