@@ -3,6 +3,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef BUILD_WINDOWS
+    #ifdef DEBUG
+    int main()
+    {
+        return WinMain(GetModuleHandleA(0), 0, GetCommandLineA(), 0);
+    }
+    #else
+    int CALLBACK WinMain
+    (
+        HINSTANCE instance,
+        HINSTANCE prevInstance,
+        LPSTR     cmdline,
+        int       cmdShow
+    ){
+        return main();
+    }
+    #endif
+#endif
+
 int main()
 {
     uint32_t width  = 0;
