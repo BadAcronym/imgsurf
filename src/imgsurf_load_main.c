@@ -22,11 +22,20 @@ internal uint8_t* loadPNG
     (void)width;
     (void)height;
 
-    //WIP: decode PNG, allocate size
+    //TODO: decode PNG, allocate size
     //write width and height into vars
     fprintf(stderr, "\n\033[33;1;7mWIP: PNG loader under construction!\033[0m\n");
     return 0;
 }
+
+#define IMGSURF_QOI_INDEX (red * 3 + green * 5 + blue * 7 + alpha * 11) % 64
+
+#define QOI_OP_RGBA  0b11111111
+
+#define QOI_OP_INDEX 0b00
+#define QOI_OP_DIFF  0b01
+#define QOI_OP_LUMA  0b10
+#define QOI_OP_RUN   0b11
 
 internal uint8_t* loadQOI
 (
@@ -86,45 +95,118 @@ internal uint8_t* loadQOI
 
     uint32_t seenPixels[64] = {0};
 
-    bool discard = channels == IMGSURF_CHANNELS_RGB || channels == IMGSURF_CHANNELS_BGR;
-    bool flip    = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
+    bool discardAlpha = channels == IMGSURF_CHANNELS_RGB || channels == IMGSURF_CHANNELS_BGR;
+    bool flipRnB      = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
 
     //TODO: figure out best user interface to free image
-    uint8_t* image = malloc(*width * *height * (discard ? 3 : 4));
+    uint64_t pixelcount = *width * *height;
+
+    uint8_t* image = malloc(pixelcount * (discardAlpha ? 3 : 4));
     if(!image)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Failed to allocate image. Requested: %u\033[0m\n", (*width * *height * (discard ? 3 : 4)));
+        fprintf(stderr, "\n\033[31;1;7mERROR: Failed to allocate image.");
+        fprintf(stderr, "Requested Bytes: %lu\033[0m\n", (pixelcount * (discardAlpha ? 3 : 4)));
         return 0;
     }
 
-    if(discard && flip)
+    uint8_t red   = 0;
+    uint8_t green = 0;
+    uint8_t blue  = 0;
+    uint8_t alpha = 255;
+
+    for(uint64_t i = 0; (byte = fgetc(file)) != EOF && i < pixelcount; ++i)
     {
-        while((byte = fgetc(file)) != EOF)
+        if(byte == QOI_OP_RGBA)
+        {
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            red = byte;
+
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            green = byte;
+
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            blue = byte;
+
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            alpha = byte;
+
+            image[i + 1] = green;
+
+            if(flipRnB)
+            {
+                image[i]     = blue;
+                image[i + 2] = red;
+            }
+            else
+            {
+                image[i]     = red;
+                image[i + 2] = blue;
+            }
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = alpha;
+            }
+        }
+        else if((byte >> 6) == QOI_OP_INDEX)
         {
             //
         }
-        return image;
-    }
-    else if(discard)
-    {
-        while((byte = fgetc(file)) != EOF)
+        else if((byte >> 6) == QOI_OP_DIFF)
         {
             //
         }
-        return image;
-    }
-    else if(flip)
-    {
-        while((byte = fgetc(file)) != EOF)
+        else if((byte >> 6) == QOI_OP_LUMA)
+        {
+            uint8_t diffGreen = byte % 0b100000;
+            if((byte = fgetc(file)) == EOF)
+            {
+                return image;
+            }
+            uint8_t diffRest  = byte;
+        }
+        else if((byte >> 6) == QOI_OP_RUN)
         {
             //
         }
-        return image;
+        else
+        {
+            //TODO: check for end of stream (7x 0x00, 1x 0x01)
+            fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
+            fprintf(stderr, "byte: %b\n", byte);
+            fprintf(stderr, "byte >> 6: %b\033[0m\n", byte >> 6);
+            return image;
+        }
+
+        //check for 2-bit tag
+
+        if(discardAlpha && flipRnB)
+        {
+        }
+        else if(discardAlpha)
+        {
+        }
+        else if(flipRnB)
+        {
+        }
+        else
+        {
+            image[i] = 0;
+        }
     }
 
-    while((byte = fgetc(file)) != EOF)
-    {
-    }
     return image;
 }
 
@@ -134,6 +216,7 @@ internal void findFormat
     uint8_t    *format
 ){
     uint32_t period = 0;
+
     uint32_t i = 0;
     while(path[i] != '\0')
     {
@@ -184,6 +267,7 @@ internal void findFormat
     }
 }
 
+//TODO: write back format to River2D_Image
 uint8_t* imgsurf_load
 (
     const char *path,
@@ -193,10 +277,9 @@ uint8_t* imgsurf_load
     uint8_t    bitdepth
 ){
     uint8_t* image = 0;
-
     uint8_t format = UINT8_MAX;
-    findFormat(path, &format);
 
+    findFormat(path, &format);
     if(format == UINT8_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. Try a .png/.bmp/.webp/.avif/.qoi/.jxl file.\033[0m\n");
