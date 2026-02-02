@@ -71,7 +71,7 @@ extern uint8_t imgsurf_write_file
     uint32_t   height,
     uint8_t    channels,
     uint8_t    bitdepth,
-    uint8_t    writeFileFormat
+    uint8_t    fileFormat
 );
 
 extern void imgsurf_write_ptr
