@@ -30,13 +30,16 @@ internal uint8_t* loadPNG
 
 #define IMGSURF_QOI_INDEX (prev_pixel.red * 3 + prev_pixel.green * 5 + prev_pixel.blue * 7 + prev_pixel.alpha * 11) % 64
 
-#define QOI_OP_RGB   0b11111110
-#define QOI_OP_RGBA  0b11111111
+#define QOI_OP_RGB    0b11111110
+#define QOI_OP_RGBA   0b11111111
 
-#define QOI_OP_INDEX 0b00
-#define QOI_OP_DIFF  0b01
-#define QOI_OP_LUMA  0b10
-#define QOI_OP_RUN   0b11
+#define QOI_OP_INDEX  0b00
+#define QOI_OP_DIFF   0b01
+#define QOI_OP_LUMA   0b10
+#define QOI_OP_RUN    0b11
+
+#define QOI_EOS_part1 0b00000000
+#define QOI_EOS_part2 0b00000001
 
 internal uint8_t* loadQOI
 (
@@ -98,7 +101,7 @@ internal uint8_t* loadQOI
     bool flipRnB      = channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA;
 
     uint64_t pixelcount = *width * *height;
-    uint8_t pixelwidth = discardAlpha ? 3 : 4;
+    uint8_t  pixelwidth = discardAlpha ? 3 : 4;
 
     //TODO: figure out best user interface to free image
     uint8_t* image = malloc(pixelcount * pixelwidth);
@@ -121,199 +124,216 @@ internal uint8_t* loadQOI
     //So we'll write two extra black pixels if the image ends early - but then it's cropped weird anyways?
     //I'll leave it at that.
 
-    for(uint64_t i = 0; ((byte = fgetc(file)) != EOF) && i < pixelcount * pixelwidth; i += 4)
+    //WIP: debug
+    uint64_t count = 0;
+
+    //FIXME: loop count
+    for(uint32_t y = 0; y < *height; ++y)
     {
-        if(byte == QOI_OP_RGB)
+        for(uint32_t x = 0; x < *width && ((byte = fgetc(file)) != EOF); ++x)
         {
-            if((byte = fgetc(file)) == EOF)
+            if(byte == QOI_OP_RGB)
             {
-                return image;
-            }
-            prev_pixel.red = byte;
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                prev_pixel.red = byte;
 
-            if((byte = fgetc(file)) == EOF)
-            {
-                return image;
-            }
-            prev_pixel.green = byte;
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                prev_pixel.green = byte;
 
-            if((byte = fgetc(file)) == EOF)
-            {
-                return image;
-            }
-            prev_pixel.blue = byte;
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                prev_pixel.blue = byte;
 
-            image[i + 1] = prev_pixel.green;
-
-            if(flipRnB)
-            {
-                image[i]     = prev_pixel.blue;
-                image[i + 2] = prev_pixel.red;
-            }
-            else
-            {
-                image[i]     = prev_pixel.red;
-                image[i + 2] = prev_pixel.blue;
-            }
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = 255;
-            }
-
-            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
-        }
-        if(byte == QOI_OP_RGBA)
-        {
-            if((byte = fgetc(file)) == EOF)
-            {
-                return image;
-            }
-            prev_pixel.red = byte;
-
-            if((byte = fgetc(file)) == EOF)
-            {
-                return image;
-            }
-            prev_pixel.green = byte;
-
-            if((byte = fgetc(file)) == EOF)
-            {
-                return image;
-            }
-            prev_pixel.blue = byte;
-
-            if((byte = fgetc(file)) == EOF)
-            {
-                return image;
-            }
-            prev_pixel.alpha = byte;
-
-            image[i + 1] = prev_pixel.green;
-
-            if(flipRnB)
-            {
-                image[i]     = prev_pixel.blue;
-                image[i + 2] = prev_pixel.red;
-            }
-            else
-            {
-                image[i]     = prev_pixel.red;
-                image[i + 2] = prev_pixel.blue;
-            }
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = prev_pixel.alpha;
-            }
-
-            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
-        }
-        else if((byte >> 6) == QOI_OP_INDEX)
-        {
-            prev_pixel = seen_pixels[byte % 64];
-
-            image[i + 1] = prev_pixel.green;
-
-            if(flipRnB)
-            {
-                image[i]     = prev_pixel.blue;
-                image[i + 2] = prev_pixel.red;
-            }
-            else
-            {
-                image[i]     = prev_pixel.red;
-                image[i + 2] = prev_pixel.blue;
-            }
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = prev_pixel.alpha;
-            }
-        }
-        else if((byte >> 6) == QOI_OP_DIFF)
-        {
-            prev_pixel.red   += ((0b00110000 & byte) >> 4) - 2;
-            prev_pixel.green += ((0b00001100 & byte) >> 2) - 2;
-            prev_pixel.blue  +=  (0b00000011 & byte) - 2;
-
-            image[i + 1] = prev_pixel.green;
-
-            if(flipRnB)
-            {
-                image[i]     = prev_pixel.blue;
-                image[i + 2] = prev_pixel.red;
-            }
-            else
-            {
-                image[i]     = prev_pixel.red;
-                image[i + 2] = prev_pixel.blue;
-            }
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = prev_pixel.alpha;
-            }
-
-            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
-        }
-        else if((byte >> 6) == QOI_OP_LUMA)
-        {
-            uint8_t diffGreen = byte % 64;
-
-            if((byte = fgetc(file)) == EOF)
-            {
-                return image;
-            }
-            uint8_t diffRest = byte;
-
-            prev_pixel.green = prev_pixel.green - 32 + diffGreen;
-
-            prev_pixel.red  = prev_pixel.red - 32 + diffGreen - 8 + (diffRest >> 4);
-
-            prev_pixel.blue = prev_pixel.blue - 32 + diffGreen - 8 + (diffRest & 0b00001111);
-
-            if(!discardAlpha)
-            {
-                image[i + 3] = prev_pixel.alpha;
-            }
-
-            seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
-        }
-        else if((byte >> 6) == QOI_OP_RUN)
-        {
-            uint8_t runlength = byte % 64;
-
-            for(uint8_t j = 0; j < runlength; ++j)
-            {
-                image[i + 1] = prev_pixel.green;
+                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
 
                 if(flipRnB)
                 {
-                    image[i]     = prev_pixel.blue;
-                    image[i + 2] = prev_pixel.red;
+                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
                 }
                 else
                 {
-                    image[i]     = prev_pixel.red;
-                    image[i + 2] = prev_pixel.blue;
+                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
                 }
 
                 if(!discardAlpha)
                 {
-                    image[i + 3] = prev_pixel.alpha;
+                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
                 }
-                i += j;
+
+                seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
-        }
-        else
-        {
-            fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
-            fprintf(stderr, "byte: %b\n", byte);
-            fprintf(stderr, "byte >> 6: %b\033[0m\n", byte >> 6);
-            return image;
+            else if(byte == QOI_OP_RGBA)
+            {
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                prev_pixel.red = byte;
+
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                prev_pixel.green = byte;
+
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                prev_pixel.blue = byte;
+
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                prev_pixel.alpha = byte;
+
+                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+
+                if(flipRnB)
+                {
+                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                }
+                else
+                {
+                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                }
+
+                if(!discardAlpha)
+                {
+                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                }
+
+                seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
+            }
+            else if((byte >> 6) == QOI_OP_DIFF)
+            {
+                prev_pixel.red   += ((0b00110000 & byte) >> 4) - 2;
+                prev_pixel.green += ((0b00001100 & byte) >> 2) - 2;
+                prev_pixel.blue  +=  (byte % 4) - 2;
+
+                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+
+                if(flipRnB)
+                {
+                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                }
+                else
+                {
+                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                }
+
+                if(!discardAlpha)
+                {
+                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                }
+
+                seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
+            }
+            else if((byte >> 6) == QOI_OP_LUMA)
+            {
+                uint8_t diffGreen = byte % 64;
+
+                if((byte = fgetc(file)) == EOF)
+                {
+                    return image;
+                }
+                uint8_t diffRest = byte;
+
+                prev_pixel.green = prev_pixel.green - 32 + diffGreen;
+                prev_pixel.red   = prev_pixel.red   - 32 + diffGreen - 8 + (diffRest >> 4);
+                prev_pixel.blue  = prev_pixel.blue  - 32 + diffGreen - 8 + (diffRest % 16);
+
+                if(!discardAlpha)
+                {
+                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                }
+
+                seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
+            }
+            else if((byte >> 6) == QOI_OP_RUN)
+            {
+                //FIXME: verify runlength
+                uint8_t runlength = (byte % 64) + 1;
+
+                for(uint8_t j = 0; j < runlength; ++j)
+                {
+                    image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+
+                    if(flipRnB)
+                    {
+                        image[y * *width + x * pixelwidth]     = prev_pixel.blue;
+                        image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                    }
+                    else
+                    {
+                        image[y * *width + x * pixelwidth]     = prev_pixel.red;
+                        image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                    }
+
+                    if(!discardAlpha)
+                    {
+                        image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                    }
+                    x += 4;
+                }
+            }
+            else if((byte >> 6) == QOI_OP_INDEX)
+            {
+                prev_pixel = seen_pixels[byte & 0b00111111];
+
+                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+
+                if(flipRnB)
+                {
+                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                }
+                else
+                {
+                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
+                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                }
+
+                if(!discardAlpha)
+                {
+                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                }
+
+                int nextByte = ungetc(fgetc(file), file);
+                if(nextByte == QOI_EOS_part2)
+                {
+                    return image;
+                }
+            }
+            else
+            {
+                fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
+                fprintf(stderr, "byte: %b\n", byte);
+                fprintf(stderr, "byte >> 6: %b\033[0m\n", byte >> 6);
+                return image;
+            }
+            //WIP: debug
+            count = y * *width + x;
         }
     }
+
+    fprintf(stderr, "\nINFO: parsed %lu of %lu.\n", count, pixelcount);
+    fprintf(stderr, "diff: %lu\n", count - pixelcount);
 
     return image;
 }
