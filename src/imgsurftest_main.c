@@ -66,14 +66,15 @@ int main()
                 }
 
 errmsg:
-                fprintf(stderr, "got: \nR:%u ", qoiRGBA[y * width * 4 + x]);
-                fprintf(stderr, "G:%u ", qoiRGBA[y * width * 4 + x + 1]);
-                fprintf(stderr, "B:%u ", qoiRGBA[y * width * 4 + x + 2]);
-                fprintf(stderr, "A:%u\n", qoiRGBA[y * width * 4 + x + 3]);
+                fprintf(stderr, "got: \nR:%u ",      qoiRGBA[y * width * 4 + x]);
+                fprintf(stderr, "G:%u ",             qoiRGBA[y * width * 4 + x + 1]);
+                fprintf(stderr, "B:%u ",             qoiRGBA[y * width * 4 + x + 2]);
+                fprintf(stderr, "A:%u\n",            qoiRGBA[y * width * 4 + x + 3]);
+
                 fprintf(stderr, "expected: \nR:%u ", stbTest[y * width * 4 + x]);
-                fprintf(stderr, "G:%u ", stbTest[y * width * 4 + x + 1]);
-                fprintf(stderr, "B:%u ", stbTest[y * width * 4 + x + 2]);
-                fprintf(stderr, "A:%u\033[0m\n", stbTest[y * width * 4 + x + 3]);
+                fprintf(stderr, "G:%u ",             stbTest[y * width * 4 + x + 1]);
+                fprintf(stderr, "B:%u ",             stbTest[y * width * 4 + x + 2]);
+                fprintf(stderr, "A:%u\033[0m\n",     stbTest[y * width * 4 + x + 3]);
                 return -1;
             }
         }
