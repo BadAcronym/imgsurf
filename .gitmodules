@@ -1,6 +1,3 @@
 [submodule "vendor/premake-ecc"]
 	path = vendor/premake-ecc
 	url = git@github.com:mattbystrin/premake-ecc
-[submodule "vendor/stb"]
-	path = vendor/stb
-	url = git@github.com:nothings/stb
