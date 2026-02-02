@@ -49,6 +49,11 @@ typedef struct pixel
 }
 pixel;
 
+extern uint8_t imgsurf_verifyPath
+(
+    const char *path
+);
+
 extern uint8_t* imgsurf_load
 (
     const char *path,
@@ -56,4 +61,25 @@ extern uint8_t* imgsurf_load
     uint32_t   *height,
     uint8_t    channels,
     uint8_t    bitdepth
+);
+
+extern uint8_t imgsurf_write_file
+(
+    const char *path,
+    void       *data,
+    uint32_t   width,
+    uint32_t   height,
+    uint8_t    channels,
+    uint8_t    bitdepth,
+    uint8_t    writeFileFormat
+);
+
+extern void imgsurf_write_ptr
+(
+    void     *mem,
+    uint32_t width,
+    uint32_t height,
+    uint8_t  channels,
+    uint8_t  bitdepth,
+    uint8_t  writeFileFormat
 );
