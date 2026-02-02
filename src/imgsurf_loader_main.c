@@ -4,7 +4,7 @@ internal uint8_t* loadPNG
 (
 ){
     //WIP: decode PNG, allocate size and write back!
-    fprintf(stderr, "PNG loader under construction!\n");
+    fprintf(stderr, "\nPNG loader under construction!\n");
     return 0;
 }
 
@@ -28,11 +28,10 @@ internal void findFormat
 
     if(period == 0)
     {
-        fprintf(stderr, "Path doesn't look like a file. Please check or add a file extension (.png/.bmp...)\n");
+        fprintf(stderr, "\nPath doesn't look like a file. Please check or add a file extension (.png/.bmp...)\n");
         return;
     }
 
-    //NOTE: should prevent accessing beyond string, no supported extension name is < 2 || > 4
     if(period + 3 > i || i > period + 4)
     {
         return;
@@ -79,19 +78,19 @@ uint8_t* imgsurf_load
 
     if(format == UINT8_MAX)
     {
-        fprintf(stderr, "File format is not supported. Try a .png/.bmp/.webp/.avif/.qoi/.jxl file.\n");
+        fprintf(stderr, "\nFile format is not supported. Try a .png/.bmp/.webp/.avif/.qoi/.jxl file.\n");
         return 0;
     }
 
     if(channels > IMGSURF_CHANNELS_MAX)
     {
-        fprintf(stderr, "Invalid colour channels specified.\n");
+        fprintf(stderr, "\nInvalid colour channels specified.\n");
         return 0;
     }
 
     if(bitdepth == 0)
     {
-        fprintf(stderr, "Bit depth cannot be null.\n");
+        fprintf(stderr, "\nBit depth cannot be null.\n");
         return 0;
     }
 
@@ -102,7 +101,7 @@ uint8_t* imgsurf_load
         {
             if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
             {
-                fprintf(stderr, "Only bit depths of 1, 2, 4, 8 or 16 are supported by .png!\n");
+                fprintf(stderr, "\nOnly bit depths of 1, 2, 4, 8 or 16 are supported by .png!\n");
             }
             else
             {
@@ -112,32 +111,32 @@ uint8_t* imgsurf_load
         }
         case IMGSURF_FILE_BMP:
         {
-            fprintf(stderr, "Format BMP not supported yet.\n");
+            fprintf(stderr, "\nFormat BMP not supported yet.\n");
             break;
         }
         case IMGSURF_FILE_WEBP:
         {
-            fprintf(stderr, "Format WEBP not supported yet.\n");
+            fprintf(stderr, "\nFormat WEBP not supported yet.\n");
             break;
         }
         case IMGSURF_FILE_AVIF:
         {
-            fprintf(stderr, "Format AVIF not supported yet.\n");
+            fprintf(stderr, "\nFormat AVIF not supported yet.\n");
             break;
         }
         case IMGSURF_FILE_QOI:
         {
-            fprintf(stderr, "Format QOI not supported yet.\n");
+            fprintf(stderr, "\nFormat QOI not supported yet.\n");
             break;
         }
         case IMGSURF_FILE_JXL:
         {
-            fprintf(stderr, "Format JXL not supported yet.\n");
+            fprintf(stderr, "\nFormat JXL not supported yet.\n");
             break;
         }
         default:
         {
-            fprintf(stderr, "Format not supported, code path should be impossible.\n");
+            fprintf(stderr, "\nFormat not supported, code path should be impossible.\n");
             return 0;
         }
     }
