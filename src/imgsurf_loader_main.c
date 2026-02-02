@@ -1,9 +1,5 @@
 #include "imgsurf_loader.h"
 
-int main()
-{
-}
-
 internal void loadPNG
 (
 ){
