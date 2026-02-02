@@ -136,21 +136,21 @@ internal uint8_t* loadQOI
         {
             if(byte == QOI_OP_RGB)
             {
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read red @ QOI_OP_RGB.\033[0m\n");
                 }
                 prev_pixel.red = (uint8_t)byte;
 
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read green @ QOI_OP_RGB.\033[0m\n");
                 }
                 prev_pixel.green = (uint8_t)byte;
 
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read blue @ QOI_OP_RGB.\033[0m\n");
                 }
                 prev_pixel.blue = (uint8_t)byte;
 
@@ -167,27 +167,27 @@ internal uint8_t* loadQOI
             }
             else if(byte == QOI_OP_RGBA)
             {
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read red @ QOI_OP_RGBA.\033[0m\n");
                 }
                 prev_pixel.red = (uint8_t)byte;
 
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read green @ QOI_OP_RGBA.\033[0m\n");
                 }
                 prev_pixel.green = (uint8_t)byte;
 
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read blue @ QOI_OP_RGBA.\033[0m\n");
                 }
                 prev_pixel.blue = (uint8_t)byte;
 
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read alpha @ QOI_OP_RGBA.\033[0m\n");
                 }
                 prev_pixel.alpha = (uint8_t)byte;
 
@@ -225,17 +225,17 @@ internal uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
-                uint8_t diffGreen = byte & 63; //0b00111111
+                uint8_t diffGreen = byte & 0x3F;
 
-                if((byte = fgetc(file)) == EOF)
+                if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    goto endoffunction;
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read diffs @ QOI_OP_LUMA.\033[0m\n");
                 }
-                uint8_t diffRed  = (240 & byte) >> 4; //(byte & 0b11110000) >> 4
-                uint8_t diffBlue =   15 & byte;       //(byte & 0b00001111)
+                uint8_t diffRed  = (0xF0 & byte) >> 4;
+                uint8_t diffBlue = (0xF  & byte);
 
                 prev_pixel.green += diffGreen - 32;
-                prev_pixel.red   += diffGreen + diffRed - 40;
+                prev_pixel.red   += diffGreen + diffRed  - 40;
                 prev_pixel.blue  += diffGreen + diffBlue - 40;
 
                 image[y * loopWidth + x]     = flipRnB ? prev_pixel.blue : prev_pixel.red;
@@ -328,8 +328,6 @@ internal uint8_t* loadQOI
         }
     }
 
-endoffunction:
-    fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream never reached.\033[0m\n\n");
     return image;
 }
 
@@ -612,44 +610,54 @@ internal uint8_t writeQOI
             // FIXME: something is not working at all here in RLE
             if(same_pixel(curr_pixel, prev_pixel))
             {
-                uint8_t *runPixel  = data;
+                uint32_t startX = x;
+                uint32_t startY = y;
+
                 uint8_t runlength  = 1;
                 pixel   next_pixel = curr_pixel;
 
-                for(; same_pixel(curr_pixel, next_pixel); runPixel += channelcount)
+                for(; same_pixel(curr_pixel, next_pixel) && y < height; ++x)
                 {
-                    next_pixel.red   = flipRnB ? *(runPixel + 2) : *runPixel;
-                    next_pixel.green = *(runPixel + 1);
-                    next_pixel.blue  = flipRnB ? *runPixel       : *(runPixel + 2);
-                    if(useAlpha)
+                    if(x > width)
                     {
-                        next_pixel.alpha = *(runPixel + 3);
+                        x = 0;
                     }
 
-                    if(++x > width)
-                    {
-                        if(++y > height)
-                        {
-                            break;
-                        }
-                    }
+                    // WIP: DEBUG
+                    // fprintf(stderr, "y: %u, x: %u\n", y, x);
 
-                    if(++runlength > 62)
+                    if(++runlength > 61)
                     {
                         break;
+                    }
+                    //ASAN: how in the fuck are we overflowing here?
+                    uint8_t og_r = data[(y * width + x) * channelcount];
+                    uint8_t og_b = data[(y * width + x) * channelcount + 2];
+
+                    next_pixel.red   = flipRnB ? og_b : og_r;
+                    next_pixel.green = data[(y * width + x) * channelcount + 1];
+                    next_pixel.blue  = flipRnB ? og_r : og_b;
+                    if(useAlpha)
+                    {
+                        next_pixel.alpha = data[(y * width + x) * channelcount + 3];
                     }
 
                     curr_pixel = next_pixel;
                 }
 
-                // LOOKUP: maybe this is off-by-one
-                data = runPixel;
-
-                uint8_t byte = 0xC0 | runlength;
+                uint8_t byte = 0xC0 | (runlength - 1);
                 if((elements = fwrite(&byte, 1, 1, file)) != 1)
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_RUN.\033[0m\n");
                     return -3;
+                }
+            }
+            else if(same_pixel(curr_pixel, seen_pixels[index]))
+            {
+                if((elements = fwrite(&index, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_INDEX.\033[0m\n");
+                    return -5;
                 }
             }
             else if(curr_pixel.alpha == prev_pixel.alpha && dr < 4 && dg < 4 && db < 4)
@@ -662,22 +670,14 @@ internal uint8_t writeQOI
                     return -4;
                 }
             }
-            else if(same_pixel(curr_pixel, seen_pixels[index]))
-            {
-                if((elements = fwrite(&index, 1, 1, file)) != 1)
-                {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_INDEX.\033[0m\n");
-                    return -5;
-                }
-            }
             else if(dg < 64 && dr_dg < 16 && db_dg < 16)
             {
-                uint8_t tag  = 0x80;
-                uint8_t data = (dg << 8) | (dr_dg << 4) | db_dg;
+                uint8_t tag      = 0x80;
+                uint8_t diffData = (dg << 8) | (dr_dg << 4) | db_dg;
 
-                if((elements = fwrite(&data, 1, 1, file)) != 1)
+                if((elements = fwrite(&diffData, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_LUMA.\033[0m\n");
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write diff data @ QOI_OP_LUMA.\033[0m\n");
                     return -6;
                 }
 
@@ -691,7 +691,7 @@ internal uint8_t writeQOI
             {
                 if(channelcount == 3 || curr_pixel.alpha == prev_pixel.alpha)
                 {
-                    if((elements = fwrite(&data, 1, 3, file)) != 3)
+                    if((elements = fwrite(&data[(y * width + x) * channelcount], 1, 3, file)) != 3)
                     {
                         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGBA.\033[0m\n");
                         return -7;
@@ -706,7 +706,7 @@ internal uint8_t writeQOI
                     continue;
                 }
 
-                if((elements = fwrite(&data, 1, 4, file)) != 4)
+                if((elements = fwrite(&data[(y * width + x) * channelcount], 1, 4, file)) != 4)
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGB.\033[0m\n");
                     return -9;
@@ -804,6 +804,7 @@ uint8_t imgsurf_write_file
                 uint8_t result = writeQOI(file, data, width, height, channels);
                 if(result)
                 {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: couldn't correctly write .qoi!\033[0m\n");
                     fclose(file);
                     return result;
                 }
@@ -849,9 +850,8 @@ uint8_t imgsurf_write_file
         }
     }
 
-    fclose(file);
-
     // TODO: return error codes by value, why not
+    fclose(file);
     return 0;
 }
 
