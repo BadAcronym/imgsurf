@@ -49,14 +49,14 @@ if(0 -ne $LASTEXITCODE)
 
 Write-Host "`n"
 
+popd
+
 if($compile_only)
 {
     exit 0
 }
 
-popd
-
-if(0 -eq $LASTEXITCODE -and -not $compile_only)
+if(0 -eq $LASTEXITCODE)
 {
     $target = ".\bin\$build\imgsurftest.exe"
     Write-Host "`nrunning $target..."
