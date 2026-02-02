@@ -265,13 +265,31 @@ internal uint8_t* loadQOI
         else if((byte >> 6) == QOI_OP_LUMA)
         {
             uint8_t diffGreen = byte % 64;
+
             if((byte = fgetc(file)) == EOF)
             {
                 return image;
             }
-            uint8_t diffRest  = byte;
+            uint8_t diffRest = byte;
 
-            //TODAY: luma op
+            green = green - 32 + diffGreen;
+
+            red  = red - 32 + diffGreen - 8 + (diffRest >> 4);
+
+            blue = blue - 32 + diffGreen - 8 + (diffRest % 8);
+
+            uint32_t index = IMGSURF_QOI_INDEX;
+
+            //FIXME: verify BE/LE
+            prev_pixels[index] += red;
+            prev_pixels[index] += green << 8;
+            prev_pixels[index] += blue  << 16;
+
+            if(!discardAlpha)
+            {
+                image[i + 3] = alpha;
+                prev_pixels[index] += alpha << 24;
+            }
         }
         else if((byte >> 6) == QOI_OP_RUN)
         {
@@ -429,7 +447,7 @@ uint8_t* imgsurf_load
         return 0;
     }
 
-    //TODO: more bit depth checking? maybe less strict, if it can load with wrong depth, let it
+    //TODO: more bit depth checking? maybe less, if it can load with wrong depth, let it
     switch(format)
     {
         case IMGSURF_FILE_QOI:
