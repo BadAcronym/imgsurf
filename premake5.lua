@@ -107,11 +107,11 @@ project("imagesurf unit tests")
                 "./include/linux_imgsurftest*",
                 "./src/imgsurftest*",
                 "./include/imgsurftest*" })
-        includedirs({ "./include/", "/usr/include/"})
+        includedirs({ "./include/", "/usr/include/", "./vendor/"})
         libdirs("./bin/%{cfg.buildcfg}/")
         buildoptions({"-Wextra", "-Wall", "-Wpedantic"})
         links("imgsurf:static")
-        linkoptions({"-fuse-ld=mold"})
+        linkoptions({"-fuse-ld=mold", "-lm"})
         toolset("clang")
 
     filter("platforms:Windows")
