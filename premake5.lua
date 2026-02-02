@@ -30,7 +30,6 @@ project("imagesurf")
     filter("platforms:Linux")
         system("Linux")
         defines("BUILD_LINUX")
-        kind("ConsoleApp")
         targetdir("bin/Linux_%{cfg.buildcfg}")
         objdir("obj/Linux_%{cfg.buildcfg}")
         files({ "./src/linux_imgsurf*",
