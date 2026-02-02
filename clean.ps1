@@ -11,7 +11,7 @@ foreach($folder in $toDelete)
 {
     if(Test-Path $folder)
     {
-        Remove-Item $folder -Recurse
+        Remove-Item $folder -Recurse -Force
     }
 }
 
