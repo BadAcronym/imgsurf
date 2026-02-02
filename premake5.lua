@@ -14,8 +14,13 @@ project("imagesurf library")
     targetname("imgsurf")
     kind("StaticLib")
 
-    filter("configurations:debug or asan")
+    filter("configurations:asan")
+        defines{"ASAN"}
+
+    filter("configurations:debug")
         defines{"DEBUG"}
+
+    filter("configurations:debug or asan")
         runtime("debug")
         symbols("On")
         optimize("Off")
@@ -64,8 +69,7 @@ project("imagesurf library")
 
     filter({"platforms:Windows", "configurations:asan"})
         editandcontinue("Off")
-        debugformat("c7")
-        buildoptions({"/fsanitize=address"})
+        buildoptions({"/fsanitize=address", "/Zi", "/INCREMENTAL:NO"})
 
     filter({"platforms:Windows", "configurations:release"})
         linkoptions({"/NODEFAULTLIB:MSVCRTD"})
@@ -139,7 +143,7 @@ project("imagesurf unit tests")
 
     filter({"platforms:Windows", "configurations:asan"})
         editandcontinue("Off")
-        debugformat("c7")
-        buildoptions({"/fsanitize=address"})
+        buildoptions({"/fsanitize=address", "/Zi", "/INCREMENTAL:NO"})
+
     filter({"platforms:Windows", "configurations:release"})
         linkoptions({"/NODEFAULTLIB:MSVCRTD"})
