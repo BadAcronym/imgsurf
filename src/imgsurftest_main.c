@@ -20,72 +20,90 @@ int main
     if(!qoiRGBA)
     {
         fprintf(stderr, "imgsurf_load failed to load a qoi in RGBA.\n");
+        return -1;
     }
-    else
+    printf("\nQOI in RGBA loaded!\n");
+    if(width != expectedWidth || height != expectedHeight)
     {
-        printf("\nQOI in RGBA loaded!\n");
-        if(width != expectedWidth || height != expectedHeight)
-        {
-            fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
-            return -1;
-        }
+        fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from QOI header.\033[0m\n");
+        return -1;
+    }
 
-        // for(uint32_t y = 0; y < height; ++y)
-        // {
-        //     for(uint32_t x = 0; x < width * 4; x += 4)
-        //     {
-                // if(qoiRGBA[y * width * 4 + x] != unitTest[y * width * 4 + x])
-                // {
-                //     fprintf(stderr, "\x1b[1;31mERROR: red channel at y:%u, x:%u mismatch.\n", y, x);
-                //     goto errmsg;
-                // }
-                // else if(qoiRGBA[y * width * 4 + x + 1] != unitTest[y * width * 4 + x + 1])
-                // {
-                //     fprintf(stderr, "\x1b[1;31mERROR: green channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-                //     goto errmsg;
-                // }
-                // else if(qoiRGBA[y * width * 4 + x + 2] != unitTest[y * width * 4 + x + 2])
-                // {
-                //     fprintf(stderr, "\x1b[1;31mERROR: blue channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-                //     goto errmsg;
-                // }
-                // else if(qoiRGBA[y * width * 4 + x + 3] != unitTest[y * width * 4 + x + 3])
-                // {
-                //     fprintf(stderr, "\x1b[1;31mERROR: alpha channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
-                //     goto errmsg;
-                // }
-                // else
-                // {
-                //     continue;
-                // }
+    //TODO: verify that the format actually just saves as that format, not reads
+    uint8_t result = imgsurf_write_file("assets/tux_reconstructed.qoi", qoiRGBA, width, height, IMGSURF_CHANNELS_RGBA, 8, IMGSURF_FILE_QOI);
+    if(result)
+    {
+        return result;
+    }
+
+    free(qoiRGBA);
+    qoiRGBA = imgsurf_load("assets/tux_reconstructed.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    if(!qoiRGBA)
+    {
+        fprintf(stderr, "imgsurf_load failed to load reconstructed RGBA QOI.\n");
+        return -2;
+    }
+    printf("\nQOI in RGBA loaded!\n");
+    if(width != expectedWidth || height != expectedHeight)
+    {
+        fprintf(stderr, "\x1b[1;31mERROR: dimensions parsed incorrectly from reconstructed QOI header.\033[0m\n");
+        return -3;
+    }
+
+    // for(uint32_t y = 0; y < height; ++y)
+    // {
+    //     for(uint32_t x = 0; x < width * 4; x += 4)
+    //     {
+            // if(qoiRGBA[y * width * 4 + x] != unitTest[y * width * 4 + x])
+            // {
+            //     fprintf(stderr, "\x1b[1;31mERROR: red channel at y:%u, x:%u mismatch.\n", y, x);
+            //     goto errmsg;
+            // }
+            // else if(qoiRGBA[y * width * 4 + x + 1] != unitTest[y * width * 4 + x + 1])
+            // {
+            //     fprintf(stderr, "\x1b[1;31mERROR: green channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
+            //     goto errmsg;
+            // }
+            // else if(qoiRGBA[y * width * 4 + x + 2] != unitTest[y * width * 4 + x + 2])
+            // {
+            //     fprintf(stderr, "\x1b[1;31mERROR: blue channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
+            //     goto errmsg;
+            // }
+            // else if(qoiRGBA[y * width * 4 + x + 3] != unitTest[y * width * 4 + x + 3])
+            // {
+            //     fprintf(stderr, "\x1b[1;31mERROR: alpha channel at y:%u, x:%u mismatch.\033[0m\n", y, x);
+            //     goto errmsg;
+            // }
+            // else
+            // {
+            //     continue;
+            // }
 
 // errmsg:
-                // fprintf(stderr, "got: \nR:%u ",      qoiRGBA[y * width * 4 + x]);
-                // fprintf(stderr, "G:%u ",             qoiRGBA[y * width * 4 + x + 1]);
-                // fprintf(stderr, "B:%u ",             qoiRGBA[y * width * 4 + x + 2]);
-                // fprintf(stderr, "A:%u\n",            qoiRGBA[y * width * 4 + x + 3]);
+            // fprintf(stderr, "got: \nR:%u ",      qoiRGBA[y * width * 4 + x]);
+            // fprintf(stderr, "G:%u ",             qoiRGBA[y * width * 4 + x + 1]);
+            // fprintf(stderr, "B:%u ",             qoiRGBA[y * width * 4 + x + 2]);
+            // fprintf(stderr, "A:%u\n",            qoiRGBA[y * width * 4 + x + 3]);
 
-                // fprintf(stderr, "expected: \nR:%u ", unitTest[y * width * 4 + x]);
-                // fprintf(stderr, "G:%u ",             unitTest[y * width * 4 + x + 1]);
-                // fprintf(stderr, "B:%u ",             unitTest[y * width * 4 + x + 2]);
-                // fprintf(stderr, "A:%u\033[0m\n",     unitTest[y * width * 4 + x + 3]);
-                // free(qoiRGBA);
-                // return -1;
-    //         }
-    //     }
-    }
+            // fprintf(stderr, "expected: \nR:%u ", unitTest[y * width * 4 + x]);
+            // fprintf(stderr, "G:%u ",             unitTest[y * width * 4 + x + 1]);
+            // fprintf(stderr, "B:%u ",             unitTest[y * width * 4 + x + 2]);
+            // fprintf(stderr, "A:%u\033[0m\n",     unitTest[y * width * 4 + x + 3]);
+            // free(qoiRGBA);
+            // return -1;
+//         }
+//     }
     free(qoiRGBA);
 
     uint8_t* qoiBGRA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_BGRA, 8);
     if(!qoiBGRA)
     {
         fprintf(stderr, "imgsurf_load failed to load a qoi in BGRA.\n");
+        return -4;
     }
-    else
-    {
-        printf("\nQOI in BGRA loaded!\n");
-        // TODO: (imgsurf #1) validate against qoiRGBA, then other formats
-    }
+    printf("\nQOI in BGRA loaded!\n");
+
+    // TODO: (imgsurf #1) validate against qoiRGBA, then other formats
     free(qoiBGRA);
 
     return 0;

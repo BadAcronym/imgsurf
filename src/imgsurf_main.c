@@ -10,6 +10,15 @@
     #include "win32_imgsurf_platform.h"
 #endif
 
+internal bool same_pixel
+(
+    pixel pixel1,
+    pixel pixel2
+){
+    return (pixel1.red  == pixel2.red  && pixel1.green == pixel2.green &&
+            pixel1.blue == pixel2.blue && pixel1.alpha == pixel2.alpha);
+}
+
 internal uint8_t* loadPNG
 (
     FILE        *file,
@@ -44,12 +53,12 @@ internal uint8_t* loadQOI
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", i);
             fprintf(stderr, "got: %u\n", (uint8_t)byte);
-            fprintf(stderr, "expected: %u\n", magic[i]);
+            fprintf(stderr, "expected: %u\n", (uint8_t)magic[i]);
             return 0;
         }
     }
 
-    // BACKLOG: use fread wherever it makes sense.
+    // BACKLOG: use fread wherever it makes sense...
 
     for(uint8_t i = 0; i < 4; ++i)
     {
@@ -98,7 +107,7 @@ internal uint8_t* loadQOI
         return 0;
     }
 
-    pixel prev_pixel = {0, 0, 0, 255};
+    pixel prev_pixel      = {0, 0, 0, 255};
     pixel seen_pixels[64] = {0};
 
     uint64_t loopWidth  = *width * pixelwidth;
@@ -477,7 +486,7 @@ uint8_t* imgsurf_load
         }
         default:
         {
-            fprintf(stderr, "\nTODO: Format not supported, code path should be impossible.\033[0m\n");
+            fprintf(stderr, "\nUnknown format; not supported.\033[0m\n");
             return 0;
         }
     }
@@ -490,47 +499,205 @@ uint8_t* imgsurf_load
 // TODO: move this to loader as well
 typedef struct header
 {
-    char     magic[4];
     uint32_t width;
     uint32_t height;
-    uint8_t  channels;
+    uint8_t  channelcount;
     uint8_t  colorspace;
 }
 Header;
 
-// maybe return err
-internal void writeQOI
+// TODO: return error codes.
+internal uint8_t writeQOI
 (
     FILE     *file,
+    uint8_t  *data,
     uint32_t width,
     uint32_t height,
     uint8_t  channels
 ){
     Header header = {0};
-    header.magic[0] = 'q';
-    header.magic[1] = 'o';
-    header.magic[2] = 'i';
-    header.magic[3] = 'f';
+    char *magic = malloc(4);
+    magic[0] = 'q';
+    magic[1] = 'o';
+    magic[2] = 'i';
+    magic[3] = 'f';
 
-    header.width      = width;
-    header.height     = height;
-    header.channels   = channels;
-    // BACKLOG: figure out this shiie
-    header.colorspace = 0;
+    uint8_t channelcount = (channels == IMGSURF_CHANNELS_RGBA || channels == IMGSURF_CHANNELS_BGRA) ? 4 : 3;
 
-    size_t code = 0;
-
-    if((code = fwrite(&header, 1, sizeof(header), file)) != 1)
+    if(channelcount != 3 && channelcount != 4)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write header.\033[0m\n");
+        fprintf(stderr, "\n\033[31;1;7mERROR: QOI only supports channelcounts of 3 (RGB) or 4 (RGBA). Got: %u\033[0m\n", channelcount);
+        return -1;
     }
 
-    pixel previous_pixels[64] = {0};
-    // WIP: so I can use da macro
-    pixel prev_pixel;
+    // BACKLOG: figure out colorspace field
+    header.width        = width;
+    header.height       = height;
+    header.colorspace   = 0;
+    header.channelcount = channelcount;
+
+    size_t elements = 0;
+
+    if((elements = fwrite(&magic, 1, 4, file)) != 4)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes.\033[0m\n");
+        return -2;
+    }
+
+    if((elements = fwrite(&header, sizeof(header), 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write header.\033[0m\n");
+        return -2;
+    }
+
+    pixel prev_pixel      = {0, 0, 0, 255};
+    pixel seen_pixels[64] = {0};
+
+    bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  || channels == IMGSURF_CHANNELS_BGRA;
+    bool useAlpha = channels == IMGSURF_CHANNELS_RGBA || channels == IMGSURF_CHANNELS_BGRA;
+
+    // TODO: verify all of the ops manually.
+
+    for(uint32_t y = 0; y < height; ++y)
+    {
+        for(uint32_t x = 0; x < width; ++x, data += channelcount)
+        {
+            pixel curr_pixel = {0, 0, 0, 255};
+
+            curr_pixel.red   = flipRnB ? *(data + 2) : *data;
+            curr_pixel.green = *(data + 1);
+            curr_pixel.blue  = flipRnB ? *data       : *(data + 2);
+            if(useAlpha)
+            {
+                curr_pixel.alpha = *(data + 3);
+            }
+
+            uint8_t dr = curr_pixel.red   - prev_pixel.red;
+            uint8_t dg = curr_pixel.green - prev_pixel.green;
+            uint8_t db = curr_pixel.blue  - prev_pixel.blue;
+
+            uint8_t dr_dg = (curr_pixel.red  - prev_pixel.red)  - dg;
+            uint8_t db_dg = (curr_pixel.blue - prev_pixel.blue) - dg;
+
+            uint8_t index = (curr_pixel.red * 3  + curr_pixel.green * 5
+                           + curr_pixel.blue * 7 + curr_pixel.alpha * 11) % 64;
+
+            if(same_pixel(curr_pixel, prev_pixel))
+            {
+                uint8_t *runPixel  = data;
+                uint8_t runlength  = 1;
+                pixel   next_pixel = curr_pixel;
+
+                for(; same_pixel(curr_pixel, next_pixel); runPixel += channelcount)
+                {
+                    next_pixel.red   = flipRnB ? *(runPixel + 2) : *runPixel;
+                    next_pixel.green = *(runPixel + 1);
+                    next_pixel.blue  = flipRnB ? *runPixel       : *(runPixel + 2);
+                    if(useAlpha)
+                    {
+                        next_pixel.alpha = *(runPixel + 3);
+                    }
+
+                    if(++x > width)
+                    {
+                        if(++y > height)
+                        {
+                            break;
+                        }
+                    }
+
+                    if(++runlength > 62)
+                    {
+                        break;
+                    }
+                }
+
+                // LOOKUP: maybe this is off-by-one
+                data = runPixel;
+
+                uint8_t byte = 192 | runlength;
+                if((elements = fwrite(&byte, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_RUN.\033[0m\n");
+                    return -3;
+                }
+            }
+            else if(curr_pixel.alpha == prev_pixel.alpha && dr < 4 && dg < 4 && db < 4)
+            {
+                uint8_t byte = 0x40 | (dr << 4) | (dg << 2) | db;
+
+                if((elements = fwrite(&byte, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_DIFF.\033[0m\n");
+                    return -4;
+                }
+            }
+            else if(same_pixel(curr_pixel, seen_pixels[index]))
+            {
+                if((elements = fwrite(&index, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_INDEX.\033[0m\n");
+                    return -5;
+                }
+            }
+            else if(dg < 64 && dr_dg < 16 && db_dg < 16)
+            {
+                uint16_t twobyte = 0x8000 | (dg << 8) | (dr_dg << 4) | db_dg;
+
+                if((elements = fwrite(&twobyte, 2, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_LUMA.\033[0m\n");
+                    return -6;
+                }
+            }
+            else
+            {
+                if(channelcount == 4)
+                {
+                    uint8_t tag  = 0xFF;
+                    if((elements = fwrite(&tag, 1, 1, file)) != 1)
+                    {
+                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
+                        return -7;
+                    }
+
+                    if((elements = fwrite(&data, 1, 4, file)) != 4)
+                    {
+                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGB.\033[0m\n");
+                        return -8;
+                    }
+                    continue;
+                }
+
+                uint8_t tag  = 0xFE;
+                if((elements = fwrite(&tag, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
+                    return -9;
+                }
+
+                if((elements = fwrite(&data, 1, 3, file)) != 3)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGBA.\033[0m\n");
+                    return -10;
+                }
+            }
+
+            prev_pixel = curr_pixel;
+            seen_pixels[index] = curr_pixel;
+        }
+    }
+
+    uint64_t EOS = 0x01;
+    if((elements = fwrite(&EOS, 8, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS tag.\033[0m\n");
+        return -11;
+    }
+
+    return 0;
 }
 
-// TODO: allow writing to a file
 uint8_t imgsurf_write_file
 (
     const char *path,
@@ -538,7 +705,8 @@ uint8_t imgsurf_write_file
     uint32_t   width,
     uint32_t   height,
     uint8_t    channels,
-    uint8_t    bitdepth
+    uint8_t    bitdepth,
+    uint8_t    writeFileFormat
 ){
     if(!data)
     {
@@ -546,9 +714,9 @@ uint8_t imgsurf_write_file
         return -1;
     }
 
-    uint8_t format = UINT8_MAX;
-    findFormat(path, &format);
-    if(format == UINT8_MAX)
+    uint8_t readFileFormat = UINT8_MAX;
+    findFormat(path, &readFileFormat);
+    if(readFileFormat == UINT8_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. Try a .qoi/.png/.bmp/.webp/.avif/.jxl file.\033[0m\n");
         return 0;
@@ -566,23 +734,6 @@ uint8_t imgsurf_write_file
         return 0;
     }
 
-    uint8_t code = imgsurf_verifyPath(path);
-    if(code == IMGSURF_TYPE_ERROR)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is not valid.\033[0m\n", path);
-        return 0;
-    }
-    if(code == IMGSURF_TYPE_DIRECTORY)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is a directory.\033[0m\n", path);
-        return 0;
-    }
-    if(code > IMGSURF_TYPE_MAX)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Verifying the path %s has failed.\033[0m\n", path);
-        return 0;
-    }
-
     FILE *file = fopen(path, "wb");
     if(!file)
     {
@@ -596,7 +747,7 @@ uint8_t imgsurf_write_file
         return 0;
     }
 
-    switch(format)
+    switch(writeFileFormat)
     {
         case IMGSURF_FILE_QOI:
         {
@@ -606,7 +757,7 @@ uint8_t imgsurf_write_file
             }
             else
             {
-                writeQOI(file, width, height, channels);
+                return writeQOI(file, data, width, height, channels);
             }
             break;
         }
@@ -644,7 +795,7 @@ uint8_t imgsurf_write_file
         }
         default:
         {
-            fprintf(stderr, "\nTODO: Format not supported, code path should be impossible.\033[0m\n");
+            fprintf(stderr, "\nUnknown format; not supported.\033[0m\n");
             return 0;
         }
     }
@@ -656,12 +807,14 @@ uint8_t imgsurf_write_file
 }
 
 // TODO: allow writing to a pre-allocated region in memory
+// maybe return errcodes
 void imgsurf_write_ptr
 (
     void     *mem,
     uint32_t width,
     uint32_t height,
     uint8_t  channels,
-    uint8_t  bitdepth
+    uint8_t  bitdepth,
+    uint8_t  writeFileFormat
 ){
 }
