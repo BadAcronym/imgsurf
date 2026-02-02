@@ -75,7 +75,6 @@ internal uint8_t* loadQOI
         }
     }
 
-    // TODO: replace fgetc with fread everywhere
     int byte = 0;
     for(uint8_t i = 0; i < 4; ++i)
     {
@@ -130,6 +129,16 @@ internal uint8_t* loadQOI
     uint64_t loopWidth  = *width * pixelwidth;
     uint64_t loopHeight = *height;
 
+    // WIP: DEBUG
+    uint64_t run_count   = 0;
+    uint64_t diff_count  = 0;
+    uint64_t index_count = 0;
+    uint64_t luma_count  = 0;
+    uint64_t rgb_count   = 0;
+    uint64_t rgba_count  = 0;
+
+    //FIXME: rename for consistency, prev_pixel should be curr_pixel here
+
     for(uint64_t y = 0; y < loopHeight; y++)
     {
         for(uint64_t x = 0; x < loopWidth && ((byte = fgetc(file)) != EOF); x += pixelwidth)
@@ -163,6 +172,7 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                ++rgb_count;
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if(byte == QOI_OP_RGBA)
@@ -200,13 +210,14 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                ++rgba_count;
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_DIFF)
             {
-                uint8_t diffRed   = (48 & byte) >> 4; //(0b00110000 & byte) >> 4
-                uint8_t diffGreen = (12 & byte) >> 2; //(0b00001100 & byte) >> 2
-                uint8_t diffBlue  =   3 & byte;       // 0b00000011 & byte
+                uint8_t diffRed   = (0x30 & byte) >> 4;
+                uint8_t diffGreen = (0xC  & byte) >> 2;
+                uint8_t diffBlue  =  0x3  & byte;
 
                 prev_pixel.red   += diffRed   - 2;
                 prev_pixel.green += diffGreen - 2;
@@ -221,6 +232,7 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                ++diff_count;
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_LUMA)
@@ -247,11 +259,12 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
+                ++luma_count;
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                uint8_t runlength = (byte & 63) + 1;
+                uint8_t runlength = (byte & 0x3F) + 1;
 
                 uint64_t index = y * loopWidth + x;
 
@@ -269,9 +282,12 @@ internal uint8_t* loadQOI
                 x += (runlength - 1) * pixelwidth;
                 y += x / loopWidth;
                 x %= loopWidth;
+
+                ++run_count;
             }
             else if((byte >> 6) == QOI_OP_INDEX)
             {
+                ++index_count;
                 if(byte == 0x00)
                 {
                     int byteBuffer[8];
@@ -311,6 +327,15 @@ internal uint8_t* loadQOI
             }
         }
     }
+
+    fprintf(stderr, "\n\nREAD BACK (actual):\n\n");
+    fprintf(stderr, "run_count:   %lu\n", run_count);
+    fprintf(stderr, "diff_count:  %lu\n", diff_count);
+    fprintf(stderr, "index_count: %lu\n", index_count);
+    fprintf(stderr, "luma_count:  %lu\n", luma_count);
+    fprintf(stderr, "rgb_count:   %lu\n", rgb_count);
+    fprintf(stderr, "rgba_count:  %lu\n", rgba_count);
+    fprintf(stderr, "\n\n");
 
     int byteBuffer[8];
     uint8_t zeroCounter = 0;
@@ -578,170 +603,215 @@ internal uint8_t writeQOI
     pixel prev_pixel      = {0, 0, 0, 255};
     pixel seen_pixels[64] = {0};
 
+    // FIXME: these bools gotta change, they should be based on inp_format != outp_format
+
     bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  || channels == IMGSURF_CHANNELS_BGRA;
     bool useAlpha = channels == IMGSURF_CHANNELS_RGBA || channels == IMGSURF_CHANNELS_BGRA;
 
-    // FIXME: sxiv crashes trying to load the image. I'm missing some integrity check.
-    // imagemagick says not enough pixel data! that's prob it.
-    // TODO: check that we actually have wrote & read the correct amount of pixels
-    // TODO: verify all of the ops manually.
+    // WIP: DEBUG
+    uint64_t pixelcount  = 0;
+    uint64_t run_count   = 0;
+    uint64_t diff_count  = 0;
+    uint64_t index_count = 0;
+    uint64_t luma_count  = 0;
+    uint64_t rgb_count   = 0;
+    uint64_t rgba_count  = 0;
 
-    for(uint32_t y = 0; y < height; ++y)
+    uint8_t *data_end = data + width * height * channelcount;
+    uint8_t lastOp = UINT8_MAX;
+
+    for(uint64_t i = 0; data < data_end; data += channelcount)
     {
-        for(uint32_t x = 0; x < width; ++x)
+        pixel curr_pixel = {0, 0, 0, 255};
+
+        uint8_t og_r = *data;
+        uint8_t og_b = *(data + 2);
+
+        curr_pixel.red   = flipRnB ? og_b : og_r;
+        curr_pixel.green = *(data + 1);
+        curr_pixel.blue  = flipRnB ? og_r : og_b;
+        if(useAlpha)
         {
-            pixel curr_pixel = {0, 0, 0, 255};
+            curr_pixel.alpha = *(data + 3);
+        }
 
-            uint8_t og_r = data[(y * width + x) * channelcount];
-            uint8_t og_b = data[(y * width + x) * channelcount + 2];
+        uint8_t dr = curr_pixel.red   - prev_pixel.red;
+        uint8_t dg = curr_pixel.green - prev_pixel.green;
+        uint8_t db = curr_pixel.blue  - prev_pixel.blue;
 
-            curr_pixel.red   = flipRnB ? og_b : og_r;
-            curr_pixel.green = data[(y * width + x) * channelcount + 1];
-            curr_pixel.blue  = flipRnB ? og_r : og_b;
-            if(useAlpha)
+        uint8_t dr_dg = (curr_pixel.red  - prev_pixel.red)  - dg;
+        uint8_t db_dg = (curr_pixel.blue - prev_pixel.blue) - dg;
+
+        uint8_t index = (curr_pixel.red  * 3 + curr_pixel.green * 5
+                       + curr_pixel.blue * 7 + curr_pixel.alpha * 11) % 64;
+
+        // FIXME: verify that we're updating prev_pixel in the correct place
+        if(same_pixel(curr_pixel, seen_pixels[index]) && lastOp != QOI_OP_INDEX)
+        {
+            if((elements = fwrite(&index, 1, 1, file)) != 1)
             {
-                curr_pixel.alpha = data[(y * width + x) * channelcount + 3];
+                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_INDEX.\033[0m\n");
+                return -5;
             }
 
-            uint8_t dr = curr_pixel.red   - prev_pixel.red;
-            uint8_t dg = curr_pixel.green - prev_pixel.green;
-            uint8_t db = curr_pixel.blue  - prev_pixel.blue;
+            ++pixelcount;
+            ++index_count;
+            lastOp     = QOI_OP_INDEX;
+        }
+        // FIXME: wrong runlength... still, somehow.
+        else if(same_pixel(curr_pixel, prev_pixel))
+        {
+            uint8_t  runlength  = 0;
+            pixel    next_pixel = prev_pixel;
 
-            uint8_t dr_dg = (curr_pixel.red  - prev_pixel.red)  - dg;
-            uint8_t db_dg = (curr_pixel.blue - prev_pixel.blue) - dg;
-
-            uint8_t index = (curr_pixel.red  * 3 + curr_pixel.green * 5
-                           + curr_pixel.blue * 7 + curr_pixel.alpha * 11) % 64;
-
-            if(same_pixel(curr_pixel, prev_pixel))
+            if(data > data_end)
             {
-                uint32_t startX = x;
-                uint32_t startY = y;
+                break;
+            }
 
-                uint8_t runlength  = 1;
-                pixel   next_pixel = curr_pixel;
-
-                for(; same_pixel(curr_pixel, next_pixel); ++x)
+            for(; data < data_end && same_pixel(next_pixel, prev_pixel); ++runlength, data += channelcount)
+            {
+                if(runlength > 62)
                 {
-                    if(x > width)
-                    {
-                        x = 0;
-                        if(++y > height)
-                        {
-                            break;
-                        }
-                    }
-
-                    if(++runlength > 61)
-                    {
-                        break;
-                    }
-                    uint8_t og_r = data[(y * width + x) * channelcount];
-                    uint8_t og_b = data[(y * width + x) * channelcount + 2];
-
-                    next_pixel.red   = flipRnB ? og_b : og_r;
-                    next_pixel.green = data[(y * width + x) * channelcount + 1];
-                    next_pixel.blue  = flipRnB ? og_r : og_b;
-                    if(useAlpha)
-                    {
-                        next_pixel.alpha = data[(y * width + x) * channelcount + 3];
-                    }
-
-                    curr_pixel = next_pixel;
+                    break;
                 }
 
-                uint8_t byte = 0xC0 | (runlength - 1);
-                if((elements = fwrite(&byte, 1, 1, file)) != 1)
+                uint8_t og_r = *data;
+                uint8_t og_b = *(data + 2);
+
+                next_pixel.red   = flipRnB ? og_b : og_r;
+                next_pixel.green = *(data + 1);
+                next_pixel.blue  = flipRnB ? og_r : og_b;
+                if(useAlpha)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_RUN.\033[0m\n");
-                    return -3;
+                    next_pixel.alpha = *(data + 3);
                 }
             }
-            else if(same_pixel(curr_pixel, seen_pixels[index]))
+
+            uint8_t byte = 0xC0 | (runlength - 2);
+            if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
-                if((elements = fwrite(&index, 1, 1, file)) != 1)
-                {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_INDEX.\033[0m\n");
-                    return -5;
-                }
+                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RUN.\033[0m\n");
+                return -3;
             }
-            else if(curr_pixel.alpha == prev_pixel.alpha && dr < 4 && dg < 4 && db < 4)
-            {
-                uint8_t byte = 0x40 | (dr << 4) | (dg << 2) | db;
 
-                if((elements = fwrite(&byte, 1, 1, file)) != 1)
-                {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write @ QOI_OP_DIFF.\033[0m\n");
-                    return -4;
-                }
+            ++run_count;
+            pixelcount += runlength;
+            lastOp = QOI_OP_RUN;
+        }
+        else if(curr_pixel.alpha == prev_pixel.alpha && dr < 4 && dg < 4 && db < 4)
+        {
+            uint8_t byte = 0x40 | (dr << 4) | (dg << 2) | db;
+
+            if((elements = fwrite(&byte, 1, 1, file)) != 1)
+            {
+                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_DIFF.\033[0m\n");
+                return -4;
             }
-            else if(dg < 64 && dr_dg < 16 && db_dg < 16)
+
+            ++diff_count;
+            ++pixelcount;
+            lastOp = QOI_OP_DIFF;
+            seen_pixels[index] = curr_pixel;
+        }
+        // FIXME: we're not luma-ing in the test img
+        else if(dg < 0x40 && dr_dg < 0x10 && db_dg < 0x10)
+        {
+            uint8_t tag      = 0x80;
+            uint8_t lumaData = (dg << 8) | (dr_dg << 4) | db_dg;
+
+            if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
-                uint8_t tag      = 0x80;
-                uint8_t diffData = (dg << 8) | (dr_dg << 4) | db_dg;
-
-                if((elements = fwrite(&diffData, 1, 1, file)) != 1)
-                {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write diff data @ QOI_OP_LUMA.\033[0m\n");
-                    return -6;
-                }
-
-                if((elements = fwrite(&tag, 1, 1, file)) != 1)
-                {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_LUMA.\033[0m\n");
-                    return -6;
-                }
+                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_LUMA.\033[0m\n");
+                return -6;
             }
-            else
+
+            if((elements = fwrite(&lumaData, 1, 1, file)) != 1)
             {
-                if(channelcount == 3 || curr_pixel.alpha == prev_pixel.alpha)
-                {
-                    if((elements = fwrite(&data[(y * width + x) * channelcount], 1, 3, file)) != 3)
-                    {
-                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGBA.\033[0m\n");
-                        return -7;
-                    }
+                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write diff data @ QOI_OP_LUMA.\033[0m\n");
+                return -6;
+            }
 
-                    uint8_t tag  = 0xFE;
-                    if((elements = fwrite(&tag, 1, 1, file)) != 1)
-                    {
-                        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
-                        return -8;
-                    }
-                    continue;
-                }
+            ++pixelcount;
+            ++luma_count;
+            lastOp = QOI_OP_LUMA;
+            seen_pixels[index] = curr_pixel;
+        }
+        else
+        {
+            ++pixelcount;
 
-                if((elements = fwrite(&data[(y * width + x) * channelcount], 1, 4, file)) != 4)
-                {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write bytes @ QOI_OP_RGB.\033[0m\n");
-                    return -9;
-                }
-
-                uint8_t tag  = 0xFF;
+            if(curr_pixel.alpha == prev_pixel.alpha)
+            {
+                uint8_t tag  = 0xFE;
                 if((elements = fwrite(&tag, 1, 1, file)) != 1)
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
+                    return -7;
+                }
+
+                if((elements = fwrite(data, 1, 3, file)) != 3)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RGB.\033[0m\n");
+                    return -8;
+                }
+
+                ++rgb_count;
+                lastOp = QOI_OP_RGB;
+                seen_pixels[index] = curr_pixel;
+            }
+            else
+            {
+                uint8_t tag  = 0xFF;
+                if((elements = fwrite(&tag, 1, 1, file)) != 1)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGBA.\033[0m\n");
                     return -10;
                 }
-            }
 
-            prev_pixel = curr_pixel;
-            seen_pixels[index] = curr_pixel;
+                if((elements = fwrite(data, 1, 4, file)) != 4)
+                {
+                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RGBA.\033[0m\n");
+                    return -7;
+                }
+
+                ++rgba_count;
+                lastOp = QOI_OP_RGBA;
+                seen_pixels[index] = curr_pixel;
+            }
         }
+        prev_pixel = curr_pixel;
+    }
+
+    fprintf(stderr, "\n\n");
+    fprintf(stderr, "run_count:   %lu\n", run_count);
+    fprintf(stderr, "diff_count:  %lu\n", diff_count);
+    fprintf(stderr, "index_count: %lu\n", index_count);
+    fprintf(stderr, "luma_count:  %lu\n", luma_count);
+    fprintf(stderr, "rgb_count:   %lu\n", rgb_count);
+    fprintf(stderr, "rgba_count:  %lu\n", rgba_count);
+
+    if(pixelcount != width * height)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: didn't write enough pixel data.\033[0m\n");
+        fprintf(stderr, "\n\033[31;1;7mexpected: %u, got: %lu\033[0m\n", width * height, pixelcount);
+
+        // TESTING: so I can still read the hexdump
+        // return -11;
     }
 
     uint64_t EOS0 = 0x00;
     if((elements = fwrite(&EOS0, 7, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x00 tag.\033[0m\n");
-        return -11;
+        return -12;
     }
 
     uint8_t EOS1 = 0x01;
     if((elements = fwrite(&EOS1, 1, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x01 tag.\033[0m\n");
-        return -12;
+        return -13;
     }
 
     return 0;
