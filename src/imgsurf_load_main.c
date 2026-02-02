@@ -103,7 +103,6 @@ internal uint8_t* loadQOI
     uint64_t pixelcount = *width * *height;
     uint8_t  pixelwidth = discardAlpha ? 3 : 4;
 
-    //TODO: figure out best user interface to free image
     uint8_t* image = malloc(pixelcount * pixelwidth);
     if(!image)
     {
