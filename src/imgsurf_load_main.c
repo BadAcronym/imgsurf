@@ -118,10 +118,13 @@ internal uint8_t* loadQOI
     //WIP: debug
     uint64_t count = 0;
 
+    uint64_t loopWidth  = *width * pixelwidth;
+    uint64_t loopHeight = *height;
+
     //FIXME: loop count & indexing broken
-    for(uint32_t y = 0; y < *height; ++y)
+    for(uint64_t y = 0; y < loopHeight; y++)
     {
-        for(uint32_t x = 0; x < *width && ((byte = fgetc(file)) != EOF); ++x)
+        for(uint64_t x = 0; x < loopWidth && ((byte = fgetc(file)) != EOF); x += pixelwidth)
         {
             if(byte == QOI_OP_RGB)
             {
@@ -143,22 +146,22 @@ internal uint8_t* loadQOI
                 }
                 prev_pixel.blue = byte;
 
-                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+                image[y * loopWidth + x + 1] = prev_pixel.green;
 
                 if(flipRnB)
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                    image[y * loopWidth + x]     = prev_pixel.blue;
+                    image[y * loopWidth + x + 2] = prev_pixel.red;
                 }
                 else
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                    image[y * loopWidth + x]     = prev_pixel.red;
+                    image[y * loopWidth + x + 2] = prev_pixel.blue;
                 }
 
                 if(!discardAlpha)
                 {
-                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                    image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
@@ -189,22 +192,22 @@ internal uint8_t* loadQOI
                 }
                 prev_pixel.alpha = byte;
 
-                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+                image[y * loopWidth + x + 1] = prev_pixel.green;
 
                 if(flipRnB)
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                    image[y * loopWidth + x]     = prev_pixel.blue;
+                    image[y * loopWidth + x + 2] = prev_pixel.red;
                 }
                 else
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                    image[y * loopWidth + x]     = prev_pixel.red;
+                    image[y * loopWidth + x + 2] = prev_pixel.blue;
                 }
 
                 if(!discardAlpha)
                 {
-                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                    image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
@@ -215,22 +218,22 @@ internal uint8_t* loadQOI
                 prev_pixel.green += ((0b00001100 & byte) >> 2) - 2;
                 prev_pixel.blue  +=  (byte % 4) - 2;
 
-                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+                image[y * loopWidth + x + 1] = prev_pixel.green;
 
                 if(flipRnB)
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                    image[y * loopWidth + x]     = prev_pixel.blue;
+                    image[y * loopWidth + x + 2] = prev_pixel.red;
                 }
                 else
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                    image[y * loopWidth + x]     = prev_pixel.red;
+                    image[y * loopWidth + x + 2] = prev_pixel.blue;
                 }
 
                 if(!discardAlpha)
                 {
-                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                    image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
@@ -251,7 +254,7 @@ internal uint8_t* loadQOI
 
                 if(!discardAlpha)
                 {
-                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                    image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
@@ -259,28 +262,28 @@ internal uint8_t* loadQOI
             else if((byte >> 6) == QOI_OP_RUN)
             {
                 //FIXME: verify runlength
-                uint8_t runlength = (byte % 64) + 1;
+                uint8_t runlength = (byte % 64);
 
                 for(uint8_t j = 0; j < runlength; ++j)
                 {
-                    image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+                    image[y * loopWidth + x + 1] = prev_pixel.green;
 
                     if(flipRnB)
                     {
-                        image[y * *width + x * pixelwidth]     = prev_pixel.blue;
-                        image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                        image[y * loopWidth + x]     = prev_pixel.blue;
+                        image[y * loopWidth + x + 2] = prev_pixel.red;
                     }
                     else
                     {
-                        image[y * *width + x * pixelwidth]     = prev_pixel.red;
-                        image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                        image[y * loopWidth + x]     = prev_pixel.red;
+                        image[y * loopWidth + x + 2] = prev_pixel.blue;
                     }
 
                     if(!discardAlpha)
                     {
-                        image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                        image[y * loopWidth + x + 3] = prev_pixel.alpha;
                     }
-                    x += 4;
+                    x += pixelwidth;
                 }
             }
             else if((byte >> 6) == QOI_OP_INDEX)
@@ -293,22 +296,22 @@ internal uint8_t* loadQOI
 
                 prev_pixel = seen_pixels[byte & 0b00111111];
 
-                image[y * *width + x * pixelwidth + 1] = prev_pixel.green;
+                image[y * loopWidth + x + 1] = prev_pixel.green;
 
                 if(flipRnB)
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.blue;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.red;
+                    image[y * loopWidth + x]     = prev_pixel.blue;
+                    image[y * loopWidth + x + 2] = prev_pixel.red;
                 }
                 else
                 {
-                    image[y * *width + x * pixelwidth]     = prev_pixel.red;
-                    image[y * *width + x * pixelwidth + 2] = prev_pixel.blue;
+                    image[y * loopWidth + x]     = prev_pixel.red;
+                    image[y * loopWidth + x + 2] = prev_pixel.blue;
                 }
 
                 if(!discardAlpha)
                 {
-                    image[y * *width + x * pixelwidth + 3] = prev_pixel.alpha;
+                    image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
             }
             else
@@ -319,7 +322,8 @@ internal uint8_t* loadQOI
                 return image;
             }
             //WIP: debug
-            count = y * *width + x;
+            // count = y * *width;
+            // fprintf(stderr, "\nINFO: parsed %lu.\n", y * loopWidth + x);
         }
     }
 
