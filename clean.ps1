@@ -1,7 +1,6 @@
 $toDelete =
     "./build/",
-    "./bin/imgsurftest_linux/",
-    "./bin/imgsurftest_win64/",
+    "./bin/",
     "./obj/",
     "./log/",
     "./compile_commands.json"
