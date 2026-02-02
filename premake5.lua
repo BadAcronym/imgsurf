@@ -37,7 +37,9 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*" })
         includedirs({ "./include/", "/usr/include/"})
-        linkoptions{"-fuse-ld=mold"}
+        buildoptions("-g")
+        linkoptions("-fuse-ld=mold")
+        toolset("clang")
 
     filter("platforms:Windows")
         system("Windows")
@@ -51,6 +53,10 @@ project("imagesurf library")
         includedirs({ "./include/"})
         buildoptions{"/wd4068", "/wd4100"}
         ignoredefaultlibraries({ "MSVCRT" })
+
+    filter({"platforms:Linux", "configurations:debug"})
+        buildoptions({"-fsanitize=address", "-static-libasan"})
+        linkoptions({"-fsanitize=address", "-static-libasan"})
 
 project("imagesurf unit tests")
     language("C")
@@ -82,7 +88,9 @@ project("imagesurf unit tests")
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
         includedirs({ "./include/", "/usr/include/"})
-        linkoptions{"-fuse-ld=mold"}
+        buildoptions({"-g"})
+        linkoptions({"-fuse-ld=mold"})
+        toolset("clang")
 
     filter("platforms:Windows")
         system("Windows")
@@ -96,3 +104,7 @@ project("imagesurf unit tests")
         includedirs({ "./include/"})
         buildoptions{"/wd4068", "/wd4100"}
         ignoredefaultlibraries({ "MSVCRT" })
+
+    filter({"platforms:Linux", "configurations:debug"})
+        buildoptions({"-fsanitize=address", "-static-libasan"})
+        linkoptions({"-fsanitize=address", "-static-libasan"})
