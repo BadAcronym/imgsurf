@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// TODO: validate files not with other image loaders (if avoidable),
+// but by loading the file, saving it, then comparing the data between files
+
 int main
 (
     void
