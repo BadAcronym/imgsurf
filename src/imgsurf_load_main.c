@@ -56,7 +56,7 @@ internal uint8_t* loadQOI
         if((byte = fgetc(file)) != magic[i] || byte == EOF)
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %i corrupted.\033[0m\n", i);
-            fprintf(stderr, "got: %u\n", byte);
+            fprintf(stderr, "got: %u\n", (uint8_t)byte);
             fprintf(stderr, "expected: %u\n", magic[i]);
             return 0;
         }
