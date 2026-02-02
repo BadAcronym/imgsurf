@@ -14,9 +14,7 @@ internal void findFormat
     uint8_t     *format
 ){
     uint32_t period = 0;
-
     uint32_t i = 0;
-    //TESTING: find null terminator, reliable?
     while(path[i] != '\0')
     {
         if(path[i] == '.')
@@ -28,12 +26,13 @@ internal void findFormat
 
     if(period == 0)
     {
-        fprintf(stderr, "\nPath doesn't look like a file. Please check or add a file extension (.png/.bmp...)\n");
+        fprintf(stderr, "\nPath doesn't look like a file.\n");
         return;
     }
 
     if(period + 3 > i || i > period + 4)
     {
+        fprintf(stderr, "\nFile extension doesn't look valid.\n");
         return;
     }
 
