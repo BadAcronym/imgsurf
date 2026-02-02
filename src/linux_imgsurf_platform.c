@@ -3,7 +3,7 @@
 
 #include <sys/stat.h>
 
-//TODO: (imgsurf #2) expand paths to absolute location
+// TODO: (imgsurf #2) expand paths to absolute location
 uint8_t imgsurf_verifyPath
 (
     const char *path

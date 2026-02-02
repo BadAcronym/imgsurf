@@ -84,7 +84,7 @@ int main
     else
     {
         printf("\nQOI in BGRA loaded!\n");
-        //TODO: (imgsurf #1) validate against qoiRGBA, then other formats
+        // TODO: (imgsurf #1) validate against qoiRGBA, then other formats
     }
     free(qoiBGRA);
 

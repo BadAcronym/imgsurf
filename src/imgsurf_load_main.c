@@ -372,7 +372,7 @@ internal void findFormat
     }
 }
 
-//TODO: (imgsurf #3) write back format to River2D_Image
+// TODO: (imgsurf #3) write back format to River2D_Image
 uint8_t* imgsurf_load
 (
     const char *path,
