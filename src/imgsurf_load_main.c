@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "imgsurf_load.h"
 
@@ -27,6 +28,15 @@ internal uint8_t* loadPNG
     return 0;
 }
 
+internal void writeQOIpixels
+(
+    uint8_t *image,
+    FILE    *file,
+    bool    discard,
+    bool    flip
+){
+}
+
 internal uint8_t* loadQOI
 (
     FILE        *file,
@@ -38,8 +48,6 @@ internal uint8_t* loadQOI
     *width  = 0;
     *height = 0;
 
-    //WIP: decode QOI, allocate size
-    //write width and height into vars
     fprintf(stderr, "\n\033[33;1;7mWIP: QOI loader under construction!\033[0m\n");
 
     int byte = 0;
@@ -87,43 +95,13 @@ internal uint8_t* loadQOI
     }
     // uint8_t colourspace = byte;
 
-    switch(channels)
-    {
-        case IMGSURF_CHANNELS_RGB:
-        {
-            //discard alpha
-            break;
-        }
-        case IMGSURF_CHANNELS_BGR:
-        {
-            //discard alpha, flip r/b
-            break;
-        }
-        case IMGSURF_CHANNELS_RGBA:
-        {
-            if(channelcount == 3)
-            {
-                //set alpha to 1
-                break;
-            }
+    //TODO: figure out best user interface to free image
+    uint8_t* image = malloc(*width * *height * 4);
 
-            //normal
-            break;
-        }
-        case IMGSURF_CHANNELS_BGRA:
-        {
-            if(channelcount == 3)
-            {
-                //set alpha to 1, flip r/b
-                break;
-            }
+    writeQOIpixels(image, file, channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_RGB,
+                                channels == IMGSURF_CHANNELS_BGR || channels == IMGSURF_CHANNELS_BGRA);
 
-            //normal, flip r/b
-            break;
-        }
-    }
-
-    return 0;
+    return image;
 }
 
 internal void findFormat
