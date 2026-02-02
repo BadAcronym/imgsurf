@@ -26,16 +26,6 @@ internal uint8_t* loadPNG
     return 0;
 }
 
-#define IMGSURF_QOI_INDEX (prev_pixel.red * 3 + prev_pixel.green * 5 + prev_pixel.blue * 7 + prev_pixel.alpha * 11) % 64
-
-#define QOI_OP_RGB    254
-#define QOI_OP_RGBA   255
-
-#define QOI_OP_INDEX  0
-#define QOI_OP_DIFF   1
-#define QOI_OP_LUMA   2
-#define QOI_OP_RUN    3
-
 internal uint8_t* loadQOI
 (
     FILE        *file,
@@ -387,7 +377,7 @@ uint8_t* imgsurf_load
     uint8_t    channels,
     uint8_t    bitdepth
 ){
-    uint8_t* image = 0;
+    uint8_t *image = 0;
     uint8_t format = UINT8_MAX;
 
     findFormat(path, &format);
@@ -497,17 +487,171 @@ uint8_t* imgsurf_load
     return image;
 }
 
+// TODO: move this to loader as well
+typedef struct header
+{
+    char     magic[4];
+    uint32_t width;
+    uint32_t height;
+    uint8_t  channels;
+    uint8_t  colorspace;
+}
+Header;
+
+// maybe return err
+internal void writeQOI
+(
+    FILE     *file,
+    uint32_t width,
+    uint32_t height,
+    uint8_t  channels
+){
+    Header header = {0};
+    header.magic[0] = 'q';
+    header.magic[1] = 'o';
+    header.magic[2] = 'i';
+    header.magic[3] = 'f';
+
+    header.width      = width;
+    header.height     = height;
+    header.channels   = channels;
+    // BACKLOG: figure out this shiie
+    header.colorspace = 0;
+
+    size_t code = 0;
+
+    if((code = fwrite(&header, 1, sizeof(header), file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write header.\033[0m\n");
+    }
+
+    pixel previous_pixels[64] = {0};
+    // WIP: so I can use da macro
+    pixel prev_pixel;
+}
+
 // TODO: allow writing to a file
-uint8_t imgsurf_write
+uint8_t imgsurf_write_file
 (
     const char *path,
+    void       *data,
     uint32_t   width,
     uint32_t   height,
     uint8_t    channels,
     uint8_t    bitdepth
 ){
+    if(!data)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: data is null.\033[0m\n");
+        return -1;
+    }
 
-    // return error codes by value, why not
+    uint8_t format = UINT8_MAX;
+    findFormat(path, &format);
+    if(format == UINT8_MAX)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. Try a .qoi/.png/.bmp/.webp/.avif/.jxl file.\033[0m\n");
+        return 0;
+    }
+
+    if(channels > IMGSURF_CHANNELS_MAX)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Invalid colour channels specified.\033[0m\n");
+        return 0;
+    }
+
+    if(bitdepth == 0)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Bit depth cannot be null.\033[0m\n");
+        return 0;
+    }
+
+    uint8_t code = imgsurf_verifyPath(path);
+    if(code == IMGSURF_TYPE_ERROR)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is not valid.\033[0m\n", path);
+        return 0;
+    }
+    if(code == IMGSURF_TYPE_DIRECTORY)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is a directory.\033[0m\n", path);
+        return 0;
+    }
+    if(code > IMGSURF_TYPE_MAX)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Verifying the path %s has failed.\033[0m\n", path);
+        return 0;
+    }
+
+    FILE *file = fopen(path, "wb");
+    if(!file)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s\033[0m\n", path);
+        return 0;
+    }
+
+    if(channels > IMGSURF_CHANNELS_MAX)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: unknown channel format!\033[0m\n");
+        return 0;
+    }
+
+    switch(format)
+    {
+        case IMGSURF_FILE_QOI:
+        {
+            if(bitdepth != 8)
+            {
+                fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is supported by .qoi!\033[0m\n");
+            }
+            else
+            {
+                writeQOI(file, width, height, channels);
+            }
+            break;
+        }
+        case IMGSURF_FILE_PNG:
+        {
+            if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
+            {
+                fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 or 16 are supported by .png!\033[0m\n");
+            }
+            else
+            {
+                // writePNG();
+            }
+            break;
+        }
+        case IMGSURF_FILE_BMP:
+        {
+            fprintf(stderr, "\nTODO: Format BMP not supported yet.\033[0m\n");
+            break;
+        }
+        case IMGSURF_FILE_WEBP:
+        {
+            fprintf(stderr, "\nTODO: Format WEBP not supported yet.\033[0m\n");
+            break;
+        }
+        case IMGSURF_FILE_AVIF:
+        {
+            fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
+            break;
+        }
+        case IMGSURF_FILE_JXL:
+        {
+            fprintf(stderr, "\nTODO: Format JXL not supported yet.\033[0m\n");
+            break;
+        }
+        default:
+        {
+            fprintf(stderr, "\nTODO: Format not supported, code path should be impossible.\033[0m\n");
+            return 0;
+        }
+    }
+
+    fclose(file);
+
+    // TODO: return error codes by value, why not
     return 0;
 }
 
