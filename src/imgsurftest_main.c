@@ -15,9 +15,10 @@ int main()
     else
     {
         printf("\nPNG loaded!\n");
-        printf("R:%u ", png[0]);
-        printf("G:%u ", png[1]);
-        printf("B:%u ", png[2]);
+        printf("First pixel:\n");
+        printf("R:%u ",  png[0]);
+        printf("G:%u ",  png[1]);
+        printf("B:%u ",  png[2]);
         printf("A:%u\n", png[3]);
     }
 
@@ -29,8 +30,9 @@ int main()
     else
     {
         printf("\nBMP loaded!\n");
-        printf("R:%u ", bmp[0]);
-        printf("G:%u ", bmp[1]);
+        printf("First pixel:\n");
+        printf("R:%u ",  bmp[0]);
+        printf("G:%u ",  bmp[1]);
         printf("B:%u\n", bmp[2]);
     }
 
@@ -42,9 +44,10 @@ int main()
     else
     {
         printf("\nQOI in RGBA loaded!\n");
-        printf("R:%u ", qoiRGBA[0]);
-        printf("G:%u ", qoiRGBA[1]);
-        printf("B:%u ", qoiRGBA[2]);
+        printf("First pixel:\n");
+        printf("R:%u ",  qoiRGBA[0]);
+        printf("G:%u ",  qoiRGBA[1]);
+        printf("B:%u ",  qoiRGBA[2]);
         printf("A:%u\n", qoiRGBA[3]);
     }
 
@@ -56,9 +59,10 @@ int main()
     else
     {
         printf("\nQOI in BGRA loaded!\n");
-        printf("B:%u ", qoiBGRA[0]);
-        printf("G:%u ", qoiBGRA[1]);
-        printf("R:%u ", qoiBGRA[2]);
+        printf("First pixel:\n");
+        printf("B:%u ",  qoiBGRA[0]);
+        printf("G:%u ",  qoiBGRA[1]);
+        printf("R:%u ",  qoiBGRA[2]);
         printf("A:%u\n", qoiBGRA[3]);
     }
 
@@ -70,9 +74,10 @@ int main()
     else
     {
         printf("\nQOI in RGB loaded!\n");
-        printf("R:%u ", qoiBGRA[0]);
-        printf("G:%u ", qoiBGRA[1]);
-        printf("B:%u\n", qoiBGRA[2]);
+        printf("First pixel:\n");
+        printf("R:%u ",  qoiRGB[0]);
+        printf("G:%u ",  qoiRGB[1]);
+        printf("B:%u\n", qoiRGB[2]);
     }
 
     uint8_t* qoiBGR = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_BGR, 8);
@@ -83,8 +88,9 @@ int main()
     else
     {
         printf("\nQOI in BGR loaded!\n");
-        printf("B:%u ", qoiBGRA[0]);
-        printf("G:%u ", qoiBGRA[1]);
-        printf("R:%u\n", qoiBGRA[2]);
+        printf("First pixel:\n");
+        printf("B:%u ",  qoiBGR[0]);
+        printf("G:%u ",  qoiBGR[1]);
+        printf("R:%u\n", qoiBGR[2]);
     }
 }
