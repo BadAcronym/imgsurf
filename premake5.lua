@@ -62,9 +62,6 @@ project("imagesurf library")
         linkoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                      "-static-libasan"})
 
-    filter({"platforms:Windows", "configurations:debug or asan"})
-        kind("ConsoleApp")
-
     filter({"platforms:Windows", "configurations:asan"})
         editandcontinue("Off")
         debugformat("c7")

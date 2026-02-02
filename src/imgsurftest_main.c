@@ -10,11 +10,8 @@ int main
     uint32_t width  = 0;
     uint32_t height = 0;
 
-    uint32_t expectedWidth = 0;
-    uint32_t expectedHeight = 0;
-
-    expectedWidth  = 1584;
-    expectedHeight = 1920;
+    uint32_t expectedWidth  = 1584;
+    uint32_t expectedHeight = 1920;
 
     uint8_t* qoiRGBA = imgsurf_load("assets/tux.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
     if(!qoiRGBA)
