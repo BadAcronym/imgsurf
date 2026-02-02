@@ -53,8 +53,8 @@ project("imagesurf library")
         includedirs({ "./include/"})
 
     filter({"platforms:Linux", "configurations:debug or asan"})
-        buildoptions({"-gfull", "-O0"})
-        linkoptions({"-gfull", "-O0"})
+        buildoptions({"-gfull", "-O1"})
+        linkoptions({"-gfull", "-O1"})
 
     filter({"platforms:Linux", "configurations:asan"})
         buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
@@ -123,8 +123,8 @@ project("imagesurf unit tests")
         links("imgsurf.lib")
 
     filter({"platforms:Linux", "configurations:debug or asan"})
-        buildoptions({"-gfull", "-O0"})
-        linkoptions({"-gfull", "-O0"})
+        buildoptions({"-gfull", "-O1"})
+        linkoptions({"-gfull", "-O1"})
 
     filter({"platforms:Linux", "configurations:asan"})
         buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
