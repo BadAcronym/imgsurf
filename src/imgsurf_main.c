@@ -38,9 +38,9 @@ internal uint8_t* loadPNG
 internal uint8_t* loadQOI
 (
     FILE        *file,
-    uint8_t     channels,
     uint32_t    *width,
-    uint32_t    *height
+    uint32_t    *height,
+    uint8_t     channels
 ){
     char magic[5] = "qoif";
     *width  = 0;
@@ -448,7 +448,7 @@ internal void findFormat
     }
 }
 
-uint8_t* imgsurf_load
+uint8_t* imgsurf_load_file
 (
     const char *path,
     uint32_t   *width,
@@ -518,7 +518,7 @@ uint8_t* imgsurf_load
             }
             else
             {
-                image = loadQOI(file, channels, width, height);
+                image = loadQOI(file, width, height, channels);
             }
             break;
         }
@@ -564,6 +564,24 @@ uint8_t* imgsurf_load
     fclose(file);
 
     return image;
+}
+
+uint8_t* imgsurf_load_ptr
+(
+    FILE       *file,
+    uint8_t    fileFormat,
+    uint32_t   *width,
+    uint32_t   *height,
+    uint8_t    channels,
+    uint8_t    bitdepth
+){
+    if(fileFormat == IMGSURF_FILE_QOI)
+    {
+        return loadQOI(file, width, height, channels);
+    }
+
+    fprintf(stderr, "\033[31;1;1mERROR: format not implemented or supported. try QOI for now.\033[0m");
+    return 0;
 }
 
 // TODO: return error codes.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdio.h>
 
 #define bool  _Bool
 #define true  1
@@ -54,9 +55,19 @@ extern uint8_t imgsurf_verifyPath
     const char *path
 );
 
-extern uint8_t* imgsurf_load
+extern uint8_t* imgsurf_load_file
 (
     const char *path,
+    uint32_t   *width,
+    uint32_t   *height,
+    uint8_t    channels,
+    uint8_t    bitdepth
+);
+
+extern uint8_t* imgsurf_load_ptr
+(
+    FILE       *file,
+    uint8_t    fileFormat,
     uint32_t   *width,
     uint32_t   *height,
     uint8_t    channels,

@@ -1,6 +1,6 @@
 #include "imgsurf_main.h"
 
-#include <stdio.h>
+#include <stdlib.h>
 
 #define STBI_ONLY_PNG
 #define STB_IMAGE_IMPLEMENTATION
@@ -20,7 +20,7 @@ int verifyImage
     int stb_height   = 0;
     int stb_channels = 0;
 
-    uint8_t *testRGBA = imgsurf_load(name_qoi, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    uint8_t *testRGBA = imgsurf_load_file(name_qoi, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
     if(!testRGBA)
     {
         fprintf(stderr, "\x1b[1;31mimgsurf_load failed.\033[0m\n");
@@ -75,7 +75,7 @@ int verifyImage
         return result;
     }
 
-    uint8_t *reconstructed = imgsurf_load("assets/reconstructed.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    uint8_t *reconstructed = imgsurf_load_file("assets/reconstructed.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
 
     for(uint64_t i = 0; i < width * height * 4; i += 4)
     {
