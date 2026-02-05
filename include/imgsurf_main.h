@@ -87,10 +87,11 @@ extern uint8_t imgsurf_write_file
 
 extern void imgsurf_write_ptr
 (
-    void     *mem,
+    FILE     *file,
+    void     *data,
+    uint8_t  fileFormat,
     uint32_t width,
     uint32_t height,
     uint8_t  channels,
-    uint8_t  bitdepth,
-    uint8_t  writeFileFormat
+    uint8_t  bitdepth
 );

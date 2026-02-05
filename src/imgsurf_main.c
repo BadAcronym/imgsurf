@@ -580,7 +580,7 @@ uint8_t* imgsurf_load_ptr
         return loadQOI(file, width, height, channels);
     }
 
-    fprintf(stderr, "\033[31;1;1mERROR: format not implemented or supported. try QOI for now.\033[0m");
+    fprintf(stderr, "\033[31;1;1mERROR: format not implemented or supported. try QOI for now.\033[0m\n");
     return 0;
 }
 
@@ -987,11 +987,19 @@ uint8_t imgsurf_write_file
 // maybe return errcodes
 void imgsurf_write_ptr
 (
-    void     *mem,
+    FILE     *file,
+    void     *data,
+    uint8_t  fileFormat,
     uint32_t width,
     uint32_t height,
     uint8_t  channels,
-    uint8_t  bitdepth,
-    uint8_t  writeFileFormat
+    uint8_t  bitdepth
 ){
+    if(fileFormat == IMGSURF_FILE_QOI)
+    {
+        writeQOI(file, data, width, height, channels);
+        return;
+    }
+
+    fprintf(stderr, "\033[31;1;1mERROR: format not implemented or supported. try QOI for now.\033[0m\n");
 }
