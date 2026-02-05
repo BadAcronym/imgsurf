@@ -1,7 +1,7 @@
 ## State:
 
-- Currently working on the loader. Working formats:
-    - .qoi, loaded in RGBA, BGRA, RGB or BGR
+- Currently in development. Finished formats:
+    - .qoi read/write in RGBA, BGRA, RGB or BGR
 
 ## Planned Features:
 
