@@ -6,8 +6,8 @@
 
 int verifyImage
 (
-    const char *name_qoi,
-    const char *name_png
+    const char *name_qoi//,
+    // const char *name_png
 ){
     fprintf(stderr, "\ntrying to verify image: %s\n", name_qoi);
 
@@ -110,21 +110,21 @@ int main
 ){
     int result = 0;
 
-    if((result = verifyImage("assets/smallTest.qoi", "assets/smallTest.png")))
+    if((result = verifyImage("assets/smallTest.qoi"/*, "assets/smallTest.png"*/)))
     {
         fprintf(stderr, "\x1b[7;31mERROR: unit test not passed with image assets/smallTest!\n");
         return result;
     }
     fprintf(stderr, "\033[32;1;1mSUCCESS: unit test passed with image assets/smallTest!\033[0m\n");
 
-    if((result = verifyImage("assets/black.qoi", "assets/black.png")))
+    if((result = verifyImage("assets/black.qoi"/*, "assets/black.png"*/)))
     {
         fprintf(stderr, "\x1b[7;31mERROR: unit test not passed with image assets/black!\033[0m\n");
         return result;
     }
     fprintf(stderr, "\033[32;1;1mSUCCESS: unit test passed with image assets/black!\033[0m\n");
 
-    if((result = verifyImage("assets/tux.qoi", "assets/tux.png")))
+    if((result = verifyImage("assets/tux.qoi"/*, "assets/tux.png"*/)))
     {
         fprintf(stderr, "\x1b[7;31mERROR: unit tux not passed with image assets/tux!\033[0m\n");
         return result;
