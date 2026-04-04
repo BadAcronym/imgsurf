@@ -115,7 +115,7 @@ internal uint8_t* loadQOI
     uint64_t pixelcount = *width * *height;
     uint8_t  pixelwidth = discardAlpha ? 3 : 4;
 
-    #ifdef ASAN
+    #ifdef IMGSURF_LOGGING
     uint8_t *data = (uint8_t*)file;
     uint8_t *data_start = (uint8_t*)file;
     #endif
@@ -134,7 +134,7 @@ internal uint8_t* loadQOI
     uint64_t loopWidth  = *width * pixelwidth;
     uint64_t loopHeight = *height;
 
-    #ifdef ASAN
+    #ifdef IMGSURF_LOGGING
     uint64_t run_count   = 0;
     uint64_t diff_count  = 0;
     uint64_t index_count = 0;
@@ -178,7 +178,7 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                 ++rgb_count;
                 fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_RGB with new pixel: %u, %u, %u\n", data - data_start, prev_pixel.red, prev_pixel.green, prev_pixel.blue);
                 #endif
@@ -219,7 +219,7 @@ internal uint8_t* loadQOI
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
 
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                 ++rgba_count;
                 fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_RGBA with new pixel: %u, %u, %u, %u\n", data - data_start, prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha);
                 #endif
@@ -245,7 +245,7 @@ internal uint8_t* loadQOI
                 }
 
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                 ++diff_count;
                 fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_DIFF with diff: %u, %u, %u\n", data - data_start, diffRed, diffGreen, diffBlue);
                 #endif
@@ -275,7 +275,7 @@ internal uint8_t* loadQOI
                 }
 
                 seen_pixels[IMGSURF_QOI_INDEX] = prev_pixel;
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                 ++luma_count;
                 fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_LUMA with encoded diffs: %u, %u, %u\n", data - data_start, (uint8_t)(diffGreen), (uint8_t)(diffRed), (uint8_t)(diffBlue));
                 #endif
@@ -301,7 +301,7 @@ internal uint8_t* loadQOI
                 y += x / loopWidth;
                 x %= loopWidth;
 
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                 data += (runlength - 1) * pixelwidth;
                 ++run_count;
                 fprintf(stderr, "%lx: (%x) CURRENT READ OP: QOI_OP_RUN with pixel: %u, %u, %u and runlength %hhu\n", data - data_start, byte, prev_pixel.red, prev_pixel.green, prev_pixel.blue, runlength);
@@ -340,7 +340,7 @@ internal uint8_t* loadQOI
                 {
                     image[y * loopWidth + x + 3] = prev_pixel.alpha;
                 }
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                 ++index_count;
                 fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_INDEX with index: %u\n", data - data_start, byte % 0x40);
                 #endif
@@ -350,13 +350,13 @@ internal uint8_t* loadQOI
                 fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
                 return image;
             }
-            #ifdef ASAN
+            #ifdef IMGSURF_LOGGING
             data += pixelwidth;
             #endif
         }
     }
 
-    #ifdef ASAN
+    #ifdef IMGSURF_LOGGING
     fprintf(stderr, "\n\nREAD BACK (actual):\n\n");
     fprintf(stderr, "run_count:   %lu\n", run_count);
     fprintf(stderr, "diff_count:  %lu\n", diff_count);
@@ -375,7 +375,7 @@ internal uint8_t* loadQOI
         {
             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
             {
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                     fprintf(stderr, "QOI end-of-stream reached.\n");
                 #endif
                 return image;
@@ -652,7 +652,7 @@ internal uint8_t writeQOI
     bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  || channels == IMGSURF_CHANNELS_BGRA;
     bool useAlpha = channels == IMGSURF_CHANNELS_RGBA || channels == IMGSURF_CHANNELS_BGRA;
 
-    #ifdef ASAN
+    #ifdef IMGSURF_LOGGING
     uint64_t run_count   = 0;
     uint64_t diff_count  = 0;
     uint64_t index_count = 0;
@@ -698,7 +698,7 @@ internal uint8_t writeQOI
                     return -3;
                 }
 
-                #ifdef ASAN
+                #ifdef IMGSURF_LOGGING
                 ++run_count;
                 fprintf(stderr, "%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: %u, %u, %u, %u, runlength: %hhu\n", data - data_start, byte, prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha, runlength);
                 fprintf(stderr, "data_end is: %lx", data_end - data_start);
@@ -717,7 +717,7 @@ internal uint8_t writeQOI
                 return -3;
             }
 
-            #ifdef ASAN
+            #ifdef IMGSURF_LOGGING
             ++run_count;
             fprintf(stderr, "%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: %u, %u, %u, %u, runlength: %hhu\n", data - data_start, byte, prev_pixel.red, prev_pixel.green, prev_pixel.blue, prev_pixel.alpha, runlength);
             #endif
@@ -732,7 +732,7 @@ internal uint8_t writeQOI
                 return -5;
             }
 
-            #ifdef ASAN
+            #ifdef IMGSURF_LOGGING
             ++index_count;
             fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_INDEX with index: %u\n", data - data_start, index);
             #endif
@@ -747,7 +747,7 @@ internal uint8_t writeQOI
                 return -4;
             }
 
-            #ifdef ASAN
+            #ifdef IMGSURF_LOGGING
             ++diff_count;
             fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_DIFF and diff: %i, %i, %i\n", data - data_start, (uint8_t)(dr + 2), (uint8_t)(dg + 2), (uint8_t)(db + 2));
             #endif
@@ -769,7 +769,7 @@ internal uint8_t writeQOI
                 return -6;
             }
 
-            #ifdef ASAN
+            #ifdef IMGSURF_LOGGING
             ++luma_count;
             fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_LUMA and encoded diffs: %u, %u, %u\n", data - data_start, (uint8_t)(dg + 32), (uint8_t)(dr - dg + 8), (uint8_t)(db - dg + 8));
             #endif
@@ -799,7 +799,7 @@ internal uint8_t writeQOI
                 return -8;
             }
 
-            #ifdef ASAN
+            #ifdef IMGSURF_LOGGING
             ++rgb_count;
             fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_RGB with new pixel: %u, %u, %u\n", data - data_start, curr_pixel.red, curr_pixel.green, curr_pixel.blue);
             #endif
@@ -834,7 +834,7 @@ internal uint8_t writeQOI
                 return -8;
             }
 
-            #ifdef ASAN
+            #ifdef IMGSURF_LOGGING
             ++rgba_count;
             fprintf(stderr, "CURRENT WRITE OP: QOI_OP_RGBA with new pixel: %u, %u, %u, %u\n", curr_pixel.red, curr_pixel.green, curr_pixel.blue, curr_pixel.alpha);
             #endif
@@ -844,7 +844,7 @@ internal uint8_t writeQOI
         seen_pixels[index] = curr_pixel;
     }
 
-    #ifdef ASAN
+    #ifdef IMGSURF_LOGGING
     fprintf(stderr, "\n\n");
     fprintf(stderr, "run_count:   %lu\n", run_count);
     fprintf(stderr, "diff_count:  %lu\n", diff_count);
