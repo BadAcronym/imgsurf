@@ -647,10 +647,13 @@ internal uint8_t writeQOI
     pixel prev_pixel      = {0, 0, 0, 255};
     pixel seen_pixels[64] = {0};
 
-    // FIXME: these bools gotta change, they should be based on inp_format != outp_format
+    // FIXME: these bools gotta change, they should be based on
+    // inp_format != outp_format, not just the output!!!
 
-    bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  || channels == IMGSURF_CHANNELS_BGRA;
-    bool useAlpha = channels == IMGSURF_CHANNELS_RGBA || channels == IMGSURF_CHANNELS_BGRA;
+    bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  ||
+                    channels == IMGSURF_CHANNELS_BGRA;
+    bool useAlpha = channels == IMGSURF_CHANNELS_RGBA ||
+                    channels == IMGSURF_CHANNELS_BGRA;
 
     #ifdef IMGSURF_LOGGING
     uint64_t run_count   = 0;
