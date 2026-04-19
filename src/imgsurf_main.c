@@ -10,7 +10,7 @@
     #include "win32_imgsurf_platform.h"
 #endif
 
-internal bool same_pixel
+f_internal bool same_pixel
 (
     pixel pixel1,
     pixel pixel2
@@ -19,7 +19,7 @@ internal bool same_pixel
             pixel1.blue == pixel2.blue && pixel1.alpha == pixel2.alpha);
 }
 
-internal uint8_t* loadPNG
+f_internal uint8_t* loadPNG
 (
     FILE        *file,
     uint8_t     channels,
@@ -35,7 +35,7 @@ internal uint8_t* loadPNG
     return 0;
 }
 
-internal uint8_t* loadQOI
+f_internal uint8_t* loadQOI
 (
     FILE        *file,
     uint32_t    *width,
@@ -386,7 +386,7 @@ internal uint8_t* loadQOI
     return image;
 }
 
-internal void findFormat
+f_internal void findFormat
 (
     const char *path,
     uint8_t    *format
@@ -585,7 +585,7 @@ uint8_t* imgsurf_load_ptr
 }
 
 // TODO: return error codes.
-internal uint8_t writeQOI
+f_internal uint8_t writeQOI
 (
     FILE     *file,
     uint8_t  *data,

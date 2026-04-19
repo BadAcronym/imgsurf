@@ -7,9 +7,9 @@
 #define true  1
 #define false 0
 
-#define persistent  static
-#define global      static
-#define internal    static
+#define v_persistent  static
+#define v_global      static
+#define f_internal    static
 
 #define IMGSURF_CHANNELS_RGBA 0
 #define IMGSURF_CHANNELS_BGRA 1
@@ -31,7 +31,9 @@
 #define IMGSURF_TYPE_OTHER     3
 #define IMGSURF_TYPE_MAX       3
 
-#define IMGSURF_QOI_INDEX (prev_pixel.red * 3 + prev_pixel.green * 5 + prev_pixel.blue * 7 + prev_pixel.alpha * 11) % 64
+#define IMGSURF_QOI_INDEX \
+(prev_pixel.red * 3 + prev_pixel.green * 5 + \
+prev_pixel.blue * 7 + prev_pixel.alpha * 11) % 64
 
 #define QOI_OP_RGB    254
 #define QOI_OP_RGBA   255
