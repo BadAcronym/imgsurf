@@ -599,7 +599,7 @@ f_internal uint8_t writeQOI
     if(channelcount != 3 && channelcount != 4)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: QOI only supports channelcounts of 3 (RGB) or 4 (RGBA). Got: %u\033[0m\n", channelcount);
-        return -1;
+        return 1;
     }
 
     // colourspace ignored
@@ -609,7 +609,7 @@ f_internal uint8_t writeQOI
     if((elements = fwrite("qoif", 4, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes of header.\033[0m\n");
-        return -2;
+        return 2;
     }
 
     for(int8_t i = 3; i > -1; --i)
@@ -618,7 +618,7 @@ f_internal uint8_t writeQOI
         if((elements = fwrite(&width_shifted, 1, 1, file)) != 1)
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: failed to write width @ byte: %u.\033[0m\n", i);
-            return -2;
+            return 2;
         }
     }
 
@@ -628,20 +628,20 @@ f_internal uint8_t writeQOI
         if((elements = fwrite(&height_shifted, 1, 1, file)) != 1)
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: failed to write height @ byte: %u.\033[0m\n", i);
-            return -2;
+            return 2;
         }
     }
 
     if((elements = fwrite(&channelcount, 1, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write channelcount.\033[0m\n");
-        return -2;
+        return 2;
     }
 
     if((elements = fwrite(&colourspace, 1, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write colourspace.\033[0m\n");
-        return -2;
+        return 2;
     }
 
     pixel prev_pixel      = {0, 0, 0, 255};
@@ -698,7 +698,7 @@ f_internal uint8_t writeQOI
                 if((elements = fwrite(&byte, 1, 1, file)) != 1)
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RUN.\033[0m\n");
-                    return -3;
+                    return 3;
                 }
 
                 #ifdef IMGSURF_LOGGING
@@ -717,7 +717,7 @@ f_internal uint8_t writeQOI
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_RUN.\033[0m\n");
-                return -3;
+                return 3;
             }
 
             #ifdef IMGSURF_LOGGING
@@ -732,7 +732,7 @@ f_internal uint8_t writeQOI
             if((elements = fwrite(&index, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_INDEX.\033[0m\n");
-                return -5;
+                return 5;
             }
 
             #ifdef IMGSURF_LOGGING
@@ -742,12 +742,12 @@ f_internal uint8_t writeQOI
         }
         else if(curr_pixel.alpha == prev_pixel.alpha && (uint8_t)(dr + 2) < 0x4 && (uint8_t)(dg + 2) < 0x4 && (uint8_t)(db + 2) < 0x4)
         {
-            uint8_t byte = 0x40 | ((uint8_t)(dr + 2) << 4) | ((uint8_t)(dg + 2) << 2) | (uint8_t)(db + 2);
+            uint8_t byte = (uint8_t)(0x40 | ((uint8_t)(dr + 2) << 4) | ((uint8_t)(dg + 2) << 2) | (uint8_t)(db + 2));
 
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ QOI_OP_DIFF.\033[0m\n");
-                return -4;
+                return 4;
             }
 
             #ifdef IMGSURF_LOGGING
@@ -758,18 +758,18 @@ f_internal uint8_t writeQOI
         else if(curr_pixel.alpha == prev_pixel.alpha && (uint8_t)(dg + 32) < 0x40 && (uint8_t)(dr - dg + 8) < 0x10 && (uint8_t)(db - dg + 8) < 0x10)
         {
             uint8_t byte1 = 0x80 | (uint8_t)(dg + 32);
-            uint8_t byte2 = ((uint8_t)(dr - dg + 8) << 4) | (uint8_t)(db - dg + 8);
+            uint8_t byte2 = (uint8_t)(((uint8_t)(dr - dg + 8) << 4) | (uint8_t)(db - dg + 8));
 
             if((elements = fwrite(&byte1, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag/dg @ QOI_OP_LUMA.\033[0m\n");
-                return -6;
+                return 6;
             }
 
             if((elements = fwrite(&byte2, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write dr/db data @ QOI_OP_LUMA.\033[0m\n");
-                return -6;
+                return 6;
             }
 
             #ifdef IMGSURF_LOGGING
@@ -783,23 +783,23 @@ f_internal uint8_t writeQOI
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGB.\033[0m\n");
-                return -7;
+                return 7;
             }
 
             if((elements = fwrite(&curr_pixel.red, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ QOI_OP_RGB.\033[0m\n");
-                return -8;
+                return 8;
             }
             if((elements = fwrite(&curr_pixel.green, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ QOI_OP_RGB.\033[0m\n");
-                return -8;
+                return 8;
             }
             if((elements = fwrite(&curr_pixel.blue, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ QOI_OP_RGB.\033[0m\n");
-                return -8;
+                return 8;
             }
 
             #ifdef IMGSURF_LOGGING
@@ -813,28 +813,28 @@ f_internal uint8_t writeQOI
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ QOI_OP_RGBA.\033[0m\n");
-                return -10;
+                return 10;
             }
 
             if((elements = fwrite(&curr_pixel.red, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ QOI_OP_RGBA.\033[0m\n");
-                return -8;
+                return 8;
             }
             if((elements = fwrite(&curr_pixel.green, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ QOI_OP_RGBA.\033[0m\n");
-                return -8;
+                return 8;
             }
             if((elements = fwrite(&curr_pixel.blue, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ QOI_OP_RGBA.\033[0m\n");
-                return -8;
+                return 8;
             }
             if((elements = fwrite(&curr_pixel.alpha, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write alpha @ QOI_OP_RGBA.\033[0m\n");
-                return -8;
+                return 8;
             }
 
             #ifdef IMGSURF_LOGGING
@@ -861,14 +861,14 @@ f_internal uint8_t writeQOI
     if((elements = fwrite(&EOS0, 7, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x00 tag.\033[0m\n");
-        return -12;
+        return 12;
     }
 
     uint8_t EOS1 = 0x01;
     if((elements = fwrite(&EOS1, 1, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x01 tag.\033[0m\n");
-        return -13;
+        return 13;
     }
 
     return 0;
@@ -887,7 +887,7 @@ uint8_t imgsurf_write_file
     if(!data)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: data is null.\033[0m\n");
-        return -1;
+        return 1;
     }
 
     uint8_t readFileFormat = UINT8_MAX;
