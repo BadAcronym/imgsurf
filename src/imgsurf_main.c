@@ -143,8 +143,6 @@ f_internal uint8_t* loadQOI
     uint64_t rgba_count  = 0;
     #endif
 
-    // BACKLOG: rename for consistency, prev_pixel should be curr_pixel here
-
     for(uint64_t y = 0; y < loopHeight; y++)
     {
         for(uint64_t x = 0; x < loopWidth && ((byte = fgetc(file)) != EOF); x += pixelwidth)
@@ -584,7 +582,6 @@ uint8_t* imgsurf_load_ptr
     return 0;
 }
 
-// TODO: return error codes.
 f_internal uint8_t writeQOI
 (
     FILE     *file,
@@ -646,9 +643,6 @@ f_internal uint8_t writeQOI
 
     pixel prev_pixel      = {0, 0, 0, 255};
     pixel seen_pixels[64] = {0};
-
-    // FIXME: these bools gotta change, they should be based on
-    // inp_format != outp_format, not just the output!!!
 
     bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  ||
                     channels == IMGSURF_CHANNELS_BGRA;
@@ -986,8 +980,6 @@ uint8_t imgsurf_write_file
     return 0;
 }
 
-// TODO: allow writing to a pre-allocated region in memory
-// maybe return errcodes
 void imgsurf_write_ptr
 (
     FILE     *file,

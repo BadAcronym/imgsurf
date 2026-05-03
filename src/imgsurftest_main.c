@@ -2,8 +2,6 @@
 
 #include <stdlib.h>
 
-//TODO: use a dumped raw image data file to compare against, not another loader like stb_image.
-
 int verifyImage
 (
     const char *name_qoi//,
@@ -94,8 +92,6 @@ int verifyImage
     //         return 5;
     //     }
     // }
-
-    // TODO: test BGRA, RGB and BGR loading/writing
 
     // free(test_stb);
     free(testRGBA);
