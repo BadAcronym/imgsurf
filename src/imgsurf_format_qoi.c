@@ -395,13 +395,6 @@ uint8_t writeQOI
     uint8_t channelcount = (channels == IMGSURF_CHANNELS_RGBA ||
                             channels == IMGSURF_CHANNELS_BGRA) ? 4 : 3;
 
-    if(channelcount != 3 && channelcount != 4)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: QOI only supports channelcounts of 3 "
-                "(RGB) or 4 (RGBA). Got: %u\033[0m\n", channelcount);
-        return 1;
-    }
-
     // colourspace ignored
     uint8_t colourspace = 0;
     size_t  elements    = 0;
@@ -450,9 +443,10 @@ uint8_t writeQOI
     pixel prev     = {0, 0, 0, 255};
     pixel seen[64] = {0};
 
-    bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  ||
-                    channels == IMGSURF_CHANNELS_BGRA;
     bool useAlpha = channels == IMGSURF_CHANNELS_RGBA ||
+                    channels == IMGSURF_CHANNELS_BGRA;
+
+    bool flipRnB  = channels == IMGSURF_CHANNELS_BGR  ||
                     channels == IMGSURF_CHANNELS_BGRA;
 
     #ifdef IMGSURF_LOG_WRITE
