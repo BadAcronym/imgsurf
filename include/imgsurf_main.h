@@ -52,6 +52,63 @@ typedef struct pixel
 }
 pixel;
 
+extern bool same_pixel
+(
+    pixel pixel1,
+    pixel pixel2
+);
+
+uint8_t* loadBMP
+(
+    FILE        *file,
+    uint32_t    *width,
+    uint32_t    *height,
+    uint8_t     channels
+);
+
+uint8_t writeBMP
+(
+    FILE     *file,
+    uint8_t  *data,
+    uint32_t width,
+    uint32_t height,
+    uint8_t  channels
+);
+
+uint8_t* loadPNG
+(
+    FILE        *file,
+    uint32_t    *width,
+    uint32_t    *height,
+    uint8_t     channels
+);
+
+uint8_t writePNG
+(
+    FILE     *file,
+    uint8_t  *data,
+    uint32_t width,
+    uint32_t height,
+    uint8_t  channels
+);
+
+uint8_t* loadQOI
+(
+    FILE        *file,
+    uint32_t    *width,
+    uint32_t    *height,
+    uint8_t     channels
+);
+
+uint8_t writeQOI
+(
+    FILE     *file,
+    uint8_t  *data,
+    uint32_t width,
+    uint32_t height,
+    uint8_t  channels
+);
+
 extern uint8_t imgsurf_verifyPath
 (
     const char *path
