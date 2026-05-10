@@ -1,9 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <inttypes.h>
-
-// #define IMGSURF_LOG_READ
-// #define IMGSURF_LOG_WRITE
 
 #include "imgsurf_main.h"
 

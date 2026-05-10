@@ -276,7 +276,10 @@ uint8_t* loadQOI
                 uint8_t  runlength = (byte & 0x3F) + 1;
                 uint64_t index     = y * loopWidth + x;
 
-                for(uint8_t j = 0; j < runlength; ++j)
+                uint8_t j  = 0;
+                bool under = index + j * bpp < loopHeight * loopWidth;
+
+                for(; j < runlength && under; ++j)
                 {
                     image[index + j * bpp]     = flipRnB ? prev.blue : prev.red;
                     image[index + j * bpp + 1] = prev.green;
@@ -285,11 +288,6 @@ uint8_t* loadQOI
                     if(!discardAlpha)
                     {
                         image[index + j * bpp + 3] = prev.alpha;
-                    }
-
-                    if(index + j * bpp < loopHeight * loopWidth)
-                    {
-                        break;
                     }
                 }
                 x += (runlength - 1) * bpp;
@@ -556,8 +554,7 @@ uint8_t writeQOI
                 (uint8_t)(db + 2) < 0x4
         ){
             uint8_t byte = (uint8_t)(0x40 | ((uint8_t)(dr + 2) << 4) |
-                                     ((uint8_t)(dg + 2) << 2)        |
-                                     (uint8_t)(db + 2));
+                                     ((uint8_t)(dg + 2) << 2) | (uint8_t)(db + 2));
 
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
@@ -574,7 +571,7 @@ uint8_t writeQOI
             #endif
         }
         else if(curr.alpha == prev.alpha      &&
-                (uint8_t)(dg + 32) < 0x40     &&
+                (uint8_t)(dg + 32)     < 0x40 &&
                 (uint8_t)(dr - dg + 8) < 0x10 &&
                 (uint8_t)(db - dg + 8) < 0x10
         ){

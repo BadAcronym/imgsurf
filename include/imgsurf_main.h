@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
+// #define IMGSURF_LOG_READ
+// #define IMGSURF_LOG_WRITE
+
 #define bool  _Bool
 #define true  1
 #define false 0
