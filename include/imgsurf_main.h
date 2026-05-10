@@ -55,7 +55,7 @@ typedef struct pixel
 }
 pixel;
 
-extern bool same_pixel
+bool same_pixel
 (
     pixel pixel1,
     pixel pixel2
