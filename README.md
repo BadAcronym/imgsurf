@@ -1,6 +1,8 @@
 ## State:
 
-- Currently in development. Finished formats:
+- Currently in development. Finished features:
+    - save from RAM to new file in specified format
+    - save from RAM to pointer (encode without writing to a file)
     - .qoi read/write in RGBA, BGRA, RGB or BGR
 
 ## Planned Features:
@@ -13,5 +15,4 @@
     - .jxl
 
 - Support for the following additional operations:
-    - save from RAM to file in specified format
     - convert formats between each other (really just a wrapper around load/write)
