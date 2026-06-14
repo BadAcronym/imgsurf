@@ -4,98 +4,95 @@
 
 int verifyImage
 (
-    const char *name_qoi//,
-    // const char *name_png
+    const char *name_qoi,
+    const char *name_png
 ){
-    fprintf(stderr, "\ntrying to verify image: %s\n", name_qoi);
+    fprintf(stderr, "\ntrying to verify image: %s with %s\n", name_qoi, name_png);
 
     uint32_t width  = 0;
     uint32_t height = 0;
 
-    uint8_t *testRGBA = imgsurf_load_file(name_qoi, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
-    if(!testRGBA)
+    uint8_t *testQOI = imgsurf_load_file(name_qoi, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    if(!testQOI)
     {
-        fprintf(stderr, "\x1b[1;31mimgsurf_load failed.\033[0m\n");
+        fprintf(stderr, "\x1b[1;31mimgsurf_load failed on QOI file.\033[0m\n");
         return 1;
     }
-    // uint8_t *test_stb = stbi_load(name_png, &stb_width, &stb_height, &stb_channels, STBI_rgb_alpha);
-    // if(!test_stb)
-    // {
-    //     fprintf(stderr, "\x1b[1;31mstb_image failed: %s\n", stbi_failure_reason());
-    //     return -1;
-    // }
 
-    // if((int)width != stb_width)
-    // {
-    //     fprintf(stderr, "\x1b[1;31mimgsurf_load failed to correctly load width. Expected: %u, got: %u.\033[0m\n", stb_width, width);
-    //     return 2;
-    // }
-    //
-    // if((int)height != stb_height)
-    // {
-    //     fprintf(stderr, "\x1b[1;31mimgsurf_load failed to correctly load height. Expected: %u, got: %u.\033[0m\n", stb_height, height);
-    //     return 3;
-    // }
+    uint8_t *testPNG = imgsurf_load_file(name_png, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    if(!testPNG)
+    {
+        fprintf(stderr, "\x1b[1;31mimgsurf_load failed on PNG file.\033[0m\n");
+        return 2;
+    }
 
-    // for(uint64_t i = 0; i < width * height * 4; i += 4)
-    // {
-    //     if(testRGBA[i] != test_stb[i])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.red, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
-    //         return -2;
-    //     }
-    //     if(testRGBA[i + 1] != test_stb[i + 1])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.green, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
-    //         return -3;
-    //     }
-    //     if(testRGBA[i + 2] != test_stb[i + 2])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.blue, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
-    //         return -4;
-    //     }
-    //     if(testRGBA[i + 3] != test_stb[i + 3])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.alpha, expected: %u, got: %u\n", i / 4, testRGBA[i], test_stb[i]);
-    //         return -5;
-    //     }
-    // }
+    for(uint64_t i = 0; i < width * height * 4; i += 4)
+    {
+        if(testQOI[i] != testPNG[i])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.red, expected: %u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+            return -2;
+        }
+        if(testQOI[i + 1] != testPNG[i + 1])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.green, expected: %u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+            return -3;
+        }
+        if(testQOI[i + 2] != testPNG[i + 2])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.blue, expected: %u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+            return -4;
+        }
+        if(testQOI[i + 3] != testPNG[i + 3])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.alpha, expected: %u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+            return -5;
+        }
+    }
 
-    uint8_t result = imgsurf_write_file("assets/reconstructed.qoi", testRGBA, width, height, IMGSURF_CHANNELS_RGBA, 8, IMGSURF_FILE_QOI);
+    uint8_t result = imgsurf_write_file("assets/reconstructed.qoi", testQOI, width, height, IMGSURF_CHANNELS_RGBA, 8, IMGSURF_FILE_QOI);
     if(result)
     {
         return result;
     }
 
-    uint8_t *reconstructed = imgsurf_load_file("assets/reconstructed.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+    uint8_t *reconstructedQOI = imgsurf_load_file("assets/reconstructed.qoi", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
 
-    // for(uint64_t i = 0; i < width * height * 4; i += 4)
-    // {
-    //     if(reconstructed[i] != test_stb[i])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.red, expected: %u, got: %u\n", i / 4, reconstructed[i], test_stb[i]);
-    //         return 2;
-    //     }
-    //     if(reconstructed[i + 1] != test_stb[i + 1])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.green, expected: %u, got: %u\n", i / 4, reconstructed[i], test_stb[i]);
-    //         return 3;
-    //     }
-    //     if(reconstructed[i + 2] != test_stb[i + 2])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.blue, expected: %u, got: %u\n", i / 4, reconstructed[i], test_stb[i]);
-    //         return 4;
-    //     }
-    //     if(reconstructed[i + 3] != test_stb[i + 3])
-    //     {
-    //         fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.alpha, expected: %u, got: %u\n", i / 4, reconstructed[i], test_stb[i]);
-    //         return 5;
-    //     }
-    // }
+    result = imgsurf_write_file("assets/reconstructed.png", testPNG, width, height, IMGSURF_CHANNELS_RGBA, 8, IMGSURF_FILE_PNG);
+    if(result)
+    {
+        return result;
+    }
 
-    // free(test_stb);
-    free(testRGBA);
-    free(reconstructed);
+    uint8_t *reconstructedPNG = imgsurf_load_file("assets/reconstructed.png", &width, &height, IMGSURF_CHANNELS_RGBA, 8);
+
+    for(uint64_t i = 0; i < width * height * 4; i += 4)
+    {
+        if(reconstructedQOI[i] != reconstructedPNG[i])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.red, expected: %u, got: %u\n", i / 4, reconstructedQOI[i], reconstructedPNG[i]);
+            return 2;
+        }
+        if(reconstructedQOI[i + 1] != reconstructedPNG[i + 1])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.green, expected: %u, got: %u\n", i / 4, reconstructedQOI[i], reconstructedPNG[i]);
+            return 3;
+        }
+        if(reconstructedQOI[i + 2] != reconstructedPNG[i + 2])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.blue, expected: %u, got: %u\n", i / 4, reconstructedQOI[i], reconstructedPNG[i]);
+            return 4;
+        }
+        if(reconstructedQOI[i + 3] != reconstructedPNG[i + 3])
+        {
+            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.alpha, expected: %u, got: %u\n", i / 4, reconstructedQOI[i], reconstructedPNG[i]);
+            return 5;
+        }
+    }
+
+    free(testQOI);
+    free(testPNG);
+    free(reconstructedQOI);
 
     return 0;
 }
@@ -106,21 +103,21 @@ int main
 ){
     int result = 0;
 
-    if((result = verifyImage("assets/smallTest.qoi"/*, "assets/smallTest.png"*/)))
+    if((result = verifyImage("assets/smallTest.qoi", "assets/smallTest.png")))
     {
         fprintf(stderr, "\x1b[7;31mERROR: unit test not passed with image assets/smallTest!\n");
         return result;
     }
     fprintf(stderr, "\033[32;1;1mSUCCESS: unit test passed with image assets/smallTest!\033[0m\n");
 
-    if((result = verifyImage("assets/black.qoi"/*, "assets/black.png"*/)))
+    if((result = verifyImage("assets/black.qoi", "assets/black.png")))
     {
         fprintf(stderr, "\x1b[7;31mERROR: unit test not passed with image assets/black!\033[0m\n");
         return result;
     }
     fprintf(stderr, "\033[32;1;1mSUCCESS: unit test passed with image assets/black!\033[0m\n");
 
-    if((result = verifyImage("assets/tux.qoi"/*, "assets/tux.png"*/)))
+    if((result = verifyImage("assets/tux.qoi", "assets/tux.png")))
     {
         fprintf(stderr, "\x1b[7;31mERROR: unit tux not passed with image assets/tux!\033[0m\n");
         return result;
