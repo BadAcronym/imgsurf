@@ -1,13 +1,8 @@
-#include <stdio.h>
-#include <inttypes.h>
-
 #include "imgsurf_main.h"
 
-#ifdef BUILD_LINUX
-    #include "linux_imgsurf_platform.h"
-#elif defined(BUILD_WINDOWS)
-    #include "win32_imgsurf_platform.h"
-#endif
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 bool same_pixel
 (

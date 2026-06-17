@@ -1,5 +1,4 @@
 #include "imgsurf_main.h"
-#include "linux_imgsurf_platform.h"
 
 #include <sys/stat.h>
 
