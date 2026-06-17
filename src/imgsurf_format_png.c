@@ -1,4 +1,6 @@
 #include "imgsurf_main.h"
+
+#define STRING_VIEW_IMPL
 #include "string_view.h"
 
 f_internal StringView readChunkHeader
@@ -35,6 +37,27 @@ f_internal StringView readChunkHeader
         .data = result,
         .size = 4
     };
+}
+
+f_internal uint8_t readChunk_IHDR
+(
+    FILE *file
+){
+    return 0;
+}
+
+f_internal uint8_t readChunk_PLTE
+(
+    FILE *file
+){
+    return 0;
+}
+
+f_internal uint8_t readChunk_IDAT
+(
+    FILE *file
+){
+    return 0;
 }
 
 uint8_t* loadPNG
@@ -123,6 +146,11 @@ uint8_t writePNG
     uint32_t height,
     uint8_t  channels
 ){
+    (void)file;
+    (void)data;
+    (void)width;
+    (void)height;
+    (void)channels;
     fprintf(stderr, "\n\033[33;1;7mWIP: PNG writer under construction!\033[0m\n");
     return 0;
 }
