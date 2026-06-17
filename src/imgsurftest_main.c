@@ -7,7 +7,7 @@ f_internal uint8_t verifyImage_read
     const char *name_qoi,
     const char *name_png
 ){
-    fprintf(stderr, "\ntrying to verify image: %s with %s\n", name_qoi, name_png);
+    fprintf(stderr, "\ntrying to verify reading image: %s with %s\n", name_qoi, name_png);
     uint32_t width  = 0;
     uint32_t height = 0;
 
@@ -61,7 +61,7 @@ f_internal uint8_t verifyImage_write
     const char *name_qoi,
     const char *name_png
 ){
-    fprintf(stderr, "\ntrying to verify image: %s with %s\n", name_qoi, name_png);
+    fprintf(stderr, "\ntrying to verify writing image: %s with %s\n", name_qoi, name_png);
 
     uint32_t width  = 0;
     uint32_t height = 0;
@@ -179,6 +179,33 @@ int main
     else
     {
         fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image assets/tux!\033[0m\n");
+    }
+
+    if((result = verifyImage_write("assets/smallTest.qoi", "assets/smallTest.png")))
+    {
+        fprintf(stderr, "\x1b[7;31mERROR: WRITE test not passed with image assets/smallTest!\033[0m\n");
+    }
+    else
+    {
+        fprintf(stderr, "\033[32;1;1mSUCCESS: WRITE test passed with image assets/smallTest!\033[0m\n");
+    }
+
+    if((result = verifyImage_write("assets/black.qoi", "assets/black.png")))
+    {
+        fprintf(stderr, "\x1b[7;31mERROR: WRITE test not passed with image assets/black!\033[0m\n");
+    }
+    else
+    {
+        fprintf(stderr, "\033[32;1;1mSUCCESS: WRITE test passed with image assets/black!\033[0m\n");
+    }
+
+    if((result = verifyImage_write("assets/tux.qoi", "assets/tux.png")))
+    {
+        fprintf(stderr, "\x1b[7;31mERROR: WRITE test not passed with image assets/tux!\033[0m\n");
+    }
+    else
+    {
+        fprintf(stderr, "\033[32;1;1mSUCCESS: WRITE test passed with image assets/tux!\033[0m\n");
     }
 
     return result;
