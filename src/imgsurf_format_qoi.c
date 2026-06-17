@@ -1,5 +1,7 @@
 #include "imgsurf_main.h"
 
+#include "string_view.h"
+
 #include <stdlib.h>
 #include <inttypes.h>
 
@@ -391,7 +393,9 @@ uint8_t writeQOI
     uint32_t height,
     uint8_t  channels
 ){
+    #ifdef IMGSURF_LOG_WRITE
     uint8_t *data_start  = data;
+    #endif
     uint8_t channelcount = (channels == IMGSURF_CHANNELS_RGBA ||
                             channels == IMGSURF_CHANNELS_BGRA) ? 4 : 3;
 
