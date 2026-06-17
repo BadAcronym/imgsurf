@@ -40,7 +40,7 @@ project("imagesurf library")
                 "./include/linux_imgsurf*",
                 "./src/imgsurf_*",
                 "./include/imgsurf_*" })
-        includedirs({ "./include/", "/usr/include/"})
+        includedirs({ "./include/", "/usr/include/", "./vendor/puddle/include/"})
         buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow", "-Wsign-compare"})
         linkoptions("-fuse-ld=mold")
         toolset("clang")
