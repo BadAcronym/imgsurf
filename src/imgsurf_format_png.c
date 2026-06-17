@@ -5,12 +5,29 @@
 
 f_internal StringView readChunkHeader
 (
-    FILE *file
+    FILE     *file,
+    uint32_t *length
 ){
-    char result[4] = {0, 0, 0, 0};
+    *length = 0;
+    char *result = calloc(5, 1);
 
     char   byte     = 0;
     size_t elements = 0;
+    if((elements = fread(length, 4, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read chunk length.\033[0m\n");
+        return(StringView){0};
+    }
+
+    fprintf(stderr, "read length: %u\n", *length);
+    uint32_t max = (1 << 30) - 1;
+    if(*length > max)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: chunk length exceedes maximum of %u with "
+                "length %u.\033[0m\n", max, *length);
+        return (StringView){0};
+    }
+
     for(uint8_t i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
@@ -29,43 +46,43 @@ f_internal StringView readChunkHeader
             return(StringView){0};
         }
 
+        fprintf(stderr, "byte: %u\n", byte);
         result[i] = byte;
     }
 
-    return(StringView)
-    {
-        .data = result,
-        .size = 4
-    };
+    return cstr_sv(result);
 }
 
 f_internal uint8_t readChunk_IHDR
 (
-    FILE *file
+    FILE     *file,
+    uint32_t length
 ){
     return 0;
 }
 
 f_internal uint8_t readChunk_PLTE
 (
-    FILE *file
+    FILE     *file,
+    uint32_t length
 ){
     return 0;
 }
 
 f_internal uint8_t readChunk_IDAT
 (
-    FILE *file
+    FILE     *file,
+    uint32_t length
 ){
     return 0;
 }
 
 uint8_t* loadPNG
 (
-    FILE        *file,
-    uint32_t    *width,
-    uint32_t    *height,
-    uint8_t     channels
+    FILE     *file,
+    uint32_t *width,
+    uint32_t *height,
+    uint8_t  channels
 ){
     char header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
     *width  = 0;
@@ -107,20 +124,27 @@ uint8_t* loadPNG
     StringView IDAT = cstr_sv("IDAT");
     StringView IEND = cstr_sv("IEND");
 
-    StringView chunkHeader = readChunkHeader(file);
+    uint32_t   length      = 0;
+    StringView chunkHeader = readChunkHeader(file, &length);
     if(!sv_same(chunkHeader, IHDR))
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: could not read IHDR header at beginning "
-                "of PNG stream.\033[0m\n");
+                "of PNG stream. Read chunk header: "PRI_SV"\033[0m\n",
+                ARG_SV(chunkHeader));
         return 0;
     }
 
-    readChunk_IHDR(file);
+    readChunk_IHDR(file, length);
 
     bool streamData = true;
     while(streamData)
     {
-        chunkHeader = readChunkHeader(file);
+        if(chunkHeader.data)
+        {
+            free((void*)chunkHeader.data);
+            chunkHeader.size = 0;
+        }
+        chunkHeader = readChunkHeader(file, &length);
         if(!chunkHeader.data)
         {
             fprintf(stderr, "\033[31;1;7mERROR: could not successfully read chunk "
@@ -129,11 +153,11 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, PLTE))
         {
-            readChunk_PLTE(file);
+            readChunk_PLTE(file, length);
         }
         else if(sv_same(chunkHeader, IDAT))
         {
-            readChunk_IDAT(file);
+            readChunk_IDAT(file, length);
         }
         else if(sv_same(chunkHeader, IEND))
         {
