@@ -16,6 +16,7 @@ f_internal StringView readChunkHeader
     if((elements = fread(length, 4, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: could not read chunk length.\033[0m\n");
+        free(result);
         return(StringView){0};
     }
 
@@ -25,6 +26,7 @@ f_internal StringView readChunkHeader
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: chunk length exceedes maximum of %u with "
                 "length %u.\033[0m\n", max, *length);
+        free(result);
         return (StringView){0};
     }
 
@@ -145,6 +147,7 @@ uint8_t* loadPNG
             chunkHeader.size = 0;
         }
         chunkHeader = readChunkHeader(file, &length);
+
         if(!chunkHeader.data)
         {
             fprintf(stderr, "\033[31;1;7mERROR: could not successfully read chunk "
