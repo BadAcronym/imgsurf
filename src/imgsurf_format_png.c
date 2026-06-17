@@ -3,6 +3,9 @@
 #define STRING_VIEW_IMPL
 #include "string_view.h"
 
+#define PNG_STREAM_END      0
+#define PNG_STREAM_CONTINUE 1
+
 f_internal StringView readChunkHeader
 (
     FILE     *file,
@@ -21,11 +24,11 @@ f_internal StringView readChunkHeader
     }
 
     fprintf(stderr, "read length: %u\n", *length);
-    uint32_t max = (1 << 30) - 1;
+    uint32_t max = (uint32_t)((1 << 31)) - 1;
     if(*length > max)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: chunk length exceedes maximum of %u with "
-                "length %u.\033[0m\n", max, *length);
+        fprintf(stderr, "\n\033[31;1;7mERROR: chunk length %u exceedes maximum of %u."
+                "\033[0m\n", *length, max);
         free(result);
         return (StringView){0};
     }
@@ -60,7 +63,7 @@ f_internal uint8_t readChunk_IHDR
     FILE     *file,
     uint32_t length
 ){
-    return 0;
+    return PNG_STREAM_END;
 }
 
 f_internal uint8_t readChunk_PLTE
@@ -68,7 +71,7 @@ f_internal uint8_t readChunk_PLTE
     FILE     *file,
     uint32_t length
 ){
-    return 0;
+    return PNG_STREAM_END;
 }
 
 f_internal uint8_t readChunk_IDAT
@@ -76,7 +79,7 @@ f_internal uint8_t readChunk_IDAT
     FILE     *file,
     uint32_t length
 ){
-    return 0;
+    return PNG_STREAM_END;
 }
 
 uint8_t* loadPNG
@@ -128,15 +131,22 @@ uint8_t* loadPNG
 
     uint32_t   length      = 0;
     StringView chunkHeader = readChunkHeader(file, &length);
-    if(!sv_same(chunkHeader, IHDR))
+    if(chunkHeader.data && !sv_same(chunkHeader, IHDR))
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: could not read IHDR header at beginning "
                 "of PNG stream. Read chunk header: "PRI_SV"\033[0m\n",
                 ARG_SV(chunkHeader));
+        free((void*)chunkHeader.data);
         return 0;
     }
 
-    readChunk_IHDR(file, length);
+    if(!readChunk_IHDR(file, length))
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read IHDR header data."
+                "\033[0m\n");
+        free((void*)chunkHeader.data);
+        return 0;
+    }
 
     bool streamData = true;
     while(streamData)
@@ -156,15 +166,21 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, PLTE))
         {
-            readChunk_PLTE(file, length);
+            streamData = readChunk_PLTE(file, length);
         }
         else if(sv_same(chunkHeader, IDAT))
         {
-            readChunk_IDAT(file, length);
+            streamData = readChunk_IDAT(file, length);
         }
         else if(sv_same(chunkHeader, IEND))
         {
             streamData = false;
+        }
+        else
+        {
+            fprintf(stderr, "\033[31;1;7mERROR: unknown chunk type: "PRI_SV"\033[0m",
+                    ARG_SV(chunkHeader));
+            return 0;
         }
     }
 
