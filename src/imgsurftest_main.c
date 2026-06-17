@@ -14,14 +14,14 @@ f_internal uint8_t verifyImage_read
     uint8_t *testQOI = imgsurf_load_file(name_qoi, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
     if(!testQOI)
     {
-        fprintf(stderr, "\x1b[1;31mimgsurf_load failed on QOI file.\033[0m\n");
+        fprintf(stderr, "\x1b[1;31m\nimgsurf_load failed on QOI file.\033[0m\n");
         return 1;
     }
 
     uint8_t *testPNG = imgsurf_load_file(name_png, &width, &height, IMGSURF_CHANNELS_RGBA, 8);
     if(!testPNG)
     {
-        fprintf(stderr, "\x1b[1;31mimgsurf_load failed on PNG file.\033[0m\n");
+        fprintf(stderr, "\x1b[1;31m\nimgsurf_load failed on PNG file.\033[0m\n");
         return 2;
     }
 
@@ -147,21 +147,30 @@ int main
 
     if((result = verifyImage_read("assets/smallTest.qoi", "assets/smallTest.png")))
     {
-        fprintf(stderr, "\x1b[7;31mERROR: READ test not passed with image assets/smallTest!\n");
+        fprintf(stderr, "\x1b[7;31mERROR: READ test not passed with image assets/smallTest!\033[0m\n");
     }
-    fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image assets/smallTest!\033[0m\n");
+    else
+    {
+        fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image assets/smallTest!\033[0m\n");
+    }
 
     if((result = verifyImage_read("assets/black.qoi", "assets/black.png")))
     {
         fprintf(stderr, "\x1b[7;31mERROR: READ test not passed with image assets/black!\033[0m\n");
     }
-    fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image assets/black!\033[0m\n");
+    else
+    {
+        fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image assets/black!\033[0m\n");
+    }
 
     if((result = verifyImage_read("assets/tux.qoi", "assets/tux.png")))
     {
         fprintf(stderr, "\x1b[7;31mERROR: READ test not passed with image assets/tux!\033[0m\n");
     }
-    fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image assets/tux!\033[0m\n");
+    else
+    {
+        fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image assets/tux!\033[0m\n");
+    }
 
     return result;
 }

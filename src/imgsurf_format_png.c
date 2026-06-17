@@ -108,10 +108,11 @@ uint8_t* loadPNG
     StringView IEND = cstr_sv("IEND");
 
     StringView chunkHeader = readChunkHeader(file);
-    if(!sv_is_same(chunkHeader, IHDR))
+    if(!sv_same(chunkHeader, IHDR))
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: could not read IHDR header at beginning"
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read IHDR header at beginning "
                 "of PNG stream.\033[0m\n");
+        return 0;
     }
 
     readChunk_IHDR(file);
@@ -120,15 +121,21 @@ uint8_t* loadPNG
     while(streamData)
     {
         chunkHeader = readChunkHeader(file);
-        if(sv_is_same(chunkHeader, PLTE))
+        if(!chunkHeader.data)
+        {
+            fprintf(stderr, "\033[31;1;7mERROR: could not successfully read chunk "
+                    "header.\033[0m");
+            return 0;
+        }
+        else if(sv_same(chunkHeader, PLTE))
         {
             readChunk_PLTE(file);
         }
-        else if(sv_is_same(chunkHeader, IDAT))
+        else if(sv_same(chunkHeader, IDAT))
         {
             readChunk_IDAT(file);
         }
-        else if(sv_is_same(chunkHeader, IEND))
+        else if(sv_same(chunkHeader, IEND))
         {
             streamData = false;
         }
