@@ -107,7 +107,7 @@ project("imagesurf unit tests")
                 "./include/linux_imgsurftest*",
                 "./src/imgsurftest*",
                 "./include/imgsurftest*" })
-        includedirs({ "./include/", "/usr/include/", "./vendor/"})
+        includedirs({ "./include/", "/usr/include/", "./vendor/puddle/include/"})
         libdirs("./bin/%{cfg.buildcfg}/")
         buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow", "-Wsign-compare"})
         links("imgsurf:static")
