@@ -54,7 +54,8 @@ project("imagesurf library")
         files({ "./src/win32_imgsurf*",
                 "./include/win32_imgsurf*",
                 "./src/imgsurf_*",
-                "./include/imgsurf_*" })
+                "./include/imgsurf_*",
+                "./vendor/puddle/src/string_view.c" })
         includedirs({ "./include/"})
 
     filter({"platforms:Linux", "configurations:debug or asan"})
