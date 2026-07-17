@@ -1,6 +1,5 @@
 #include "imgsurf_main.h"
 
-#define STRING_VIEW_IMPL
 #include "string_view.h"
 
 #define PNG_STREAM_END      0

@@ -39,7 +39,8 @@ project("imagesurf library")
         files({ "./src/linux_imgsurf*",
                 "./include/linux_imgsurf*",
                 "./src/imgsurf_*",
-                "./include/imgsurf_*" })
+                "./include/imgsurf_*",
+                "./vendor/puddle/src/string_view.c" })
         includedirs({ "./include/", "/usr/include/", "./vendor/puddle/include/"})
         buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow", "-Wsign-compare"})
         linkoptions("-fuse-ld=mold")
