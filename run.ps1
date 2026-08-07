@@ -1,63 +1,55 @@
 param
 (
-    $build = "release",
-    [switch]$compile_only = $false
+    [Parameter(Position = 0)][string]$build,
+    [Parameter(Position = 1)][string]$compile_only
 )
 
-if(-Not(Test-Path ".\obj\"))
+if(-Not(Test-Path "./obj/"))
 {
-    &mkdir .\obj\
+    mkdir "./obj/"
 }
 
-if(-Not(Test-Path ".\build\"))
+if(-Not(Test-Path "./build/"))
 {
-    &mkdir .\build\
+    mkdir "./build/"
 }
 
-if(-Not(Test-Path ".\bin\"))
+if(-Not(Test-Path "./bin/"))
 {
-    &mkdir .\bin\
+    mkdir "./bin/"
 }
 
-function Get-Compileprep()
+if($build -eq $null -or $build -eq "")
 {
-    Write-Host ""
-    Write-Host "`033[36mcompiling imgsurf...`033[0m"
-    Write-Host ""
-    premake5 vs2022
+    $build = "release"
 }
 
 if($build -eq "asan" -or $build -eq "debug" -or $build -eq "release")
 {
-    Get-Compileprep
-    pushd ".\build\"
-    &MSBuild imgsurf.sln -p:Configuration=$build -p:Platform=windows
+    Write-Host "`ncompiling imgsurf...`n" -Fore Cyan
+
+    premake5 gmake
+    pushd "./build/"
+    make config=$build`_windows
+    popd
 }
 else
 {
-    Write-Host "`033[31m\nERROR: invalid make config: $build.`033[0m"
-    exit -2;
+     Write-Host "ERROR: invalid make config: '$build'." -ForegroundColor Red
+     exit -2;
 }
 
-if(0 -ne $LASTEXITCODE)
+if($LASTEXITCODE -ne 0)
 {
-    Write-Host "`033[31m`nERROR: failed to compile.`n`033[0m"
-    popd
-    exit -1
+     Write-Host "`nERROR: failed to compile imgsurf.`n" -ForegroundColor Red
+     exit -1;
 }
 
 Write-Host "`n"
 
-popd
-
-if($compile_only)
+if($compile_only -eq "--compile-only")
 {
-    exit 0
+    exit 0;
 }
 
-if(0 -eq $LASTEXITCODE)
-{
-    $target = ".\bin\$build\imgsurftest.exe"
-    Write-Host "`nrunning $target..."
-    Invoke-Expression $target
-}
+&./bin/$build/imgsurftest.exe

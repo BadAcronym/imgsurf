@@ -6,7 +6,7 @@ workspace("imgsurf")
     location("build")
     architecture("x86_64")
 
-project("imagesurf library")
+project("imgsurf")
     language("C")
     cdialect("C99")
     warnings("Extra")
@@ -41,7 +41,7 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*",
                 "./vendor/puddle/src/string_view.c" })
-        includedirs({ "./include/", "/usr/include/", "./vendor/puddle/include/"})
+        includedirs({"./include/", "/usr/include/", "./vendor/puddle/include/"})
         buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow", "-Wsign-compare"})
         linkoptions("-fuse-ld=mold")
         toolset("clang")
@@ -56,7 +56,7 @@ project("imagesurf library")
                 "./src/imgsurf_*",
                 "./include/imgsurf_*",
                 "./vendor/puddle/src/string_view.c" })
-        includedirs({ "./include/"})
+        includedirs({"./include/", "./vendor/puddle/include/"})
 
     filter({"platforms:Linux", "configurations:debug or asan"})
         buildoptions({"-gfull", "-O1"})
@@ -75,7 +75,7 @@ project("imagesurf library")
     filter({"platforms:Windows", "configurations:release"})
         linkoptions({"/NODEFAULTLIB:MSVCRTD"})
 
-project("imagesurf unit tests")
+project("imgsurftest")
     language("C")
     cdialect("C99")
     warnings("Extra")
@@ -125,9 +125,9 @@ project("imagesurf unit tests")
                 "./include/win32_imgsurf*",
                 "./src/imgsurf*",
                 "./include/imgsurf*" })
-        includedirs({"./include/"})
+        includedirs({"./include/", "./vendor/puddle/include/"})
         libdirs("./bin/%{cfg.buildcfg}/")
-        links("imgsurf.lib")
+        links("imgsurf:static")
 
     filter({"platforms:Linux", "configurations:debug or asan"})
         buildoptions({"-gfull", "-O1"})
@@ -145,6 +145,3 @@ project("imagesurf unit tests")
     filter({"platforms:Windows", "configurations:asan"})
         editandcontinue("Off")
         buildoptions({"/fsanitize=address", "/Zi", "/INCREMENTAL:NO"})
-
-    filter({"platforms:Windows", "configurations:release"})
-        linkoptions({"/NODEFAULTLIB:MSVCRTD"})
