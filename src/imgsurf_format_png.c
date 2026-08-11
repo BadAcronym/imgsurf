@@ -132,7 +132,7 @@ uint8_t* loadPNG
     StringView chunkHeader = readChunkHeader(file, &length);
     if(chunkHeader.data && !sv_same(chunkHeader, IHDR))
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: could not read IHDR header at beginning "
+        fprintf(stderr, "\n\033[31;1mERROR: could not read IHDR header at beginning "
                 "of PNG stream. Read chunk header: "PRI_SV"\033[0m\n",
                 ARG_SV(chunkHeader));
         free((void*)chunkHeader.data);
@@ -141,7 +141,7 @@ uint8_t* loadPNG
 
     if(!readChunk_IHDR(file, length))
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: could not read IHDR header data."
+        fprintf(stderr, "\n\033[31;1;1mERROR: could not read IHDR header data."
                 "\033[0m\n");
         free((void*)chunkHeader.data);
         return 0;
@@ -159,7 +159,7 @@ uint8_t* loadPNG
 
         if(!chunkHeader.data)
         {
-            fprintf(stderr, "\033[31;1;7mERROR: could not successfully read chunk "
+            fprintf(stderr, "\033[31;1;1mERROR: could not successfully read chunk "
                     "header.\033[0m");
             return 0;
         }
@@ -177,13 +177,13 @@ uint8_t* loadPNG
         }
         else
         {
-            fprintf(stderr, "\033[31;1;7mERROR: unknown chunk type: "PRI_SV"\033[0m",
+            fprintf(stderr, "\033[31;1;1mERROR: unknown chunk type: "PRI_SV"\033[0m",
                     ARG_SV(chunkHeader));
             return 0;
         }
     }
 
-    fprintf(stderr, "\n\033[33;1;7mWIP: PNG loader under construction!\033[0m\n");
+    fprintf(stderr, "\n\033[33;1;1mWIP: PNG loader under construction!\033[0m\n");
     return 0;
 }
 
