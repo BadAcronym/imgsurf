@@ -42,7 +42,8 @@ project("imgsurf")
                 "./include/imgsurf_*",
                 "./vendor/puddle/src/string_view.c" })
         includedirs({"./include/", "/usr/include/", "./vendor/puddle/include/"})
-        buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow", "-Wsign-compare"})
+        buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow",
+                      "-Wsign-compare", "-Wunused"})
         linkoptions("-fuse-ld=mold")
         toolset("clang")
 
