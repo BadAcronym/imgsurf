@@ -1,4 +1,5 @@
-#pragma once
+#ifndef IMGSURF_HEADER
+#define IMGSURF_HEADER
 
 #include <stdint.h>
 #include <stdio.h>
@@ -157,3 +158,5 @@ extern void imgsurf_write_ptr
     uint8_t  channels,
     uint8_t  bitdepth
 );
+
+#endif
