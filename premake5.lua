@@ -63,10 +63,6 @@ project("imgsurf")
                 "./vendor/puddle/src/string_view.c" })
         includedirs({"./include/", "./vendor/puddle/include/"})
 
-    filter({"platforms:linux", "configurations:debug or asan"})
-        buildoptions({"-gfull", "-O1"})
-        linkoptions({"-gfull", "-O1"})
-
     filter({"platforms:linux", "configurations:asan"})
         buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                       "-static-libasan"})
@@ -139,10 +135,6 @@ project("imgsurftest")
                 "./include/imgsurf*" })
         includedirs({"./include/", "./vendor/puddle/include/"})
         libdirs("./bin/%{cfg.buildcfg}/")
-
-    filter({"platforms:linux", "configurations:debug or asan"})
-        buildoptions({"-gfull", "-O1"})
-        linkoptions({"-gfull", "-O1"})
 
     filter({"platforms:linux", "configurations:asan"})
         buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
