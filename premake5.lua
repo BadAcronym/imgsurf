@@ -12,6 +12,9 @@ project("imgsurf")
     warnings("Extra")
     targetname("imgsurf")
     kind("StaticLib")
+    toolset("clang")
+    buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow",
+                  "-Wsign-compare", "-Wtype-limits", "-Wunused"})
 
     filter("configurations:asan")
         defines{"ASAN"}
@@ -23,6 +26,8 @@ project("imgsurf")
         runtime("debug")
         symbols("On")
         optimize("Off")
+        buildoptions({"-gfull", "-O1"})
+        linkoptions({"-gfull", "-O1"})
 
     filter("configurations:release")
         defines{"NDEBUG"}
@@ -31,8 +36,8 @@ project("imgsurf")
         symbols("Off")
         optimize("Speed")
 
-    filter("platforms:Linux")
-        system("Linux")
+    filter("platforms:linux")
+        system("linux")
         defines("BUILD_LINUX")
         targetdir("bin/%{cfg.buildcfg}")
         objdir("obj/imgsurf")
@@ -45,10 +50,9 @@ project("imgsurf")
         buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow",
                       "-Wsign-compare", "-Wunused"})
         linkoptions("-fuse-ld=mold")
-        toolset("clang")
 
-    filter("platforms:Windows")
-        system("Windows")
+    filter("platforms:windows")
+        system("windows")
         defines("BUILD_WINDOWS")
         targetdir("bin/%{cfg.buildcfg}")
         objdir("obj/")
@@ -59,22 +63,25 @@ project("imgsurf")
                 "./vendor/puddle/src/string_view.c" })
         includedirs({"./include/", "./vendor/puddle/include/"})
 
-    filter({"platforms:Linux", "configurations:debug or asan"})
+    filter({"platforms:linux", "configurations:debug or asan"})
         buildoptions({"-gfull", "-O1"})
         linkoptions({"-gfull", "-O1"})
 
-    filter({"platforms:Linux", "configurations:asan"})
+    filter({"platforms:linux", "configurations:asan"})
         buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                       "-static-libasan"})
         linkoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                      "-static-libasan"})
 
-    filter({"platforms:Windows", "configurations:asan"})
-        editandcontinue("Off")
-        buildoptions({"/fsanitize=address", "/Zi", "/INCREMENTAL:NO"})
+    filter({"platforms:windows", "configurations:debug or asan"})
+        buildoptions("-gcodeview");
+        linkoptions("-gcodeview");
 
-    filter({"platforms:Windows", "configurations:release"})
-        linkoptions({"/NODEFAULTLIB:MSVCRTD"})
+    filter({"platforms:windows", "configurations:asan"})
+        toolset("clang-cl")
+        buildoptions({"/fsanitize=address", "/Zi", "/INCREMENTAL:NO"})
+        linkoptions{"/link clang_rt.asan_dynamic-x86_64.lib clang_rt.asan_dynamic_runtime_thunk-x86_64.lib"}
+        editandcontinue("Off")
 
 project("imgsurftest")
     language("C")
@@ -82,6 +89,10 @@ project("imgsurftest")
     warnings("Extra")
     targetname("imgsurftest")
     kind("ConsoleApp")
+    toolset("clang")
+    buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow",
+                  "-Wsign-compare", "-Wtype-limits", "-Wunused"})
+    links("imgsurf:static")
 
     filter("configurations:asan")
         defines{"ASAN"}
@@ -101,8 +112,8 @@ project("imgsurftest")
         symbols("Off")
         optimize("Speed")
 
-    filter("platforms:Linux")
-        system("Linux")
+    filter("platforms:linux")
+        system("linux")
         defines("BUILD_LINUX")
         targetdir("bin/%{cfg.buildcfg}")
         objdir("obj/imgsurftest/")
@@ -117,8 +128,8 @@ project("imgsurftest")
         linkoptions({"-fuse-ld=mold", "-lm"})
         toolset("clang")
 
-    filter("platforms:Windows")
-        system("Windows")
+    filter("platforms:windows")
+        system("windows")
         defines("BUILD_WINDOWS")
         targetdir("bin/%{cfg.buildcfg}")
         objdir("obj/")
@@ -128,21 +139,26 @@ project("imgsurftest")
                 "./include/imgsurf*" })
         includedirs({"./include/", "./vendor/puddle/include/"})
         libdirs("./bin/%{cfg.buildcfg}/")
-        links("imgsurf:static")
 
-    filter({"platforms:Linux", "configurations:debug or asan"})
+    filter({"platforms:linux", "configurations:debug or asan"})
         buildoptions({"-gfull", "-O1"})
         linkoptions({"-gfull", "-O1"})
 
-    filter({"platforms:Linux", "configurations:asan"})
+    filter({"platforms:linux", "configurations:asan"})
         buildoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                       "-static-libasan"})
         linkoptions({"-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer",
                      "-static-libasan"})
 
-    filter({"platforms:Windows", "configurations:debug or asan"})
+    filter({"platforms:windows", "configurations:debug or asan"})
         kind("ConsoleApp")
 
-    filter({"platforms:Windows", "configurations:asan"})
-        editandcontinue("Off")
+    filter({"platforms:windows", "configurations:debug or asan"})
+        buildoptions("-gcodeview");
+        linkoptions("-gcodeview");
+
+    filter({"platforms:windows", "configurations:asan"})
+        toolset("clang-cl")
         buildoptions({"/fsanitize=address", "/Zi", "/INCREMENTAL:NO"})
+        linkoptions{"/link clang_rt.asan_dynamic-x86_64.lib clang_rt.asan_dynamic_runtime_thunk-x86_64.lib"}
+        editandcontinue("Off")
