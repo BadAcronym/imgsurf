@@ -41,7 +41,8 @@ f_internal StringView readChunkHeader
     }
 
     #ifdef DEBUG
-    fprintf(stderr, "read length: %u\n", *length);
+    fprintf(stderr, "---------------------------------\n");
+    fprintf(stderr, "next chunk length: %u\n", *length);
     #endif
     uint32_t max = (uint32_t)((1 << 31)) - 1;
     if(*length > max)
@@ -75,6 +76,7 @@ f_internal StringView readChunkHeader
 
     #ifdef DEBUG
     fprintf(stderr, "identified chunk: %s\n", result);
+    fprintf(stderr, "---------------------------------\n");
     #endif
     return cstr_sv(result);
 }
@@ -85,20 +87,31 @@ f_internal uint8_t readChunk_IHDR
     uint32_t length,
     IHDRData *data
 ){
-    size_t elements = 0;
+    size_t  elements = 0;
+    uint8_t byte     = 0;
 
-    if((elements = fread(&data->width, 4, 1, file)) != 1)
+    for(uint8_t i = 0; i < 4; ++i)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: could not read width from IHDR chunk."
-                "\033[0m\n");
-        return PNG_STREAM_END;
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read width from IHDR chunk."
+                    "\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->width += ((uint32_t)byte << (3 - i) * 8);
     }
 
-    if((elements = fread(&data->height, 4, 1, file)) != 1)
+    for(uint8_t i = 0; i < 4; ++i)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: could not read height from IHDR chunk."
-                "\033[0m\n");
-        return PNG_STREAM_END;
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read height from IHDR chunk."
+                    "\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->height += ((uint32_t)byte << (3 - i) * 8);
     }
 
     if((elements = fread(&data->bitdepth, 1, 1, file)) != 1)
@@ -221,6 +234,18 @@ uint8_t* loadPNG
         free((void*)chunkHeader.data);
         return 0;
     }
+
+    // TODO: 4 byte CRC
+
+    #ifdef DEBUG
+    fprintf(stderr, "width: %u\n", ihdrData.width);
+    fprintf(stderr, "height: %u\n", ihdrData.height);
+    fprintf(stderr, "bitdepth: %u\n", ihdrData.bitdepth);
+    fprintf(stderr, "color type: %u\n", ihdrData.colorType);
+    fprintf(stderr, "compression method: %u\n", ihdrData.compression);
+    fprintf(stderr, "filter method: %u\n", ihdrData.filter);
+    fprintf(stderr, "interlace method: %u\n", ihdrData.interlace);
+    #endif
 
     bool streamData = true;
     while(streamData)
