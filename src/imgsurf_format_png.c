@@ -33,7 +33,9 @@ f_internal StringView readChunkHeader
         return(StringView){0};
     }
 
+    #ifdef DEBUG
     fprintf(stderr, "read length: %u\n", *length);
+    #endif
     uint32_t max = (uint32_t)((1 << 31)) - 1;
     if(*length > max)
     {
@@ -61,10 +63,12 @@ f_internal StringView readChunkHeader
             return(StringView){0};
         }
 
-        fprintf(stderr, "byte: %u\n", byte);
         result[i] = byte;
     }
 
+    #ifdef DEBUG
+    fprintf(stderr, "identified chunk: %s\n", result);
+    #endif
     return cstr_sv(result);
 }
 
@@ -241,7 +245,7 @@ uint8_t* loadPNG
         }
         else
         {
-            fprintf(stderr, "\033[31;1;1mERROR: unknown chunk type: "PRI_SV"\033[0m",
+            fprintf(stderr, "\033[31;1;1mERROR: unknown chunk type: '"PRI_SV"'\033[0m",
                     ARG_SV(chunkHeader));
             return 0;
         }
