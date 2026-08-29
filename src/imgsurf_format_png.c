@@ -5,6 +5,17 @@
 #define PNG_STREAM_END      0
 #define PNG_STREAM_CONTINUE 1
 
+typedef struct IHDRData
+{
+    uint32_t width;
+    uint32_t height;
+    uint8_t  bitdepth;
+    uint8_t  colorType;
+    uint8_t  compression;
+    uint8_t  filter;
+    uint8_t  interlace;
+}IHDRData;
+
 f_internal StringView readChunkHeader
 (
     FILE     *file,
@@ -60,9 +71,61 @@ f_internal StringView readChunkHeader
 f_internal uint8_t readChunk_IHDR
 (
     FILE     *file,
-    uint32_t length
+    uint32_t length,
+    IHDRData *data
 ){
-    return PNG_STREAM_END;
+    size_t elements = 0;
+
+    if((elements = fread(&data->width, 4, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read width from IHDR chunk."
+                "\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    if((elements = fread(&data->height, 4, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read height from IHDR chunk."
+                "\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    if((elements = fread(&data->bitdepth, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read bitdepth from IHDR chunk."
+                "\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    if((elements = fread(&data->colorType, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read color type from IHDR "
+                "chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    if((elements = fread(&data->compression, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read compression method from "
+                "IHDR chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    if((elements = fread(&data->filter, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read filter method from IHDR "
+                "chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    if((elements = fread(&data->interlace, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read interlace method from "
+                "IHDR chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    return PNG_STREAM_CONTINUE;
 }
 
 f_internal uint8_t readChunk_PLTE
@@ -139,7 +202,8 @@ uint8_t* loadPNG
         return 0;
     }
 
-    if(!readChunk_IHDR(file, length))
+    IHDRData ihdrData = {0};
+    if(!readChunk_IHDR(file, length, &ihdrData))
     {
         fprintf(stderr, "\n\033[31;1;1mERROR: could not read IHDR header data."
                 "\033[0m\n");
