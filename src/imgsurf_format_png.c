@@ -168,6 +168,29 @@ f_internal uint8_t readChunk_IDAT
     return PNG_STREAM_END;
 }
 
+f_internal bool readChunkCRC
+(
+    FILE *file
+){
+    // TODO: actually verify these bytes and not just skip them
+    size_t   elements = 0;
+    uint8_t  byte     = 0;
+    uint32_t CRC      = 0;
+
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read CRC.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        CRC += ((uint32_t)byte << (3 - i) * 8);
+    }
+
+    return true;
+}
+
 uint8_t* loadPNG
 (
     FILE     *file,
@@ -235,6 +258,8 @@ uint8_t* loadPNG
         return 0;
     }
 
+    readChunkCRC(file);
+
     // TODO: 4 byte CRC
 
     #ifdef DEBUG
@@ -281,6 +306,8 @@ uint8_t* loadPNG
                     ARG_SV(chunkHeader));
             return 0;
         }
+
+        readChunkCRC(file);
     }
 
     fprintf(stderr, "\n\033[33;1;1mWIP: PNG loader under construction!\033[0m\n");
