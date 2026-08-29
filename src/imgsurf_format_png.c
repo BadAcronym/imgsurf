@@ -26,11 +26,18 @@ f_internal StringView readChunkHeader
 
     char   byte     = 0;
     size_t elements = 0;
-    if((elements = fread(length, 4, 1, file)) != 1)
+
+    for(uint8_t i = 0; i < 4; ++i)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: could not read chunk length.\033[0m\n");
-        free(result);
-        return(StringView){0};
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read chunk length."
+                    "\033[0m\n");
+            free(result);
+            return(StringView){0};
+        }
+
+        *length += ((uint32_t)byte << (3 - i) * 8);
     }
 
     #ifdef DEBUG
