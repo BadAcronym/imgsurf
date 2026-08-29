@@ -39,7 +39,7 @@ f_internal StringView readChunkHeader
     uint32_t max = (uint32_t)((1 << 31)) - 1;
     if(*length > max)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: chunk length %u exceedes maximum of %u."
+        fprintf(stderr, "\n\033[31;1;7mERROR: chunk length %u exceeds maximum of %u."
                 "\033[0m\n", *length, max);
         free(result);
         return (StringView){0};
