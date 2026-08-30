@@ -157,6 +157,7 @@ f_internal uint8_t readChunk_PLTE
     FILE     *file,
     uint32_t length
 ){
+    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_PLTE not implemented.\033[0m\n");
     return PNG_STREAM_END;
 }
 
@@ -165,6 +166,16 @@ f_internal uint8_t readChunk_IDAT
     FILE     *file,
     uint32_t length
 ){
+    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_IDAT not implemented.\033[0m\n");
+    return PNG_STREAM_END;
+}
+
+f_internal uint8_t readChunk_cHRM
+(
+    FILE     *file,
+    uint32_t length
+){
+    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_cHRM not implemented.\033[0m\n");
     return PNG_STREAM_END;
 }
 
@@ -237,6 +248,7 @@ uint8_t* loadPNG
     StringView PLTE = cstr_sv("PLTE");
     StringView IDAT = cstr_sv("IDAT");
     StringView IEND = cstr_sv("IEND");
+    StringView cHRM = cstr_sv("cHRM");
 
     uint32_t   length      = 0;
     StringView chunkHeader = readChunkHeader(file, &length);
@@ -259,8 +271,6 @@ uint8_t* loadPNG
     }
 
     readChunkCRC(file);
-
-    // TODO: 4 byte CRC
 
     #ifdef DEBUG
     fprintf(stderr, "width: %u\n", ihdrData.width);
@@ -300,17 +310,20 @@ uint8_t* loadPNG
         {
             streamData = false;
         }
+        else if(sv_same(chunkHeader, cHRM))
+        {
+            streamData = readChunk_cHRM(file, length);
+        }
         else
         {
-            fprintf(stderr, "\033[31;1;1mERROR: unknown chunk type: '"PRI_SV"'\033[0m",
-                    ARG_SV(chunkHeader));
+            fprintf(stderr, "\033[31;1;1mERROR: chunk type '"PRI_SV"' not implemented."
+                    "\033[0m", ARG_SV(chunkHeader));
             return 0;
         }
 
         readChunkCRC(file);
     }
 
-    fprintf(stderr, "\n\033[33;1;1mWIP: PNG loader under construction!\033[0m\n");
     return 0;
 }
 
