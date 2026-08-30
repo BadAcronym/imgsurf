@@ -5,6 +5,14 @@
 #define PNG_STREAM_END      0
 #define PNG_STREAM_CONTINUE 1
 
+typedef struct RGB8
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+}
+RGB8;
+
 typedef struct IHDRData
 {
     uint32_t width;
@@ -14,7 +22,21 @@ typedef struct IHDRData
     uint8_t  compression;
     uint8_t  filter;
     uint8_t  interlace;
-}IHDRData;
+}
+IHDRData;
+
+typedef struct cHRMData
+{
+    uint32_t whitePointX;
+    uint32_t whitePointY;
+    uint32_t redX;
+    uint32_t redY;
+    uint32_t greenX;
+    uint32_t greenY;
+    uint32_t blueX;
+    uint32_t blueY;
+}
+cHRMData;
 
 f_internal StringView readChunkHeader
 (
@@ -84,11 +106,13 @@ f_internal StringView readChunkHeader
 f_internal uint8_t readChunk_IHDR
 (
     FILE     *file,
-    uint32_t length,
     IHDRData *data
 ){
     size_t  elements = 0;
     uint8_t byte     = 0;
+
+    data->width  = 0;
+    data->height = 0;
 
     for(uint8_t i = 0; i < 4; ++i)
     {
@@ -106,8 +130,8 @@ f_internal uint8_t readChunk_IHDR
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: could not read height from IHDR chunk."
-                    "\033[0m\n");
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read height from IHDR "
+                    "chunk.\033[0m\n");
             return PNG_STREAM_END;
         }
 
@@ -155,28 +179,152 @@ f_internal uint8_t readChunk_IHDR
 f_internal uint8_t readChunk_PLTE
 (
     FILE     *file,
-    uint32_t length
+    uint32_t length,
+    RGB8     *palette
 ){
+    if(length > 255)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: corrupted PLTE chunk, palette size too "
+                "big: %u entries.\033[0m\n", length);
+        return PNG_STREAM_END;
+    }
+    else if(length % 3 != 0)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: corrupted PLTE chunk, palette size not "
+                "divisible by 3: %u.\033[0m\n", length);
+        return PNG_STREAM_END;
+    }
+
+    //
     fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_PLTE not implemented.\033[0m\n");
     return PNG_STREAM_END;
+    //
+
+    return PNG_STREAM_CONTINUE;
 }
 
 f_internal uint8_t readChunk_IDAT
 (
-    FILE     *file,
-    uint32_t length
+    FILE *file
 ){
+    //
     fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_IDAT not implemented.\033[0m\n");
     return PNG_STREAM_END;
+    //
+
+    return PNG_STREAM_CONTINUE;
 }
 
 f_internal uint8_t readChunk_cHRM
 (
     FILE     *file,
-    uint32_t length
+    cHRMData *data
 ){
-    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_cHRM not implemented.\033[0m\n");
-    return PNG_STREAM_END;
+    size_t  elements = 0;
+    uint8_t byte     = 0;
+
+    data->whitePointX = 0;
+    data->whitePointY = 0;
+    data->redX        = 0;
+    data->redY        = 0;
+    data->greenX      = 0;
+    data->greenY      = 0;
+    data->blueX       = 0;
+    data->blueY       = 0;
+
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read white point X from "
+                    "cHRM chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->whitePointX += ((uint32_t)byte << (3 - i) * 8);
+    }
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read white point Y from "
+                    "cHRM chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->whitePointY += ((uint32_t)byte << (3 - i) * 8);
+    }
+
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read red X from cHRM "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->redX += ((uint32_t)byte << (3 - i) * 8);
+    }
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read red Y from cHRM "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->redY += ((uint32_t)byte << (3 - i) * 8);
+    }
+
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read green X from cHRM "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->greenX += ((uint32_t)byte << (3 - i) * 8);
+    }
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read green Y from cHRM "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->greenY += ((uint32_t)byte << (3 - i) * 8);
+    }
+
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read blue X from cHRM "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->blueX += ((uint32_t)byte << (3 - i) * 8);
+    }
+    for(uint8_t i = 0; i < 4; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read blue Y from cHRM "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        data->blueY += ((uint32_t)byte << (3 - i) * 8);
+    }
+
+    return PNG_STREAM_CONTINUE;
 }
 
 f_internal bool readChunkCRC
@@ -262,13 +410,17 @@ uint8_t* loadPNG
     }
 
     IHDRData ihdrData = {0};
-    if(!readChunk_IHDR(file, length, &ihdrData))
+    if(!readChunk_IHDR(file, &ihdrData))
     {
         fprintf(stderr, "\n\033[31;1;1mERROR: could not read IHDR header data."
                 "\033[0m\n");
         free((void*)chunkHeader.data);
         return 0;
     }
+
+    cHRMData chrmData = {0};
+    // other chunk data structs
+    RGB8 *palette = 0;
 
     readChunkCRC(file);
 
@@ -300,11 +452,12 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, PLTE))
         {
-            streamData = readChunk_PLTE(file, length);
+            palette = malloc(length * sizeof(RGB8));
+            streamData = readChunk_PLTE(file, length, palette);
         }
         else if(sv_same(chunkHeader, IDAT))
         {
-            streamData = readChunk_IDAT(file, length);
+            streamData = readChunk_IDAT(file);
         }
         else if(sv_same(chunkHeader, IEND))
         {
@@ -312,7 +465,7 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, cHRM))
         {
-            streamData = readChunk_cHRM(file, length);
+            streamData = readChunk_cHRM(file, &chrmData);
         }
         else
         {
