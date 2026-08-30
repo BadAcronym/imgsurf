@@ -327,6 +327,17 @@ f_internal uint8_t readChunk_cHRM
     return PNG_STREAM_CONTINUE;
 }
 
+f_internal uint8_t readChunk_bKGD
+(
+){
+    //
+    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_bKGD not implemented.\033[0m\n");
+    return PNG_STREAM_END;
+    //
+
+    return PNG_STREAM_CONTINUE;
+}
+
 f_internal bool readChunkCRC
 (
     FILE *file
@@ -397,6 +408,7 @@ uint8_t* loadPNG
     StringView IDAT = cstr_sv("IDAT");
     StringView IEND = cstr_sv("IEND");
     StringView cHRM = cstr_sv("cHRM");
+    StringView bKGD = cstr_sv("bKGD");
 
     uint32_t   length      = 0;
     StringView chunkHeader = readChunkHeader(file, &length);
@@ -466,6 +478,10 @@ uint8_t* loadPNG
         else if(sv_same(chunkHeader, cHRM))
         {
             streamData = readChunk_cHRM(file, &chrmData);
+        }
+        else if(sv_same(chunkHeader, bKGD))
+        {
+            streamData = readChunk_bKGD(file);
         }
         else
         {
