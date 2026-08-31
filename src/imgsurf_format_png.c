@@ -568,11 +568,7 @@ uint8_t* loadPNG
         {
             fprintf(stderr, "\033[31;1;1mERROR: could not successfully read chunk "
                     "header.\033[0m");
-            if(palette)
-            {
-                free(palette);
-            }
-            return 0;
+            goto cleanup;
         }
         else if(sv_same(chunkHeader, PLTE))
         {
@@ -599,13 +595,17 @@ uint8_t* loadPNG
         {
             fprintf(stderr, "\033[31;1;1mERROR: chunk type '"PRI_SV"' not implemented."
                     "\033[0m", ARG_SV(chunkHeader));
-            free(palette);
-            return 0;
+            goto cleanup;
         }
 
         readChunkCRC(file);
     }
 
+cleanup:
+    if(chunkHeader.data)
+    {
+        free((void*)chunkHeader.data);
+    }
     if(palette)
     {
         free(palette);
