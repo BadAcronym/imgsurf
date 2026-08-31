@@ -449,7 +449,7 @@ f_internal bool readChunkCRC
 (
     FILE *file
 ){
-    // TODO: actually verify these bytes and not just skip them
+    // actually verify these bytes and not just skip them
     size_t   elements = 0;
     uint8_t  byte     = 0;
     uint32_t CRC      = 0;
@@ -465,7 +465,7 @@ f_internal bool readChunkCRC
         CRC += ((uint32_t)byte << (3 - i) * 8);
     }
 
-    return true;
+    return PNG_STREAM_CONTINUE;
 }
 
 uint8_t* loadPNG
