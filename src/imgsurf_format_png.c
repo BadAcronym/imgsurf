@@ -5,6 +5,12 @@
 #define PNG_STREAM_END      0
 #define PNG_STREAM_CONTINUE 1
 
+#define IS_PNG_TYPE_GREYSCALE        0
+#define IS_PNG_TYPE_TRUECOLOUR       2
+#define IS_PNG_TYPE_INDEXED          3
+#define IS_PNG_TYPE_GREYSCALE_ALPHA  4
+#define IS_PNG_TYPE_TRUECOLOUR_ALPHA 6
+
 typedef struct RGB8
 {
     uint8_t red;
@@ -12,6 +18,14 @@ typedef struct RGB8
     uint8_t blue;
 }
 RGB8;
+
+typedef struct RGB16
+{
+    uint16_t red;
+    uint16_t green;
+    uint16_t blue;
+}
+RGB16;
 
 typedef struct IHDRData
 {
@@ -347,12 +361,86 @@ f_internal uint8_t readChunk_cHRM
 
 f_internal uint8_t readChunk_bKGD
 (
-    FILE *file
+    FILE          *file,
+    const uint8_t colorType,
+    const RGB8    *palette,
+    RGB16         *background
 ){
-    //
-    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_bKGD not implemented.\033[0m\n");
-    return PNG_STREAM_END;
-    //
+    size_t  elements = 0;
+    uint8_t byte     = 0;
+
+    background->red   = 0;
+    background->green = 0;
+    background->blue  = 0;
+
+    if(colorType == IS_PNG_TYPE_INDEXED)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read palette index from "
+                    "bKGD chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        background->red   = palette[byte].red;
+        background->green = palette[byte].green;
+        background->blue  = palette[byte].blue;
+
+        return PNG_STREAM_CONTINUE;
+    }
+    else if(colorType == IS_PNG_TYPE_GREYSCALE ||
+            colorType == IS_PNG_TYPE_GREYSCALE_ALPHA
+    ){
+        for(uint8_t i = 0; i < 2; ++i)
+        {
+            if((elements = fread(&byte, 1, 1, file)) != 1)
+            {
+                fprintf(stderr, "\n\033[31;1;7mERROR: could not read grey from bKGD "
+                        "chunk.\033[0m\n");
+                return PNG_STREAM_END;
+            }
+
+            background->red   += ((uint16_t)byte << (3 - i) * 8);
+            background->green += ((uint16_t)byte << (3 - i) * 8);
+            background->blue  += ((uint16_t)byte << (3 - i) * 8);
+        }
+
+        return PNG_STREAM_CONTINUE;
+    }
+
+    for(uint8_t i = 0; i < 2; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read red from bKGD "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        background->red += ((uint16_t)byte << (3 - i) * 8);
+    }
+    for(uint8_t i = 0; i < 2; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read green from bKGD "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        background->green += ((uint16_t)byte << (3 - i) * 8);
+    }
+    for(uint8_t i = 0; i < 2; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read blue from bKGD "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        background->blue += ((uint16_t)byte << (3 - i) * 8);
+    }
 
     return PNG_STREAM_CONTINUE;
 }
@@ -451,7 +539,8 @@ uint8_t* loadPNG
 
     cHRMData chrmData = {0};
     // other chunk data structs
-    RGB8 *palette = 0;
+    RGB8  *palette   = 0;
+    RGB16 background = {0};
 
     readChunkCRC(file);
 
@@ -504,7 +593,7 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, bKGD))
         {
-            streamData = readChunk_bKGD(file);
+            streamData = readChunk_bKGD(file, ihdrData.colorType, palette, &background);
         }
         else
         {
