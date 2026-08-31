@@ -195,10 +195,28 @@ f_internal uint8_t readChunk_PLTE
         return PNG_STREAM_END;
     }
 
-    //
-    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_PLTE not implemented.\033[0m\n");
-    return PNG_STREAM_END;
-    //
+    size_t elements = 0;
+    for(uint32_t i = 0; i < length; i += 3)
+    {
+        if((elements = fread(&palette[i].red, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read red palette value %u "
+                    "from PLTE chunk.\033[0m\n", i);
+            return PNG_STREAM_END;
+        }
+        if((elements = fread(&palette[i].green, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read green palette value %u "
+                    "from PLTE chunk.\033[0m\n", i);
+            return PNG_STREAM_END;
+        }
+        if((elements = fread(&palette[i].blue, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read blue palette value %u "
+                    "from PLTE chunk.\033[0m\n", i);
+            return PNG_STREAM_END;
+        }
+    }
 
     return PNG_STREAM_CONTINUE;
 }
@@ -329,6 +347,7 @@ f_internal uint8_t readChunk_cHRM
 
 f_internal uint8_t readChunk_bKGD
 (
+    FILE *file
 ){
     //
     fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_bKGD not implemented.\033[0m\n");
@@ -460,6 +479,10 @@ uint8_t* loadPNG
         {
             fprintf(stderr, "\033[31;1;1mERROR: could not successfully read chunk "
                     "header.\033[0m");
+            if(palette)
+            {
+                free(palette);
+            }
             return 0;
         }
         else if(sv_same(chunkHeader, PLTE))
@@ -487,12 +510,17 @@ uint8_t* loadPNG
         {
             fprintf(stderr, "\033[31;1;1mERROR: chunk type '"PRI_SV"' not implemented."
                     "\033[0m", ARG_SV(chunkHeader));
+            free(palette);
             return 0;
         }
 
         readChunkCRC(file);
     }
 
+    if(palette)
+    {
+        free(palette);
+    }
     return 0;
 }
 
