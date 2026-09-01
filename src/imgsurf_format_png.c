@@ -400,9 +400,9 @@ f_internal uint8_t readChunk_bKGD
                 return PNG_STREAM_END;
             }
 
-            background->red   += ((uint16_t)byte << (3 - i) * 8);
-            background->green += ((uint16_t)byte << (3 - i) * 8);
-            background->blue  += ((uint16_t)byte << (3 - i) * 8);
+            background->red   += ((uint16_t)byte << (1 - i) * 8);
+            background->green += ((uint16_t)byte << (1 - i) * 8);
+            background->blue  += ((uint16_t)byte << (1 - i) * 8);
         }
 
         return PNG_STREAM_CONTINUE;
@@ -417,7 +417,7 @@ f_internal uint8_t readChunk_bKGD
             return PNG_STREAM_END;
         }
 
-        background->red += ((uint16_t)byte << (3 - i) * 8);
+        background->red += ((uint16_t)byte << (1 - i) * 8);
     }
     for(uint8_t i = 0; i < 2; ++i)
     {
@@ -428,7 +428,7 @@ f_internal uint8_t readChunk_bKGD
             return PNG_STREAM_END;
         }
 
-        background->green += ((uint16_t)byte << (3 - i) * 8);
+        background->green += ((uint16_t)byte << (1 - i) * 8);
     }
     for(uint8_t i = 0; i < 2; ++i)
     {
@@ -439,7 +439,7 @@ f_internal uint8_t readChunk_bKGD
             return PNG_STREAM_END;
         }
 
-        background->blue += ((uint16_t)byte << (3 - i) * 8);
+        background->blue += ((uint16_t)byte << (1 - i) * 8);
     }
 
     return PNG_STREAM_CONTINUE;
