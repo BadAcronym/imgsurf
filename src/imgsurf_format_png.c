@@ -449,10 +449,67 @@ f_internal uint8_t readChunk_tIME
 (
     FILE *file
 ){
-    //
-    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_tIME not implemented.\033[0m\n");
-    return PNG_STREAM_END;
-    //
+    uint64_t elements = 0;
+    uint8_t  byte     = 0;
+
+    uint16_t year   = 0;
+    uint8_t  month  = 0;
+    uint8_t  day    = 0;
+    uint8_t  hour   = 0;
+    uint8_t  minute = 0;
+    uint8_t  second = 0;
+
+    for(uint8_t i = 0; i < 2; ++i)
+    {
+        if((elements = fread(&byte, 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read year from tIME "
+                    "chunk.\033[0m\n");
+            return PNG_STREAM_END;
+        }
+
+        year += ((uint16_t)byte << (1 - i) * 8);
+    }
+
+    if((elements = fread(&byte, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read month from tIME "
+                "chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+    month = byte;
+
+    if((elements = fread(&byte, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read day from tIME "
+                "chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+    day = byte;
+
+    if((elements = fread(&byte, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read hour from tIME "
+                "chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+    hour = byte;
+
+    if((elements = fread(&byte, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read minute from tIME "
+                "chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+    minute = byte;
+
+    if((elements = fread(&byte, 1, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read second from tIME "
+                "chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+    second = byte;
 
     return PNG_STREAM_CONTINUE;
 }
