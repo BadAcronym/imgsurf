@@ -78,8 +78,10 @@ f_internal StringView readChunkHeader
 
     #ifdef DEBUG
     fprintf(stderr, "---------------------------------\n");
+    fprintf(stderr, "---------------------------------\n");
     fprintf(stderr, "next chunk length: %u\n", *length);
     #endif
+
     uint32_t max = (uint32_t)((1 << 31)) - 1;
     if(*length > max)
     {
@@ -112,7 +114,6 @@ f_internal StringView readChunkHeader
 
     #ifdef DEBUG
     fprintf(stderr, "identified chunk: %s\n", result);
-    fprintf(stderr, "---------------------------------\n");
     #endif
     return cstr_sv(result);
 }
@@ -519,6 +520,8 @@ f_internal bool readChunk_tEXt
     FILE     *file,
     uint32_t length
 ){
+    uint64_t elements    = 0;
+    uint32_t byteCounter = 0;
     // keyword, 1 - 79 bytes, one of:
     // title
     // author
@@ -534,18 +537,51 @@ f_internal bool readChunk_tEXt
     // collection
     // others...?
 
+    char keywordBuf[80] = {0};
     for(uint32_t i = 0; i < 79; ++i)
     {
+        if((elements = fread(&keywordBuf[i], 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read keyword in tEXt chunk."
+                    "\033[0m\n");
+            return PNG_STREAM_END;
+        }
+        ++byteCounter;
+
+        if(keywordBuf[i] == '\0')
+        {
+            break;
+        }
     }
 
-    // null sep
+    uint32_t readLength = length - byteCounter;
 
-    // text until chunk length is over
+    char valueBuf[readLength + 1];
+    valueBuf[readLength] = '\0';
+    for(uint32_t i = 0; i < readLength; ++i)
+    {
+        if((elements = fread(&valueBuf[i], 1, 1, file)) != 1)
+        {
+            fprintf(stderr, "\n\033[31;1;7mERROR: could not read text from tEXt chunk."
+                    "\033[0m\n");
+            return PNG_STREAM_END;
+        }
 
-    //
-    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_tEXt not implemented.\033[0m\n");
-    return PNG_STREAM_END;
-    //
+        if(valueBuf[i] == '\0')
+        {
+            break;
+        }
+    }
+
+    StringView keyword = cstr_sv(keywordBuf);
+    StringView value   = cstr_sv(valueBuf);
+
+    #ifdef DEBUG
+    fprintf(stderr, "identified keyword: '"PRI_SV"'\n", ARG_SV(keyword));
+    fprintf(stderr, "value: '"PRI_SV"'\n", ARG_SV(value));
+    #endif
+
+    return PNG_STREAM_CONTINUE;
 }
 
 f_internal bool readChunkCRC
