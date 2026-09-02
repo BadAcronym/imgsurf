@@ -514,6 +514,40 @@ f_internal uint8_t readChunk_tIME
     return PNG_STREAM_CONTINUE;
 }
 
+f_internal bool readChunk_tEXt
+(
+    FILE     *file,
+    uint32_t length
+){
+    // keyword, 1 - 79 bytes, one of:
+    // title
+    // author
+    // description
+    // copyright
+    // creation time
+    // software
+    // disclaimer
+    // warning
+    // source
+    // comment
+    // xml:com.adobe.xmp?
+    // collection
+    // others...?
+
+    for(uint32_t i = 0; i < 79; ++i)
+    {
+    }
+
+    // null sep
+
+    // text until chunk length is over
+
+    //
+    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_tEXt not implemented.\033[0m\n");
+    return PNG_STREAM_END;
+    //
+}
+
 f_internal bool readChunkCRC
 (
     FILE *file
@@ -586,6 +620,7 @@ uint8_t* loadPNG
     StringView cHRM = cstr_sv("cHRM");
     StringView bKGD = cstr_sv("bKGD");
     StringView tIME = cstr_sv("tIME");
+    StringView tEXt = cstr_sv("tEXt");
 
     uint32_t   length      = 0;
     StringView chunkHeader = readChunkHeader(file, &length);
@@ -664,6 +699,10 @@ uint8_t* loadPNG
         else if(sv_same(chunkHeader, tIME))
         {
             streamData = readChunk_tIME(file);
+        }
+        else if(sv_same(chunkHeader, tEXt))
+        {
+            streamData = readChunk_tEXt(file, length);
         }
         else
         {
