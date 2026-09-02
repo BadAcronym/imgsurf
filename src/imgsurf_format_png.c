@@ -105,7 +105,7 @@ f_internal StringView readChunkHeader
             goto cleanup;
         }
 
-        result[i] = byte;
+        result[i] = (char)byte;
     }
 
     #ifdef DEBUG
