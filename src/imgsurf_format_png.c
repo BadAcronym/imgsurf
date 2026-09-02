@@ -60,8 +60,8 @@ f_internal StringView readChunkHeader
     *length = 0;
     char *result = calloc(5, 1);
 
-    char   byte     = 0;
-    size_t elements = 0;
+    uint8_t byte     = 0;
+    size_t  elements = 0;
 
     for(uint8_t i = 0; i < 4; ++i)
     {
@@ -69,8 +69,7 @@ f_internal StringView readChunkHeader
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: could not read chunk length."
                     "\033[0m\n");
-            free(result);
-            return(StringView){0};
+            goto cleanup;
         }
 
         *length += ((uint32_t)byte << (3 - i) * 8);
@@ -87,8 +86,6 @@ f_internal StringView readChunkHeader
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: chunk length %u exceeds maximum of %u."
                 "\033[0m\n", *length, max);
-        free(result);
-        return (StringView){0};
     }
 
     for(uint8_t i = 0; i < 4; ++i)
@@ -106,7 +103,7 @@ f_internal StringView readChunkHeader
                 fprintf(stderr, "\n\033[31;1;7mcould not read file.\033[0m\n");
             }
 
-            return(StringView){0};
+            goto cleanup;
         }
 
         result[i] = byte;
@@ -115,7 +112,12 @@ f_internal StringView readChunkHeader
     #ifdef DEBUG
     fprintf(stderr, "identified chunk: %s\n", result);
     #endif
+
     return cstr_sv(result);
+
+cleanup:
+    free(result);
+    return(StringView){0};
 }
 
 f_internal uint8_t readChunk_IHDR
