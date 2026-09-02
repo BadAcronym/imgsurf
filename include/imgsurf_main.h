@@ -137,7 +137,7 @@ extern uint8_t* imgsurf_load_ptr
     uint8_t    bitdepth
 );
 
-extern uint8_t imgsurf_write_file
+extern bool imgsurf_write_file
 (
     const char *path,
     void       *data,

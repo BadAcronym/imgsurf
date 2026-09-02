@@ -226,7 +226,7 @@ uint8_t* imgsurf_load_ptr
     return 0;
 }
 
-uint8_t imgsurf_write_file
+bool imgsurf_write_file
 (
     const char *path,
     void       *data,
@@ -239,7 +239,7 @@ uint8_t imgsurf_write_file
     if(!data)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: data is null.\033[0m\n");
-        return 1;
+        return false;
     }
 
     uint8_t readFileFormat = UINT8_MAX;
@@ -248,20 +248,20 @@ uint8_t imgsurf_write_file
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. "
                 "Try a .qoi/.png/.bmp/.webp/.avif/.jxl file.\033[0m\n");
-        return 0;
+        return false;
     }
 
     if(channels > IMGSURF_CHANNELS_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Invalid colour channels specified."
                 "\033[0m\n");
-        return 0;
+        return false;
     }
 
     if(bitdepth == 0)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Bit depth cannot be null.\033[0m\n");
-        return 0;
+        return false;
     }
 
     FILE *file = fopen(path, "wb");
@@ -269,13 +269,13 @@ uint8_t imgsurf_write_file
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s for writing!"
                 "\033[0m\n", path);
-        return 0;
+        return false;
     }
 
     if(channels > IMGSURF_CHANNELS_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: unknown channel format!\033[0m\n");
-        return 0;
+        return false;
     }
 
     switch(fileFormat)
@@ -286,7 +286,7 @@ uint8_t imgsurf_write_file
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is "
                         "supported by .qoi!\033[0m\n");
-                return 1;
+                return false;
             }
 
             uint8_t result = writeQOI(file, data, width, height, channels);
@@ -306,7 +306,7 @@ uint8_t imgsurf_write_file
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 "
                         "or 16 are supported by .png!\033[0m\n");
-                return 1;
+                return false;
             }
 
             uint8_t result = writePNG(file, data, width, height, channels);
@@ -351,12 +351,12 @@ uint8_t imgsurf_write_file
         default:
         {
             fprintf(stderr, "\nUnknown format; not supported.\033[0m\n");
-            return 0;
+            return false;
         }
     }
 
     fclose(file);
-    return 0;
+    return true;
 }
 
 void imgsurf_write_ptr
