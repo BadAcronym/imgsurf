@@ -45,7 +45,8 @@ project("imgsurf")
                 "./include/linux_imgsurf*",
                 "./src/imgsurf_*",
                 "./include/imgsurf_*",
-                "./vendor/puddle/src/string_view.c" })
+                "./vendor/puddle/src/string_view.c",
+                "./vendor/puddle/src/linux_pd_path.c" })
         includedirs({"./include/", "/usr/include/", "./vendor/puddle/include/"})
         buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow",
                       "-Wsign-compare", "-Wunused"})
@@ -60,7 +61,8 @@ project("imgsurf")
                 "./include/win32_imgsurf*",
                 "./src/imgsurf_*",
                 "./include/imgsurf_*",
-                "./vendor/puddle/src/string_view.c" })
+                "./vendor/puddle/src/string_view.c",
+                "./vendor/puddle/src/win32_pd_path.c" })
         includedirs({"./include/", "./vendor/puddle/include/"})
 
     filter({"platforms:linux", "configurations:asan"})

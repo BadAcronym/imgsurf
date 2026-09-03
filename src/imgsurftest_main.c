@@ -12,65 +12,60 @@ f_internal bool verifyImage_read
     uint32_t width  = 0;
     uint32_t height = 0;
 
-    uint8_t *testQOI = imgsurf_load_file(name_qoi, &width, &height,
-                                         IMGSURF_CHANNELS_RGBA, 8);
+    uint8_t *testQOI = imLoadFile(name_qoi, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!testQOI)
     {
-        fprintf(stderr, "\x1b[1;31m\nimgsurf_load failed on QOI file.\033[0m\n");
-        goto fail;
+        fprintf(stderr, "\x1b[1;31m\nimLoadFile failed on QOI.\033[0m\n");
+        return false;
     }
 
-    uint8_t *testPNG = imgsurf_load_file(name_png, &width, &height,
-                                         IMGSURF_CHANNELS_RGBA, 8);
+    uint8_t *testPNG = imLoadFile(name_png, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!testPNG)
     {
-        fprintf(stderr, "\x1b[1;31m\nimgsurf_load failed on PNG file.\033[0m\n");
-        goto fail;
+        fprintf(stderr, "\x1b[1;31m\nimLoadFile failed on PNG.\033[0m\n");
+        free(testQOI);
+        return false;
     }
 
     for(uint64_t i = 0; i < width * height * 4; i += 4)
     {
         if(testQOI[i] != testPNG[i])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.red, expected: "
+            fprintf(stderr, "\x1b[1;31mimLoadFile failed @ pixel %lu.red, expected: "
                     "%u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
-            goto fail;
+            free(testQOI);
+            free(testPNG);
+            return false;
         }
         if(testQOI[i + 1] != testPNG[i + 1])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.green, expected: "
+            fprintf(stderr, "\x1b[1;31mimLoadFile failed @ pixel %lu.green, expected: "
                     "%u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
-            goto fail;
+            free(testQOI);
+            free(testPNG);
+            return false;
         }
         if(testQOI[i + 2] != testPNG[i + 2])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.blue, expected: "
+            fprintf(stderr, "\x1b[1;31mimLoadFile failed @ pixel %lu.blue, expected: "
                     "%u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
-            goto fail;
+            free(testQOI);
+            free(testPNG);
+            return false;
         }
         if(testQOI[i + 3] != testPNG[i + 3])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_load failed @ pixel %lu.alpha, expected:"
+            fprintf(stderr, "\x1b[1;31mimLoadFile failed @ pixel %lu.alpha, expected:"
                     " %u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
-            goto fail;
+            free(testQOI);
+            free(testPNG);
+            return false;
         }
     }
 
     free(testQOI);
     free(testPNG);
     return true;
-
-fail:
-    if(testQOI)
-    {
-        free(testQOI);
-    }
-    if(testPNG)
-    {
-        free(testPNG);
-    }
-
-    return false;
 }
 
 f_internal bool verifyImage_write
@@ -84,49 +79,57 @@ f_internal bool verifyImage_write
     uint32_t width  = 0;
     uint32_t height = 0;
 
-    uint8_t *testPNG = imgsurf_load_file(name_png, &width, &height,
-                                         IMGSURF_CHANNELS_RGBA, 8);
+    uint8_t *testPNG = imLoadFile(name_png, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!testPNG)
     {
-        fprintf(stderr, "\x1b[1;31mimgsurf_load failed on PNG file.\033[0m\n");
-        goto fail;
+        fprintf(stderr, "\x1b[1;31mimLoadFile failed on PNG.\033[0m\n");
+        return false;
     }
 
-    if(!imgsurf_write_file("assets/reconstructed.qoi", testPNG, width, height,
-                           IMGSURF_CHANNELS_RGBA, 8, IMGSURF_FILE_QOI)
+    if(!imWriteFile("assets/reconstructed.qoi", testPNG, width, height,
+                    IM_CHANNELS_RGBA, 8, IM_FILE_QOI)
     ){
-        fprintf(stderr, "\x1b[1;31mimgsurf_write_file failed on QOI file.\033[0m\n");
-        goto fail;
+        fprintf(stderr, "\x1b[1;31mimWriteFile failed on QOI.\033[0m\n");
+        free(testPNG);
+        return false;
     }
 
-    uint8_t *reconstructedQOI = imgsurf_load_file("assets/reconstructed.qoi", &width,
-                                                  &height, IMGSURF_CHANNELS_RGBA, 8);
+    uint8_t *reconstructedQOI = imLoadFile("assets/reconstructed.qoi", &width, &height,
+                                           IM_CHANNELS_RGBA, 8);
 
     for(uint64_t i = 0; i < width * height * 4; i += 4)
     {
         if(reconstructedQOI[i] != testPNG[i])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.red, expected: "
+            fprintf(stderr, "\x1b[1;31mimWriteFile failed @ pixel %lu.red, expected: "
                     "%u, got: %u\n", i / 4, reconstructedQOI[i], testPNG[i]);
-            goto fail;
+            free(testPNG);
+            free(reconstructedQOI);
+            return false;
         }
         if(reconstructedQOI[i + 1] != testPNG[i + 1])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.green, "
+            fprintf(stderr, "\x1b[1;31mimWriteFile failed @ pixel %lu.green, "
                     "expected: %u, got: %u\n", i / 4, reconstructedQOI[i], testPNG[i]);
-            goto fail;
+            free(testPNG);
+            free(reconstructedQOI);
+            return false;
         }
         if(reconstructedQOI[i + 2] != testPNG[i + 2])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.blue, expected:"
+            fprintf(stderr, "\x1b[1;31mimWriteFile failed @ pixel %lu.blue, expected:"
                     " %u, got: %u\n", i / 4, reconstructedQOI[i], testPNG[i]);
-            goto fail;
+            free(testPNG);
+            free(reconstructedQOI);
+            return false;
         }
         if(reconstructedQOI[i + 3] != testPNG[i + 3])
         {
-            fprintf(stderr, "\x1b[1;31mimgsurf_write failed @ pixel %lu.alpha, "
+            fprintf(stderr, "\x1b[1;31mimWriteFile failed @ pixel %lu.alpha, "
                     "expected: %u, got: %u\n", i / 4, reconstructedQOI[i], testPNG[i]);
-            goto fail;
+            free(testPNG);
+            free(reconstructedQOI);
+            return false;
         }
     }
 
@@ -134,18 +137,6 @@ f_internal bool verifyImage_write
     free(reconstructedQOI);
 
     return true;
-
-fail:
-    if(testPNG)
-    {
-        free(testPNG);
-    }
-    if(reconstructedQOI)
-    {
-        free(reconstructedQOI);
-    }
-
-    return false;
 }
 
 int main

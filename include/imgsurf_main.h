@@ -1,11 +1,11 @@
-#ifndef IMGSURF_HEADER
-#define IMGSURF_HEADER
+#ifndef IM_HEADER
+#define IM_HEADER
 
 #include <stdint.h>
 #include <stdio.h>
 
-// #define IMGSURF_LOG_READ
-// #define IMGSURF_LOG_WRITE
+// #define IM_LOG_READ
+// #define IM_LOG_WRITE
 
 #define bool  _Bool
 #define true  1
@@ -15,27 +15,27 @@
 #define s_global      static
 #define f_internal    static
 
-#define IMGSURF_CHANNELS_RGBA 0
-#define IMGSURF_CHANNELS_BGRA 1
-#define IMGSURF_CHANNELS_RGB  2
-#define IMGSURF_CHANNELS_BGR  3
-#define IMGSURF_CHANNELS_MAX  3
+#define IM_CHANNELS_RGBA 0
+#define IM_CHANNELS_BGRA 1
+#define IM_CHANNELS_RGB  2
+#define IM_CHANNELS_BGR  3
+#define IM_CHANNELS_MAX  3
 
-#define IMGSURF_FILE_QOI  0
-#define IMGSURF_FILE_BMP  1
-#define IMGSURF_FILE_WEBP 2
-#define IMGSURF_FILE_AVIF 3
-#define IMGSURF_FILE_JXL  4
-#define IMGSURF_FILE_PNG  5
-#define IMGSURF_FILE_MAX  5
+#define IM_FILE_QOI  0
+#define IM_FILE_BMP  1
+#define IM_FILE_WEBP 2
+#define IM_FILE_AVIF 3
+#define IM_FILE_JXL  4
+#define IM_FILE_PNG  5
+#define IM_FILE_MAX  5
 
-#define IMGSURF_TYPE_FILE      0
-#define IMGSURF_TYPE_DIRECTORY 1
-#define IMGSURF_TYPE_ERROR     2
-#define IMGSURF_TYPE_OTHER     3
-#define IMGSURF_TYPE_MAX       3
+#define IM_TYPE_FILE      0
+#define IM_TYPE_DIRECTORY 1
+#define IM_TYPE_ERROR     2
+#define IM_TYPE_OTHER     3
+#define IM_TYPE_MAX       3
 
-#define IMGSURF_QOI_INDEX \
+#define IM_QOI_INDEX \
 (prev.red * 3 + prev.green * 5 + \
 prev.blue * 7 + prev.alpha * 11) % 64
 
@@ -113,12 +113,7 @@ uint8_t writeQOI
     uint8_t  channels
 );
 
-extern uint8_t imgsurf_verifyPath
-(
-    const char *path
-);
-
-extern uint8_t* imgsurf_load_file
+extern uint8_t* imLoadFile
 (
     const char *path,
     uint32_t   *width,
@@ -127,7 +122,7 @@ extern uint8_t* imgsurf_load_file
     uint8_t    bitdepth
 );
 
-extern uint8_t* imgsurf_load_ptr
+extern uint8_t* imLoadPtr
 (
     FILE       *file,
     uint8_t    fileFormat,
@@ -137,7 +132,7 @@ extern uint8_t* imgsurf_load_ptr
     uint8_t    bitdepth
 );
 
-extern bool imgsurf_write_file
+extern bool imWriteFile
 (
     const char *path,
     void       *data,
@@ -148,7 +143,7 @@ extern bool imgsurf_write_file
     uint8_t    fileFormat
 );
 
-extern void imgsurf_write_ptr
+extern void imWritePtr
 (
     FILE     *file,
     void     *data,

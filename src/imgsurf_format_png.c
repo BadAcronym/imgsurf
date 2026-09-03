@@ -5,11 +5,11 @@
 #define PNG_STREAM_END      0
 #define PNG_STREAM_CONTINUE 1
 
-#define IS_PNG_TYPE_GREYSCALE        0
-#define IS_PNG_TYPE_TRUECOLOUR       2
-#define IS_PNG_TYPE_INDEXED          3
-#define IS_PNG_TYPE_GREYSCALE_ALPHA  4
-#define IS_PNG_TYPE_TRUECOLOUR_ALPHA 6
+#define IM_PNG_TYPE_GREYSCALE        0
+#define IM_PNG_TYPE_TRUECOLOUR       2
+#define IM_PNG_TYPE_INDEXED          3
+#define IM_PNG_TYPE_GREYSCALE_ALPHA  4
+#define IM_PNG_TYPE_TRUECOLOUR_ALPHA 6
 
 typedef struct RGB8
 {
@@ -375,7 +375,7 @@ f_internal uint8_t readChunk_bKGD
     background->green = 0;
     background->blue  = 0;
 
-    if(colorType == IS_PNG_TYPE_INDEXED)
+    if(colorType == IM_PNG_TYPE_INDEXED)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -390,8 +390,8 @@ f_internal uint8_t readChunk_bKGD
 
         return PNG_STREAM_CONTINUE;
     }
-    else if(colorType == IS_PNG_TYPE_GREYSCALE ||
-            colorType == IS_PNG_TYPE_GREYSCALE_ALPHA
+    else if(colorType == IM_PNG_TYPE_GREYSCALE ||
+            colorType == IM_PNG_TYPE_GREYSCALE_ALPHA
     ){
         for(uint8_t i = 0; i < 2; ++i)
         {
@@ -670,6 +670,8 @@ uint8_t* loadPNG
         return 0;
     }
 
+    uint8_t *img = 0;
+
     IHDRData ihdrData = {0};
     if(!readChunk_IHDR(file, &ihdrData))
     {
@@ -678,6 +680,8 @@ uint8_t* loadPNG
         free((void*)chunkHeader.data);
         return 0;
     }
+
+    img = malloc(ihdrData.width * ihdrData.height * ihdrData.bitdepth);
 
     cHRMData chrmData = {0};
     // other chunk data structs
@@ -710,7 +714,7 @@ uint8_t* loadPNG
         {
             fprintf(stderr, "\033[31;1;1mERROR: could not successfully read chunk "
                     "header.\033[0m");
-            goto cleanup;
+            goto error;
         }
         else if(sv_same(chunkHeader, PLTE))
         {
@@ -745,21 +749,18 @@ uint8_t* loadPNG
         {
             fprintf(stderr, "\033[31;1;1mERROR: chunk type '"PRI_SV"' not implemented."
                     "\033[0m", ARG_SV(chunkHeader));
-            goto cleanup;
+            goto error;
         }
 
         readChunkCRC(file);
     }
 
-cleanup:
-    if(chunkHeader.data)
-    {
-        free((void*)chunkHeader.data);
-    }
-    if(palette)
-    {
-        free(palette);
-    }
+    free((void*)chunkHeader.data);
+    free(palette);
+    return img;
+
+error:
+    free(img);
     return 0;
 }
 

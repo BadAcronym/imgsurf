@@ -1,5 +1,7 @@
 #include "imgsurf_main.h"
 
+#include "pd_path.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -45,29 +47,29 @@ f_internal void findFormat
 
     if(path[dot + 1] == 'p' && path[dot + 2] == 'n' && path[dot + 3] == 'g')
     {
-        *format = IMGSURF_FILE_PNG;
+        *format = IM_FILE_PNG;
     }
     else if(path[dot + 1] == 'b' && path[dot + 2] == 'm' && path[dot + 3] == 'p')
     {
-        *format = IMGSURF_FILE_BMP;
+        *format = IM_FILE_BMP;
     }
     else if(path[dot + 1] == 'w' && path[dot + 2] == 'e' &&
             path[dot + 3] == 'b' && path[dot + 4] == 'p')
     {
-        *format = IMGSURF_FILE_WEBP;
+        *format = IM_FILE_WEBP;
     }
     else if(path[dot + 1] == 'a' && path[dot + 2] == 'v' &&
             path[dot + 3] == 'i' && path[dot + 4] == 'f')
     {
-        *format = IMGSURF_FILE_AVIF;
+        *format = IM_FILE_AVIF;
     }
     else if(path[dot + 1] == 'q' && path[dot + 2] == 'o' && path[dot + 3] == 'i')
     {
-        *format = IMGSURF_FILE_QOI;
+        *format = IM_FILE_QOI;
     }
     else if(path[dot + 1] == 'j' && path[dot + 2] == 'x' && path[dot + 3] == 'l')
     {
-        *format = IMGSURF_FILE_JXL;
+        *format = IM_FILE_JXL;
     }
     else
     {
@@ -77,7 +79,7 @@ f_internal void findFormat
     }
 }
 
-uint8_t* imgsurf_load_file
+uint8_t* imLoadFile
 (
     const char *path,
     uint32_t   *width,
@@ -96,7 +98,7 @@ uint8_t* imgsurf_load_file
         return 0;
     }
 
-    if(channels > IMGSURF_CHANNELS_MAX)
+    if(channels > IM_CHANNELS_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Invalid colour channels specified."
                 "\033[0m\n");
@@ -109,18 +111,20 @@ uint8_t* imgsurf_load_file
         return 0;
     }
 
-    uint8_t code = imgsurf_verifyPath(path);
-    if(code == IMGSURF_TYPE_ERROR)
+    StringView path_sv = cstr_sv(path);
+
+    uint8_t code = pdVerifyPath(path_sv);
+    if(code == PD_TYPE_ERROR)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is not valid.\033[0m\n", path);
         return 0;
     }
-    if(code == IMGSURF_TYPE_DIRECTORY)
+    if(code == PD_TYPE_DIRECTORY)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is a directory.\033[0m\n", path);
         return 0;
     }
-    if(code > IMGSURF_TYPE_MAX)
+    else
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Verifying the path %s has failed."
                 "\033[0m\n", path);
@@ -135,7 +139,7 @@ uint8_t* imgsurf_load_file
         return 0;
     }
 
-    if(channels > IMGSURF_CHANNELS_MAX)
+    if(channels > IM_CHANNELS_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: unknown channel format!\033[0m\n");
         return 0;
@@ -143,7 +147,7 @@ uint8_t* imgsurf_load_file
 
     switch(format)
     {
-        case IMGSURF_FILE_QOI:
+        case IM_FILE_QOI:
         {
             if(bitdepth != 8)
             {
@@ -156,7 +160,7 @@ uint8_t* imgsurf_load_file
 
             break;
         }
-        case IMGSURF_FILE_PNG:
+        case IM_FILE_PNG:
         {
             if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
             {
@@ -169,22 +173,22 @@ uint8_t* imgsurf_load_file
 
             break;
         }
-        case IMGSURF_FILE_BMP:
+        case IM_FILE_BMP:
         {
             image = loadBMP(file, width, height, channels);
             break;
         }
-        case IMGSURF_FILE_WEBP:
+        case IM_FILE_WEBP:
         {
             fprintf(stderr, "\nTODO: Format WEBP not supported yet.\033[0m\n");
             break;
         }
-        case IMGSURF_FILE_AVIF:
+        case IM_FILE_AVIF:
         {
             fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
             break;
         }
-        case IMGSURF_FILE_JXL:
+        case IM_FILE_JXL:
         {
             fprintf(stderr, "\nTODO: Format JXL not supported yet.\033[0m\n");
             break;
@@ -197,11 +201,10 @@ uint8_t* imgsurf_load_file
     }
 
     fclose(file);
-
     return image;
 }
 
-uint8_t* imgsurf_load_ptr
+uint8_t* imLoadPtr
 (
     FILE       *file,
     uint8_t    fileFormat,
@@ -210,7 +213,7 @@ uint8_t* imgsurf_load_ptr
     uint8_t    channels,
     uint8_t    bitdepth
 ){
-    if(fileFormat == IMGSURF_FILE_QOI)
+    if(fileFormat == IM_FILE_QOI)
     {
         if(bitdepth != 8)
         {
@@ -226,7 +229,7 @@ uint8_t* imgsurf_load_ptr
     return 0;
 }
 
-bool imgsurf_write_file
+bool imWriteFile
 (
     const char *path,
     void       *data,
@@ -251,7 +254,7 @@ bool imgsurf_write_file
         return false;
     }
 
-    if(channels > IMGSURF_CHANNELS_MAX)
+    if(channels > IM_CHANNELS_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Invalid colour channels specified."
                 "\033[0m\n");
@@ -272,7 +275,7 @@ bool imgsurf_write_file
         return false;
     }
 
-    if(channels > IMGSURF_CHANNELS_MAX)
+    if(channels > IM_CHANNELS_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: unknown channel format!\033[0m\n");
         return false;
@@ -280,7 +283,7 @@ bool imgsurf_write_file
 
     switch(fileFormat)
     {
-        case IMGSURF_FILE_QOI:
+        case IM_FILE_QOI:
         {
             if(bitdepth != 8)
             {
@@ -300,7 +303,7 @@ bool imgsurf_write_file
 
             break;
         }
-        case IMGSURF_FILE_PNG:
+        case IM_FILE_PNG:
         {
             if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
             {
@@ -320,7 +323,7 @@ bool imgsurf_write_file
 
             break;
         }
-        case IMGSURF_FILE_BMP:
+        case IM_FILE_BMP:
         {
             uint8_t result = writeBMP(file, data, width, height, channels);
             if(result)
@@ -333,17 +336,17 @@ bool imgsurf_write_file
 
             break;
         }
-        case IMGSURF_FILE_WEBP:
+        case IM_FILE_WEBP:
         {
             fprintf(stderr, "\nTODO: Format WEBP not supported yet.\033[0m\n");
             break;
         }
-        case IMGSURF_FILE_AVIF:
+        case IM_FILE_AVIF:
         {
             fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
             break;
         }
-        case IMGSURF_FILE_JXL:
+        case IM_FILE_JXL:
         {
             fprintf(stderr, "\nTODO: Format JXL not supported yet.\033[0m\n");
             break;
@@ -359,7 +362,7 @@ bool imgsurf_write_file
     return true;
 }
 
-void imgsurf_write_ptr
+void imWritePtr
 (
     FILE     *file,
     void     *data,
@@ -369,7 +372,7 @@ void imgsurf_write_ptr
     uint8_t  channels,
     uint8_t  bitdepth
 ){
-    if(fileFormat == IMGSURF_FILE_QOI)
+    if(fileFormat == IM_FILE_QOI)
     {
         writeQOI(file, data, width, height, channels);
         return;
