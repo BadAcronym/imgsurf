@@ -687,13 +687,13 @@ uint8_t* loadPNG
     readChunkCRC(file);
 
     #ifdef DEBUG
-    fprintf(stderr, "width: %u\n", ihdrData.width);
-    fprintf(stderr, "height: %u\n", ihdrData.height);
-    fprintf(stderr, "bitdepth: %u\n", ihdrData.bitdepth);
-    fprintf(stderr, "color type: %u\n", ihdrData.colorType);
+    fprintf(stderr, "width: %u\n",              ihdrData.width);
+    fprintf(stderr, "height: %u\n",             ihdrData.height);
+    fprintf(stderr, "bitdepth: %u\n",           ihdrData.bitdepth);
+    fprintf(stderr, "color type: %u\n",         ihdrData.colorType);
     fprintf(stderr, "compression method: %u\n", ihdrData.compression);
-    fprintf(stderr, "filter method: %u\n", ihdrData.filter);
-    fprintf(stderr, "interlace method: %u\n", ihdrData.interlace);
+    fprintf(stderr, "filter method: %u\n",      ihdrData.filter);
+    fprintf(stderr, "interlace method: %u\n",   ihdrData.interlace);
     #endif
 
     bool streamData = true;
