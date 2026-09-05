@@ -718,12 +718,14 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, PLTE))
         {
-            palette = malloc(length * sizeof(RGB8));
+            palette    = malloc(length * sizeof(RGB8));
             streamData = readChunk_PLTE(file, length, palette);
         }
         else if(sv_same(chunkHeader, IDAT))
         {
             streamData = readChunk_IDAT(file);
+            // while not actually implemented
+            goto error;
         }
         else if(sv_same(chunkHeader, IEND))
         {
