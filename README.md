@@ -5,12 +5,13 @@
     - save from RAM to pointer (encode without writing to a file)
     - .qoi read/write in RGBA, BGRA, RGB or BGR
 
+- The PNG decoder is in-progress.
+
 ## Planned Features:
 
-- Support for more major lossless image formats, in priority order:
+- Support for additional lossless image formats, in priority order:
     - .bmp
     - .webp
-    - .png
     - .avif
     - .jxl
 
