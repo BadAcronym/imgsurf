@@ -757,11 +757,28 @@ uint8_t* loadPNG
         readChunkCRC(file);
     }
 
-    free((void*)chunkHeader.data);
-    free(palette);
+    if(chunkHeader.data)
+    {
+        free((void*)chunkHeader.data);
+        chunkHeader.size = 0;
+    }
+    if(palette)
+    {
+        free(palette);
+    }
+
     return img;
 
 error:
+    if(chunkHeader.data)
+    {
+        free((void*)chunkHeader.data);
+        chunkHeader.size = 0;
+    }
+    if(palette)
+    {
+        free(palette);
+    }
     free(img);
     return 0;
 }
