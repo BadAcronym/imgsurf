@@ -5,11 +5,6 @@ then
     mkdir ./obj/
 fi
 
-if [[ ! -d "./build/" ]]
-then
-    mkdir ./build/
-fi
-
 if [[ ! -d "./bin/" ]]
 then
     mkdir ./bin/
@@ -22,25 +17,85 @@ else
     build=$1
 fi
 
-if [[ $build = "asan" ]] || [[ $build = "debug" ]] || [[ $build = "release" ]]
-then
+args_always="-DBUILD_LINUX \
+
+-Iinclude/ \
+-Ivendor/puddle/include/ \
+src/imgsurf_format_bmp.c \
+src/imgsurf_format_png.c \
+src/imgsurf_format_qoi.c \
+src/imgsurf_main.c \
+src/imgsurftest_main.c \
+./vendor/puddle/src/string_view.c \
+./vendor/puddle/src/linux_pd_path.c \
+-Wextra -Wall -Wpedantic -Wconversion -Wshadow -Wsign-compare -Wtype-limits -Wunused \
+-fuse-ld=mold"
+
+args_release="-O2"
+
+args_debug="-DDEBUG -g -O0"
+
+args_asan="$args_debug -DASAN \
+-fsanitize=address,leak,undefined \
+-fno-omit-frame-pointer \
+-static-libasan \
+-O0"
+
+function compile()
+{
+    echo "identifying a compiler..."
+
+    clang --version > /dev/null
+    if [[ $? = 0 ]]
+    then
+        echo "found clang."
+        compiler="clang"
+    else
+        gcc --version > /dev/null
+        if [[ $? = 0 ]]
+        then
+            compiler="gcc"
+        else
+            echo -e "\033[31m\nERROR: no suitable compiler found.\n\033[0m"
+        fi
+    fi
 
     echo ""
     echo -e "\033[36mcompiling imgsurf...\033[0m"
     echo ""
-    premake5 gmake
 
-    pushd ./build/ > /dev/null
-    make config=$build\_linux
+    if [[ ! -d ./bin/$build ]]
+    then
+        mkdir ./bin/$build
+    fi
+
+    echo "compiling $build build with the following command:"
+    echo "$compiler $1"
+    $compiler $1
+    if [[ $? != 0 ]]
+    then
+        echo -e "\033[31m\nERROR: $compiler failed to compile imgsurf.\n\033[0m"
+        exit -1
+    fi
+    mv ./a.out ./bin/$build/imgsurftest
+}
+
+if [[ $build = "release" ]]
+then
+    compile "$args_always $args_release"
+else
+if [[ $build = "debug" ]]
+then
+    compile "$args_always $args_debug"
+else
+if [[ $build = "asan" ]]
+then
+    compile "$args_always $args_asan"
 else
     echo -e "\033[31m\nERROR: invalid make config: $build.\033[0m"
-    exit -2;
+    exit 3;
 fi
-
-if [[ $? != 0 ]]
-then
-    echo -e "\033[31m\nERROR: failed to compile imgsurf.\n\033[0m"
-    exit -1
+fi
 fi
 
 echo -e "\n"
@@ -49,8 +104,6 @@ if [[ $2 = "--compile-only" ]]
 then
     exit 0
 fi
-
-popd > /dev/null
 
 chmod +x ./bin/$build/imgsurftest
 ./bin/$build/imgsurftest
