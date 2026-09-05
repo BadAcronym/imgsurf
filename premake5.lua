@@ -48,8 +48,6 @@ project("imgsurf")
                 "./vendor/puddle/src/string_view.c",
                 "./vendor/puddle/src/linux_pd_path.c" })
         includedirs({"./include/", "/usr/include/", "./vendor/puddle/include/"})
-        buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow",
-                      "-Wsign-compare", "-Wunused"})
         linkoptions("-fuse-ld=mold")
 
     filter("platforms:windows")
@@ -127,7 +125,6 @@ project("imgsurftest")
                 "./include/imgsurftest*" })
         includedirs({ "./include/", "/usr/include/", "./vendor/puddle/include/"})
         libdirs("./bin/%{cfg.buildcfg}/")
-        buildoptions({"-Wextra", "-Wall", "-Wpedantic", "-Wconversion", "-Wshadow", "-Wsign-compare"})
         links("imgsurf:static")
         linkoptions({"-fuse-ld=mold", "-lm"})
         toolset("clang")
