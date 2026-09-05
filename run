@@ -13,7 +13,6 @@ else
 fi
 
 args_always="-DBUILD_LINUX \
-
 -Iinclude/ \
 -Ivendor/puddle/include/ \
 src/imgsurf_format_bmp.c \
