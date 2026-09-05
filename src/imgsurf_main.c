@@ -124,7 +124,7 @@ uint8_t* imLoadFile
         fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is a directory.\033[0m\n", path);
         return 0;
     }
-    else
+    else if(code != PD_TYPE_FILE)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Verifying the path %s has failed."
                 "\033[0m\n", path);
