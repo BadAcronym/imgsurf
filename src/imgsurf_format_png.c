@@ -39,6 +39,13 @@ typedef struct IHDRData
 }
 IHDRData;
 
+typedef struct IDATdata
+{
+    uint8_t  *data;
+    uint64_t offset;
+}
+IDATdata;
+
 typedef struct cHRMData
 {
     uint32_t whitePointX;
@@ -239,12 +246,20 @@ f_internal uint8_t readChunk_PLTE
 
 f_internal uint8_t readChunk_IDAT
 (
-    FILE *file
+    FILE     *file,
+    uint32_t length,
+    IDATdata *idat
 ){
-    //
-    fprintf(stderr, "\n\033[31;1;7mERROR: readChunk_IDAT not implemented.\033[0m\n");
-    return PNG_STREAM_END;
-    //
+    uint64_t elements = 0;
+
+    if((elements = fread(&idat->data[idat->offset], length, 1, file)) != 1)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not read zlib compressed data "
+                "from IDAT chunk.\033[0m\n");
+        return PNG_STREAM_END;
+    }
+
+    idat->offset += length;
 
     return PNG_STREAM_CONTINUE;
 }
@@ -681,12 +696,17 @@ uint8_t* loadPNG
         return 0;
     }
 
-    img = malloc(ihdrData.width * ihdrData.height * ihdrData.bitdepth);
+    *width  = ihdrData.width;
+    *height = ihdrData.height;
 
-    cHRMData chrmData = {0};
-    // other chunk data structs
-    RGB8  *palette   = 0;
-    RGB16 background = {0};
+    img = malloc(*width * *height * ihdrData.bitdepth);
+
+    IDATdata imgData     = {0};
+    cHRMData chrmData    = {0};
+    RGB8     *palette    = 0;
+    RGB16    background  = {0};
+
+    imgData.data = malloc(*width * *height * ihdrData.bitdepth);
 
     readChunkCRC(file);
 
@@ -723,9 +743,7 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, IDAT))
         {
-            streamData = readChunk_IDAT(file);
-            // while not actually implemented
-            goto error;
+            streamData = readChunk_IDAT(file, length, &imgData);
         }
         else if(sv_same(chunkHeader, IEND))
         {
