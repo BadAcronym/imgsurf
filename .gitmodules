@@ -2,3 +2,6 @@
 [submodule "vendor/puddle"]
 	path = vendor/puddle
 	url = git@github.com:badacronym/puddle
+[submodule "vendor/datasurf"]
+	path = vendor/datasurf
+	url = git@github.com:badacronym/datasurf
