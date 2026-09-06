@@ -14,12 +14,15 @@ fi
 
 args_always="-DBUILD_LINUX \
 -Iinclude/ \
+-Ivendor/datasurf/include/ \
 -Ivendor/puddle/include/ \
 src/imgsurf_format_bmp.c \
 src/imgsurf_format_png.c \
 src/imgsurf_format_qoi.c \
 src/imgsurf_main.c \
 src/imgsurftest_main.c \
+./vendor/datasurf/src/datasurf_formats.c \
+./vendor/datasurf/src/datasurf_algo_deflate.c \
 ./vendor/puddle/src/string_view.c \
 ./vendor/puddle/src/linux_pd_path.c \
 -Wextra -Wall -Wpedantic -Wconversion -Wshadow -Wsign-compare -Wtype-limits -Wunused \

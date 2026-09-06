@@ -1,6 +1,7 @@
 #include "imgsurf_main.h"
 
 #include "string_view.h"
+#include "datasurf_main.h"
 
 #define PNG_STREAM_END      0
 #define PNG_STREAM_CONTINUE 1
@@ -701,12 +702,12 @@ uint8_t* loadPNG
 
     img = malloc(*width * *height * 4);
 
-    IDATdata imgData     = {0};
+    IDATdata imgIdat     = {0};
     cHRMData chrmData    = {0};
     RGB8     *palette    = 0;
     RGB16    background  = {0};
 
-    imgData.data = malloc(*width * *height * 4);
+    imgIdat.data = malloc(*width * *height * 4);
 
     readChunkCRC(file);
 
@@ -743,7 +744,7 @@ uint8_t* loadPNG
         }
         else if(sv_same(chunkHeader, IDAT))
         {
-            streamData = readChunk_IDAT(file, length, &imgData);
+            streamData = readChunk_IDAT(file, length, &imgIdat);
         }
         else if(sv_same(chunkHeader, IEND))
         {
@@ -775,6 +776,12 @@ uint8_t* loadPNG
         readChunkCRC(file);
     }
 
+    if(!dsReadZlibPtr(imgIdat.data, img, imgIdat.offset))
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: could not decode zlib compressed image "
+                "data.\033[0m\n");
+    }
+
     if(chunkHeader.data)
     {
         free((void*)chunkHeader.data);
@@ -784,7 +791,6 @@ uint8_t* loadPNG
     {
         free(palette);
     }
-
     return img;
 
 error:
