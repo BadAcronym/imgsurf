@@ -40,7 +40,7 @@ f_internal bool verifyImage_read
         if(testQOI[i + 1] != testPNG[i + 1])
         {
             fprintf(stderr, "\x1b[1;31mimLoadFile failed @ pixel %lu.green, expected: "
-                    "%u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+                    "%u, got: %u\n", i / 4, testQOI[i + 1], testPNG[i + 1]);
             free(testQOI);
             free(testPNG);
             return false;
@@ -48,7 +48,7 @@ f_internal bool verifyImage_read
         if(testQOI[i + 2] != testPNG[i + 2])
         {
             fprintf(stderr, "\x1b[1;31mimLoadFile failed @ pixel %lu.blue, expected: "
-                    "%u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+                    "%u, got: %u\n", i / 4, testQOI[i + 2], testPNG[i + 2]);
             free(testQOI);
             free(testPNG);
             return false;
@@ -56,7 +56,7 @@ f_internal bool verifyImage_read
         if(testQOI[i + 3] != testPNG[i + 3])
         {
             fprintf(stderr, "\x1b[1;31mimLoadFile failed @ pixel %lu.alpha, expected:"
-                    " %u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+                    " %u, got: %u\n", i / 4, testQOI[i + 3], testPNG[i + 3]);
             free(testQOI);
             free(testPNG);
             return false;
