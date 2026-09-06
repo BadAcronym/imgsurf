@@ -699,14 +699,14 @@ uint8_t* loadPNG
     *width  = ihdrData.width;
     *height = ihdrData.height;
 
-    img = malloc(*width * *height * ihdrData.bitdepth);
+    img = malloc(*width * *height * 4);
 
     IDATdata imgData     = {0};
     cHRMData chrmData    = {0};
     RGB8     *palette    = 0;
     RGB16    background  = {0};
 
-    imgData.data = malloc(*width * *height * ihdrData.bitdepth);
+    imgData.data = malloc(*width * *height * 4);
 
     readChunkCRC(file);
 
