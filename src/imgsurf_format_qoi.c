@@ -1,7 +1,5 @@
 #include "imgsurf_main.h"
 
-#include "string_view.h"
-
 #include <stdlib.h>
 #include <inttypes.h>
 
