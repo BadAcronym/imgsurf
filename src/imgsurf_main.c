@@ -98,6 +98,12 @@ uint8_t* imLoadFile
         return 0;
     }
 
+    if(bitdepth == 0)
+    {
+        fprintf(stderr, "\n\033[31;1;7mERROR: Bit depth cannot be null.\033[0m\n");
+        return 0;
+    }
+
     if(channels > IM_CHANNELS_MAX)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Invalid colour channels specified."
@@ -105,15 +111,8 @@ uint8_t* imLoadFile
         return 0;
     }
 
-    if(bitdepth == 0)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Bit depth cannot be null.\033[0m\n");
-        return 0;
-    }
-
     StringView path_sv = cstr_sv(path);
-
-    uint8_t code = pdVerifyPath(path_sv);
+    uint8_t    code    = pdVerifyPath(path_sv);
     if(code == PD_TYPE_ERROR)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is not valid.\033[0m\n", path);
@@ -126,7 +125,7 @@ uint8_t* imLoadFile
     }
     else if(code != PD_TYPE_FILE)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Verifying the path %s has failed."
+        fprintf(stderr, "\n\033[31;1;7mERROR: Verifying the path '%s' has failed."
                 "\033[0m\n", path);
         return 0;
     }
@@ -134,14 +133,8 @@ uint8_t* imLoadFile
     FILE *file = fopen(path, "rb");
     if(!file)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s for reading!"
+        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file '%s' for reading!"
                 "\033[0m\n", path);
-        return 0;
-    }
-
-    if(channels > IM_CHANNELS_MAX)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: unknown channel format!\033[0m\n");
         return 0;
     }
 
@@ -153,6 +146,7 @@ uint8_t* imLoadFile
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is "
                         "supported by .qoi!\033[0m\n");
+                fclose(file);
                 return 0;
             }
 
@@ -166,6 +160,7 @@ uint8_t* imLoadFile
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 or "
                         "16 are supported by .png!\033[0m\n");
+                fclose(file);
                 return 0;
             }
 
@@ -181,21 +176,25 @@ uint8_t* imLoadFile
         case IM_FILE_WEBP:
         {
             fprintf(stderr, "\nTODO: Format WEBP not supported yet.\033[0m\n");
-            break;
+            fclose(file);
+            return 0;
         }
         case IM_FILE_AVIF:
         {
             fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
-            break;
+            fclose(file);
+            return 0;
         }
         case IM_FILE_JXL:
         {
             fprintf(stderr, "\nTODO: Format JXL not supported yet.\033[0m\n");
-            break;
+            fclose(file);
+            return 0;
         }
         default:
         {
             fprintf(stderr, "\nUnknown format; not supported.\033[0m\n");
+            fclose(file);
             return 0;
         }
     }
@@ -275,12 +274,6 @@ bool imWriteFile
         return false;
     }
 
-    if(channels > IM_CHANNELS_MAX)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: unknown channel format!\033[0m\n");
-        return false;
-    }
-
     switch(fileFormat)
     {
         case IM_FILE_QOI:
@@ -289,6 +282,7 @@ bool imWriteFile
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is "
                         "supported by .qoi!\033[0m\n");
+                fclose(file);
                 return false;
             }
 
@@ -309,6 +303,7 @@ bool imWriteFile
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 "
                         "or 16 are supported by .png!\033[0m\n");
+                fclose(file);
                 return false;
             }
 
@@ -339,21 +334,25 @@ bool imWriteFile
         case IM_FILE_WEBP:
         {
             fprintf(stderr, "\nTODO: Format WEBP not supported yet.\033[0m\n");
-            break;
+            fclose(file);
+            return false;
         }
         case IM_FILE_AVIF:
         {
             fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
-            break;
+            fclose(file);
+            return false;
         }
         case IM_FILE_JXL:
         {
             fprintf(stderr, "\nTODO: Format JXL not supported yet.\033[0m\n");
-            break;
+            fclose(file);
+            return false;
         }
         default:
         {
             fprintf(stderr, "\nUnknown format; not supported.\033[0m\n");
+            fclose(file);
             return false;
         }
     }
