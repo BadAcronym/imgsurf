@@ -98,7 +98,7 @@ uint8_t* imLoadFile
         return 0;
     }
 
-    if(bitdepth == 0)
+    if(!bitdepth)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: Bit depth cannot be null.\033[0m\n");
         return 0;
