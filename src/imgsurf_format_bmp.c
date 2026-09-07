@@ -1,4 +1,5 @@
 #include "imgsurf_main.h"
+#include "pd_print_macros.h"
 
 uint8_t* loadBMP
 (
@@ -7,7 +8,7 @@ uint8_t* loadBMP
     uint32_t    *height,
     uint8_t     channels
 ){
-    fprintf(stderr, "\n\033[33;1;7mWIP: BMP loader under construction!\033[0m\n");
+    PD_WARN("BMP loading not implemented yet.");
     return 0;
 }
 
@@ -19,6 +20,6 @@ bool writeBMP
     uint32_t height,
     uint8_t  channels
 ){
-    fprintf(stderr, "\n\033[33;1;7mWIP: BMP writer under construction!\033[0m\n");
+    PD_WARN("BMP writing not implemented yet.");
     return 0;
 }

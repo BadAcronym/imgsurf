@@ -1,4 +1,5 @@
 #include "imgsurf_main.h"
+#include "pd_print_macros.h"
 
 #include <stdlib.h>
 #include <inttypes.h>
@@ -21,15 +22,14 @@ uint8_t* loadQOI
     {
         if((elements = fread(&magicByte, 1, 1, file)) != 1)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: could not read header at byte %u."
-                    "\033[0m\n", i);
+            PD_ERROR("could not read header at byte %u.", i);
             if(feof(file))
             {
-                fprintf(stderr, "\n\033[31;1;7munexpected end of file.\033[0m\n");
+                PD_ERROR("unexpected end of file.");
             }
             else if(ferror(file))
             {
-                fprintf(stderr, "\n\033[31;1;7mcould not read file.\033[0m\n");
+                PD_ERROR("could not read file.");
             }
 
             return 0;
@@ -37,10 +37,8 @@ uint8_t* loadQOI
 
         if(magicByte != magic[i])
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %u corrupted."
-                    "\033[0m\n", i);
-            fprintf(stderr, "got: %u\n", (uint8_t)magicByte);
-            fprintf(stderr, "expected: %u\n", (uint8_t)magic[i]);
+            PD_ERROR("QOI header at byte %u corrupted. Got: %u, expected: %u",
+                     i, (uint8_t)magicByte, (uint8_t)magic[i]);
             return 0;
         }
     }
@@ -50,8 +48,7 @@ uint8_t* loadQOI
     {
         if((byte = fgetc(file)) == EOF)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %u corrupted."
-                    "\033[0m\n", 4 + i);
+            PD_ERROR("QOI header at byte %u corrupted.", 4 + i);
             return 0;
         }
         *width += (uint32_t)(byte << (3 - i) * 8);
@@ -61,8 +58,7 @@ uint8_t* loadQOI
     {
         if((byte = fgetc(file)) == EOF)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte %u corrupted."
-                    "\033[0m\n", 8 + i);
+            PD_ERROR("QOI header at byte %u corrupted.", 8 + i);
             return 0;
         }
         *height += (uint32_t)(byte << (3 - i) * 8);
@@ -70,24 +66,20 @@ uint8_t* loadQOI
 
     if((byte = fgetc(file)) == EOF)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte 12 corrupted."
-                "\033[0m\n");
+        PD_ERROR("QOI header at byte 12 corrupted.");
     }
-    // uint8_t channelcount = byte;
+    bool discardAlpha = byte == 3;
 
     if((byte = fgetc(file)) == EOF)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: QOI header at byte 13 corrupted."
-                "\033[0m\n");
+        PD_ERROR("QOI header at byte 13 corrupted.");
         return 0;
     }
     // uint8_t colourspace = byte;
 
-    bool discardAlpha = channels == IM_CHANNELS_RGB ||
-                        channels == IM_CHANNELS_BGR;
-
-    bool flipRnB      = channels == IM_CHANNELS_BGR ||
-                        channels == IM_CHANNELS_BGRA;
+    // this is not really correct. but we'll see
+    bool flipRnB = channels == IM_CHANNELS_BGR ||
+                   channels == IM_CHANNELS_BGRA;
 
     uint64_t pixelcount = *width * *height;
     uint8_t  bpp        = discardAlpha ? 3 : 4;
@@ -100,9 +92,7 @@ uint8_t* loadQOI
     uint8_t* image = malloc(pixelcount * bpp);
     if(!image)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Failed to allocate image.");
-        fprintf(stderr, "Requested Bytes: %" PRIu64 "\033[0m\n",
-                (pixelcount * bpp));
+        PD_ERROR("failed to allocate image. Requested bytes: %lu", pixelcount * bpp);
         return 0;
     }
 
@@ -129,22 +119,19 @@ uint8_t* loadQOI
             {
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read red @ "
-                            "QOI_OP_RGB.\033[0m\n");
+                    PD_ERROR("failed to read red @ QOI_OP_RGB");
                 }
                 prev.red = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read green @ "
-                            "QOI_OP_RGB.\033[0m\n");
+                    PD_ERROR("failed to read green @ QOI_OP_RGB");
                 }
                 prev.green = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read blue @ "
-                            "QOI_OP_RGB.\033[0m\n");
+                    PD_ERROR("failed to read blue @ QOI_OP_RGB");
                 }
                 prev.blue = (uint8_t)byte;
 
@@ -159,9 +146,8 @@ uint8_t* loadQOI
 
                 #ifdef IM_LOG_READ
                 ++rgb_count;
-                fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_RGB with new pixel: "
-                        "%u, %u, %u\n",
-                        data - data_start, prev.red, prev.green, prev.blue);
+                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_RGB with new pixel: %u, %u, %u",
+                         data - data_start, prev.red, prev.green, prev.blue);
                 #endif
                 seen[IM_QOI_INDEX] = prev;
             }
@@ -169,29 +155,25 @@ uint8_t* loadQOI
             {
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read red @ "
-                            "QOI_OP_RGBA.\033[0m\n");
+                    PD_ERROR("failed to read red @ QOI_OP_RGBA");
                 }
                 prev.red = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read green @ "
-                            "QOI_OP_RGBA.\033[0m\n");
+                    PD_ERROR("failed to read green @ QOI_OP_RGBA");
                 }
                 prev.green = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read blue @ "
-                            "QOI_OP_RGBA.\033[0m\n");
+                    PD_ERROR("failed to read blue @ QOI_OP_RGBA");
                 }
                 prev.blue = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read alpha @ "
-                            "QOI_OP_RGBA.\033[0m\n");
+                    PD_ERROR("failed to read alpha @ QOI_OP_RGBA");
                 }
                 prev.alpha = (uint8_t)byte;
 
@@ -206,9 +188,9 @@ uint8_t* loadQOI
 
                 #ifdef IM_LOG_READ
                 ++rgba_count;
-                fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_RGBA with new pixel: "
-                        "%u, %u, %u, %u\n",
-                        data - data_start, prev.red, prev.green, prev.blue, prev.alpha);
+                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_RGBA with new pixel: "
+                         "%u, %u, %u, %u", data - data_start,
+                         prev.red, prev.green, prev.blue, prev.alpha);
                 #endif
                 seen[IM_QOI_INDEX] = prev;
             }
@@ -234,8 +216,8 @@ uint8_t* loadQOI
                 seen[IM_QOI_INDEX] = prev;
                 #ifdef IM_LOG_READ
                 ++diff_count;
-                fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_DIFF with diff: %u, %u, "
-                        "%u\n", data - data_start, diffRed, diffGreen, diffBlue);
+                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_DIFF with diff: %u, %u, %u",
+                         data - data_start, diffRed, diffGreen, diffBlue);
                 #endif
             }
             else if((byte >> 6) == QOI_OP_LUMA)
@@ -244,8 +226,7 @@ uint8_t* loadQOI
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to read diffs @ "
-                            "QOI_OP_LUMA.\033[0m\n");
+                    PD_ERROR("failed to read diffs @ QOI_OP_LUMA.");
                 }
                 uint8_t diffRed  = (0xF0 & byte) >> 4;
                 uint8_t diffBlue = (0xF  & byte);
@@ -266,9 +247,9 @@ uint8_t* loadQOI
                 seen[IM_QOI_INDEX] = prev;
                 #ifdef IM_LOG_READ
                 ++luma_count;
-                fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_LUMA with encoded diffs: "
-                        "%u, %u, %u\n", data - data_start, (uint8_t)(diffGreen),
-                        (uint8_t)(diffRed), (uint8_t)(diffBlue));
+                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_LUMA with encoded diffs: "
+                         "%u, %u, %u", data - data_start, (uint8_t)(diffGreen),
+                         (uint8_t)(diffRed), (uint8_t)(diffBlue));
                 #endif
             }
             else if((byte >> 6) == QOI_OP_RUN)
@@ -297,9 +278,9 @@ uint8_t* loadQOI
                 #ifdef IM_LOG_READ
                 data += (runlength - 1) * bpp;
                 ++run_count;
-                fprintf(stderr, "%lx: (%x) CURRENT READ OP: QOI_OP_RUN with pixel: "
-                        "%u, %u, %u and runlength %hhu\n", data - data_start, byte,
-                        prev.red, prev.green, prev.blue, runlength);
+                PD_DEBUG("%lx: (%x) CURRENT READ OP: QOI_OP_RUN with pixel: "
+                         "%u, %u, %u and runlength %hhu", data - data_start, byte,
+                         prev.red, prev.green, prev.blue, runlength);
                 #endif
             }
             else if((byte >> 6) == QOI_OP_INDEX)
@@ -314,8 +295,7 @@ uint8_t* loadQOI
                         {
                             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
                             {
-                                fprintf(stderr, "\n\033[31;1;7mERROR: QOI end-of-stream"
-                                        " reached early.\033[0m\n");
+                                PD_ERROR("QOI end-of-stream reached early.");
                                 return image;
                             }
                         }
@@ -338,13 +318,13 @@ uint8_t* loadQOI
                 }
                 #ifdef IM_LOG_READ
                 ++index_count;
-                fprintf(stderr, "%lx: CURRENT READ OP: QOI_OP_INDEX with index: %u\n",
-                        data - data_start, byte % 0x40);
+                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_INDEX with index: %u",
+                         data - data_start, byte % 0x40);
                 #endif
             }
             else
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: Unknown QOI_OP.\n");
+                PD_ERROR("could not read QOI_OP.");
                 return image;
             }
             #ifdef IM_LOG_READ
@@ -354,14 +334,14 @@ uint8_t* loadQOI
     }
 
     #ifdef IM_LOG_READ
-    fprintf(stderr, "\n\nREAD BACK (actual):\n\n");
-    fprintf(stderr, "run_count:   %lu\n", run_count);
-    fprintf(stderr, "diff_count:  %lu\n", diff_count);
-    fprintf(stderr, "index_count: %lu\n", index_count);
-    fprintf(stderr, "luma_count:  %lu\n", luma_count);
-    fprintf(stderr, "rgb_count:   %lu\n", rgb_count);
-    fprintf(stderr, "rgba_count:  %lu\n", rgba_count);
-    fprintf(stderr, "\n\n");
+    PD_DEBUG("\n\nREAD BACK (actual):\n");
+    PD_DEBUG("run_count:   %lu", run_count);
+    PD_DEBUG("diff_count:  %lu", diff_count);
+    PD_DEBUG("index_count: %lu", index_count);
+    PD_DEBUG("luma_count:  %lu", luma_count);
+    PD_DEBUG("rgb_count:   %lu", rgb_count);
+    PD_DEBUG("rgba_count:  %lu", rgba_count);
+    PD_DEBUG("\n");
     #endif
 
     int byteBuffer[8];
@@ -373,7 +353,7 @@ uint8_t* loadQOI
             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
             {
                 #ifdef IM_LOG_READ
-                    fprintf(stderr, "QOI end-of-stream reached.\n");
+                PD_DEBUG("QOI end-of-stream reached.");
                 #endif
                 return image;
             }
@@ -403,8 +383,7 @@ bool writeQOI
 
     if((elements = fwrite("qoif", 4, 1, file)) != 1)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes of header."
-                "\033[0m\n");
+        PD_ERROR("failed to write magic bytes to header.");
         return false;
     }
 
@@ -413,8 +392,7 @@ bool writeQOI
         uint8_t width_shifted = (width >> (i * 8)) & 0xFF;
         if((elements = fwrite(&width_shifted, 1, 1, file)) != 1)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: failed to write width @ byte: %u."
-                    "\033[0m\n", i);
+            PD_ERROR("failed to write width @ byte: %u.", i);
             return false;
         }
     }
@@ -424,29 +402,27 @@ bool writeQOI
         uint8_t height_shifted = (height >> (i * 8)) & 0xFF;
         if((elements = fwrite(&height_shifted, 1, 1, file)) != 1)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: failed to write height @ byte: %u."
-                    "\033[0m\n", i);
+            PD_ERROR("failed to write height @ byte: %u.", i);
             return false;
         }
     }
 
     if((elements = fwrite(&channelcount, 1, 1, file)) != 1)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write channelcount.\033[0m\n");
+        PD_ERROR("failed to write channelcount.");
         return false;
     }
 
     if((elements = fwrite(&colourspace, 1, 1, file)) != 1)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write colourspace.\033[0m\n");
+        PD_ERROR("failed to write colourspace.");
         return false;
     }
 
     pixel prev     = {0, 0, 0, 255};
     pixel seen[64] = {0};
 
-    bool useAlpha = channels == IM_CHANNELS_RGBA ||
-                    channels == IM_CHANNELS_BGRA;
+    bool useAlpha = channelcount == 3;
 
     bool flipRnB  = channels == IM_CHANNELS_BGR  ||
                     channels == IM_CHANNELS_BGRA;
@@ -493,17 +469,16 @@ bool writeQOI
                 uint8_t byte = 0xC0 | (runlength - 1);
                 if((elements = fwrite(&byte, 1, 1, file)) != 1)
                 {
-                    fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
-                            "QOI_OP_RUN.\033[0m\n");
+                    PD_ERROR("failed to write data @ QOI_OP_RUN.");
                     return false;
                 }
 
                 #ifdef IM_LOG_WRITE
                 ++run_count;
-                fprintf(stderr, "%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
-                        "%u, %u, %u, %u, runlength: %hhu\n", data - data_start, byte,
-                        prev.red, prev.green, prev.blue, prev.alpha, runlength);
-                fprintf(stderr, "data_end is: %lx", data_end - data_start);
+                PD_DEBUG("%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
+                         "%u, %u, %u, %u, runlength: %hhu", data - data_start, byte,
+                         prev.red, prev.green, prev.blue, prev.alpha, runlength);
+                PD_DEBUG("data_end is: %lx", data_end - data_start);
                 #endif
                 runlength = 0;
             }
@@ -515,8 +490,7 @@ bool writeQOI
             uint8_t byte = 0xC0 | (runlength - 1);
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
-                        "QOI_OP_RUN.\033[0m\n");
+                PD_ERROR("failed to write data @ QOI_OP_RUN.");
                 return false;
             }
 
