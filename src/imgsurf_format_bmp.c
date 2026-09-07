@@ -11,7 +11,7 @@ uint8_t* loadBMP
     return 0;
 }
 
-uint8_t writeBMP
+bool writeBMP
 (
     FILE     *file,
     uint8_t  *data,

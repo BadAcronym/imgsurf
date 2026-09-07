@@ -277,12 +277,11 @@ bool imWriteFile
                 return false;
             }
 
-            uint8_t result = writeQOI(file, data, width, height, channels);
-            if(result)
+            if(!writeQOI(file, data, width, height, channels))
             {
                 IM_ERROR("couldn't write .qoi file.");
                 fclose(file);
-                return result;
+                return false;
             }
 
             break;
@@ -296,24 +295,22 @@ bool imWriteFile
                 return false;
             }
 
-            uint8_t result = writePNG(file, data, width, height, channels);
-            if(result)
+            if(!writePNG(file, data, width, height, channels))
             {
                 IM_ERROR("couldn't write .png file.");
                 fclose(file);
-                return result;
+                return false;
             }
 
             break;
         }
         case IM_FILE_BMP:
         {
-            uint8_t result = writeBMP(file, data, width, height, channels);
-            if(result)
+            if(!writeBMP(file, data, width, height, channels))
             {
                 IM_ERROR("couldn't write .bmp file.");
                 fclose(file);
-                return result;
+                return false;
             }
 
             break;
@@ -360,17 +357,26 @@ void imWritePtr
 ){
     if(fileFormat == IM_FILE_QOI)
     {
-        writeQOI(file, data, width, height, channels);
+        if(!writeQOI(file, data, width, height, channels))
+        {
+            IM_ERROR("imWritePtr failed to write QOI file to pointer.");
+        }
         return;
     }
     else if(fileFormat == IM_FILE_PNG)
     {
-        writePNG(file, data, width, height, channels);
+        if(!writePNG(file, data, width, height, channels))
+        {
+            IM_ERROR("imWritePtr failed to write PNG file to pointer.");
+        }
         return;
     }
     else if(fileFormat == IM_FILE_BMP)
     {
-        writeBMP(file, data, width, height, channels);
+        if(!writeBMP(file, data, width, height, channels))
+        {
+            IM_ERROR("imWritePtr failed to write BMP file to pointer.");
+        }
         return;
     }
 

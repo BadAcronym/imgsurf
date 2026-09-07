@@ -754,7 +754,7 @@ error:
     return 0;
 }
 
-uint8_t writePNG
+bool writePNG
 (
     FILE     *file,
     uint8_t  *data,

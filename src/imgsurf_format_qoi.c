@@ -383,7 +383,7 @@ uint8_t* loadQOI
     return image;
 }
 
-uint8_t writeQOI
+bool writeQOI
 (
     FILE     *file,
     uint8_t  *data,
@@ -405,7 +405,7 @@ uint8_t writeQOI
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write magic bytes of header."
                 "\033[0m\n");
-        return 2;
+        return false;
     }
 
     for(int8_t i = 3; i > -1; --i)
@@ -415,7 +415,7 @@ uint8_t writeQOI
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: failed to write width @ byte: %u."
                     "\033[0m\n", i);
-            return 2;
+            return false;
         }
     }
 
@@ -426,20 +426,20 @@ uint8_t writeQOI
         {
             fprintf(stderr, "\n\033[31;1;7mERROR: failed to write height @ byte: %u."
                     "\033[0m\n", i);
-            return 2;
+            return false;
         }
     }
 
     if((elements = fwrite(&channelcount, 1, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write channelcount.\033[0m\n");
-        return 2;
+        return false;
     }
 
     if((elements = fwrite(&colourspace, 1, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write colourspace.\033[0m\n");
-        return 2;
+        return false;
     }
 
     pixel prev     = {0, 0, 0, 255};
@@ -495,7 +495,7 @@ uint8_t writeQOI
                 {
                     fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
                             "QOI_OP_RUN.\033[0m\n");
-                    return 3;
+                    return false;
                 }
 
                 #ifdef IM_LOG_WRITE
@@ -517,7 +517,7 @@ uint8_t writeQOI
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
                         "QOI_OP_RUN.\033[0m\n");
-                return 3;
+                return false;
             }
 
             #ifdef IM_LOG_WRITE
@@ -535,7 +535,7 @@ uint8_t writeQOI
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
                         "QOI_OP_INDEX.\033[0m\n");
-                return 5;
+                return false;
             }
 
             #ifdef IM_LOG_WRITE
@@ -556,7 +556,7 @@ uint8_t writeQOI
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
                         "QOI_OP_DIFF.\033[0m\n");
-                return 4;
+                return false;
             }
 
             #ifdef IM_LOG_WRITE
@@ -579,14 +579,14 @@ uint8_t writeQOI
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag/dg @ "
                         "QOI_OP_LUMA.\033[0m\n");
-                return 6;
+                return false;
             }
 
             if((elements = fwrite(&byte2, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write dr/db data @ "
                         "QOI_OP_LUMA.\033[0m\n");
-                return 6;
+                return false;
             }
 
             #ifdef IM_LOG_WRITE
@@ -604,26 +604,26 @@ uint8_t writeQOI
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ "
                         "QOI_OP_RGB.\033[0m\n");
-                return 7;
+                return false;
             }
 
             if((elements = fwrite(&curr.red, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ "
                         "QOI_OP_RGB.\033[0m\n");
-                return 8;
+                return false;
             }
             if((elements = fwrite(&curr.green, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ "
                         "QOI_OP_RGB.\033[0m\n");
-                return 8;
+                return false;
             }
             if((elements = fwrite(&curr.blue, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ "
                         "QOI_OP_RGB.\033[0m\n");
-                return 8;
+                return false;
             }
 
             #ifdef IM_LOG_WRITE
@@ -639,32 +639,32 @@ uint8_t writeQOI
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ "
                         "QOI_OP_RGBA.\033[0m\n");
-                return 10;
+                return false;
             }
 
             if((elements = fwrite(&curr.red, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ "
                         "QOI_OP_RGBA.\033[0m\n");
-                return 8;
+                return false;
             }
             if((elements = fwrite(&curr.green, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ "
                         "QOI_OP_RGBA.\033[0m\n");
-                return 8;
+                return false;
             }
             if((elements = fwrite(&curr.blue, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ "
                         "QOI_OP_RGBA.\033[0m\n");
-                return 8;
+                return false;
             }
             if((elements = fwrite(&curr.alpha, 1, 1, file)) != 1)
             {
                 fprintf(stderr, "\n\033[31;1;7mERROR: failed to write alpha @ "
                         "QOI_OP_RGBA.\033[0m\n");
-                return 8;
+                return false;
             }
 
             #ifdef IM_LOG_WRITE
@@ -692,15 +692,15 @@ uint8_t writeQOI
     if((elements = fwrite(&EOS0, 7, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x00 tag.\033[0m\n");
-        return 12;
+        return false;
     }
 
     uint8_t EOS1 = 0x01;
     if((elements = fwrite(&EOS1, 1, 1, file)) != 1)
     {
         fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x01 tag.\033[0m\n");
-        return 13;
+        return false;
     }
 
-    return 0;
+    return true;
 }

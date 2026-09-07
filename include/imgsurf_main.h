@@ -70,7 +70,7 @@ uint8_t* loadBMP
     uint8_t     channels
 );
 
-uint8_t writeBMP
+bool writeBMP
 (
     FILE     *file,
     uint8_t  *data,
@@ -87,7 +87,7 @@ uint8_t* loadPNG
     uint8_t     channels
 );
 
-uint8_t writePNG
+bool writePNG
 (
     FILE     *file,
     uint8_t  *data,
@@ -104,7 +104,7 @@ uint8_t* loadQOI
     uint8_t     channels
 );
 
-uint8_t writeQOI
+bool writeQOI
 (
     FILE     *file,
     uint8_t  *data,
