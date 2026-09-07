@@ -1,17 +1,32 @@
-$toDelete =
-    "./build/",
-    "./bin/",
-    "./obj/",
-    "./log/"
+Write-Host "cleaning up imgsurf builds..." -Fore Yellow
 
-Write-Host "cleaning the build..."
-
-foreach($folder in $toDelete)
+if(Test-Path "./bin")
 {
-    if(Test-Path $folder)
+    rm "./bin/" -Recurse -Force
+}
+
+foreach($file in (gci *.o))
+{
+    if(Test-Path $file)
     {
-        Remove-Item $folder -Recurse -Force
+        Remove-Item $file
     }
 }
 
-Write-Host "all clean!" -ForegroundColor Green
+foreach($file in (gci *.exe))
+{
+    if(Test-Path $file)
+    {
+        Remove-Item $file
+    }
+}
+
+foreach($file in (gci *.pdb))
+{
+    if(Test-Path $file)
+    {
+        Remove-Item $file
+    }
+}
+
+Write-Host "cleaned puddle!`n" -Fore Green
