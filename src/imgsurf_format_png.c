@@ -388,9 +388,9 @@ f_internal uint8_t readChunk_bKGD
                 return PNG_STREAM_END;
             }
 
-            background->red   += ((uint16_t)byte << (1 - i) * 8);
-            background->green += ((uint16_t)byte << (1 - i) * 8);
-            background->blue  += ((uint16_t)byte << (1 - i) * 8);
+            background->red   += (uint16_t)((uint16_t)byte << (1 - i) * 8);
+            background->green += (uint16_t)((uint16_t)byte << (1 - i) * 8);
+            background->blue  += (uint16_t)((uint16_t)byte << (1 - i) * 8);
         }
 
         return PNG_STREAM_CONTINUE;
@@ -588,12 +588,12 @@ uint8_t* loadPNG
     uint32_t *height,
     uint8_t  channels
 ){
-    char header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+    uint8_t header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
     *width  = 0;
     *height = 0;
 
-    size_t elements = 0;
-    char   byte     = 0;
+    size_t  elements = 0;
+    uint8_t byte     = 0;
 
     for(uint8_t i = 0; i < 8; ++i)
     {
