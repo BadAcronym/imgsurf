@@ -1,10 +1,7 @@
 #include "imgsurf_main.h"
+#include "imgsurf_print_macros.h"
 
 #include "pd_path.h"
-
-#include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
 
 bool same_pixel
 (
@@ -34,14 +31,13 @@ f_internal void findFormat
 
     if(dot == 0)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Path doesn't look like a file.\033[0m\n");
+        IM_ERROR("path '%s' does not look like a file.", path);
         return;
     }
 
     if(dot + 3 > i || i > dot + 4)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: File extension doesn't look valid."
-                "\033[0m\n");
+        IM_ERROR("file extension '%s' does not look valid.", path + dot);
         return;
     }
 
@@ -73,10 +69,35 @@ f_internal void findFormat
     }
     else
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: invalid file extension in path: %s."
-                "\033[0m\n", path);
+        IM_ERROR("invalid file extension in path: '%s'.", path);
         return;
     }
+}
+
+f_internal bool verifyArgs
+(
+    uint8_t format,
+    uint8_t channels,
+    uint8_t bitdepth
+){
+    if(format == UINT8_MAX)
+    {
+        IM_ERROR("file format unsupported. Use .qoi/.png/.bmp/.webp/.avif/.jxl");
+        return false;
+    }
+
+    if(!bitdepth)
+    {
+        IM_ERROR("bitdepth cannot be null.");
+        return false;
+    }
+
+    if(channels > IM_CHANNELS_MAX)
+    {
+        IM_ERROR("invalid colour channels specified.");
+        return false;
+    }
+    return true;
 }
 
 uint8_t* imLoadFile
@@ -91,23 +112,8 @@ uint8_t* imLoadFile
     uint8_t format = UINT8_MAX;
 
     findFormat(path, &format);
-    if(format == UINT8_MAX)
+    if(!verifyArgs(format, channels, bitdepth))
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. Try "
-                "a .qoi/.png/.bmp/.webp/.avif/.jxl file.\033[0m\n");
-        return 0;
-    }
-
-    if(!bitdepth)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Bit depth cannot be null.\033[0m\n");
-        return 0;
-    }
-
-    if(channels > IM_CHANNELS_MAX)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Invalid colour channels specified."
-                "\033[0m\n");
         return 0;
     }
 
@@ -115,26 +121,24 @@ uint8_t* imLoadFile
     uint8_t    code    = pdVerifyPath(path_sv);
     if(code == PD_TYPE_ERROR)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is not valid.\033[0m\n", path);
+        IM_ERROR("path '%s' is not valid.", path);
         return 0;
     }
     if(code == PD_TYPE_DIRECTORY)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Path %s is a directory.\033[0m\n", path);
+        IM_ERROR("path '%s' is a directory.", path);
         return 0;
     }
     else if(code != PD_TYPE_FILE)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Verifying the path '%s' has failed."
-                "\033[0m\n", path);
+        IM_ERROR("verifying the path '%s' has failed.", path);
         return 0;
     }
 
     FILE *file = fopen(path, "rb");
     if(!file)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file '%s' for reading!"
-                "\033[0m\n", path);
+        IM_ERROR("could not open file '%s' for reading.", path);
         return 0;
     }
 
@@ -144,8 +148,7 @@ uint8_t* imLoadFile
         {
             if(bitdepth != 8)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is "
-                        "supported by .qoi!\033[0m\n");
+                IM_ERROR("only a bitdepth of 8 is supported by QOI.");
                 fclose(file);
                 return 0;
             }
@@ -158,8 +161,7 @@ uint8_t* imLoadFile
         {
             if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 or "
-                        "16 are supported by .png!\033[0m\n");
+                IM_ERROR("only bitdepths of 1, 2, 4, 8 or 16 are supported by PNG.");
                 fclose(file);
                 return 0;
             }
@@ -175,25 +177,25 @@ uint8_t* imLoadFile
         }
         case IM_FILE_WEBP:
         {
-            fprintf(stderr, "\nTODO: Format WEBP not supported yet.\033[0m\n");
+            IM_WARN("format WEBP not implemented yet.");
             fclose(file);
             return 0;
         }
         case IM_FILE_AVIF:
         {
-            fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
+            IM_WARN("format AVIF not implemented yet.");
             fclose(file);
             return 0;
         }
         case IM_FILE_JXL:
         {
-            fprintf(stderr, "\nTODO: Format JXL not supported yet.\033[0m\n");
+            IM_WARN("format JXL not implemented yet.");
             fclose(file);
             return 0;
         }
         default:
         {
-            fprintf(stderr, "\nUnknown format; not supported.\033[0m\n");
+            IM_ERROR("unknown format; unsupported.");
             fclose(file);
             return 0;
         }
@@ -216,15 +218,21 @@ uint8_t* imLoadPtr
     {
         if(bitdepth != 8)
         {
-            fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is "
-                    "supported by .qoi!\033[0m\n");
+            IM_ERROR("only a bitdepth of 8 is supported by QOI.");
             return 0;
         }
         return loadQOI(file, width, height, channels);
     }
+    else if(fileFormat == IM_FILE_PNG)
+    {
+        return loadPNG(file, width, height, channels);
+    }
+    else if(fileFormat == IM_FILE_BMP)
+    {
+        return loadBMP(file, width, height, channels);
+    }
 
-    fprintf(stderr, "\033[31;1;1mERROR: format not implemented or supported. try QOI "
-            "for now.\033[0m\n");
+    IM_ERROR("format unsupported or not implemented yet. Try QOI/PNG/BMP.");
     return 0;
 }
 
@@ -240,37 +248,21 @@ bool imWriteFile
 ){
     if(!data)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: data is null.\033[0m\n");
+        IM_ERROR("data cannot be null.");
         return false;
     }
 
     uint8_t readFileFormat = UINT8_MAX;
     findFormat(path, &readFileFormat);
-    if(readFileFormat == UINT8_MAX)
+    if(!verifyArgs(readFileFormat, channels, bitdepth))
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: File format is not supported. "
-                "Try a .qoi/.png/.bmp/.webp/.avif/.jxl file.\033[0m\n");
-        return false;
-    }
-
-    if(channels > IM_CHANNELS_MAX)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Invalid colour channels specified."
-                "\033[0m\n");
-        return false;
-    }
-
-    if(bitdepth == 0)
-    {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Bit depth cannot be null.\033[0m\n");
-        return false;
+        return 0;
     }
 
     FILE *file = fopen(path, "wb");
     if(!file)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: Could not open file %s for writing!"
-                "\033[0m\n", path);
+        IM_ERROR("could not open the file '%s' for writing", path);
         return false;
     }
 
@@ -280,8 +272,7 @@ bool imWriteFile
         {
             if(bitdepth != 8)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: Only a bit depth of 8 is "
-                        "supported by .qoi!\033[0m\n");
+                IM_ERROR("only a bitdepth of 8 is supported by QOI");
                 fclose(file);
                 return false;
             }
@@ -289,8 +280,7 @@ bool imWriteFile
             uint8_t result = writeQOI(file, data, width, height, channels);
             if(result)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: couldn't write .qoi!"
-                        "\033[0m\n");
+                IM_ERROR("couldn't write .qoi file.");
                 fclose(file);
                 return result;
             }
@@ -301,8 +291,7 @@ bool imWriteFile
         {
             if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: Only bit depths of 1, 2, 4, 8 "
-                        "or 16 are supported by .png!\033[0m\n");
+                IM_ERROR("only bitdepths of 1, 2, 4, 8 or 16 are supported by PNG.");
                 fclose(file);
                 return false;
             }
@@ -310,8 +299,7 @@ bool imWriteFile
             uint8_t result = writePNG(file, data, width, height, channels);
             if(result)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: couldn't write .png!"
-                        "\033[0m\n");
+                IM_ERROR("couldn't write .png file.");
                 fclose(file);
                 return result;
             }
@@ -323,8 +311,7 @@ bool imWriteFile
             uint8_t result = writeBMP(file, data, width, height, channels);
             if(result)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: couldn't write .bmp!"
-                        "\033[0m\n");
+                IM_ERROR("couldn't write .bmp file.");
                 fclose(file);
                 return result;
             }
@@ -333,25 +320,25 @@ bool imWriteFile
         }
         case IM_FILE_WEBP:
         {
-            fprintf(stderr, "\nTODO: Format WEBP not supported yet.\033[0m\n");
+            IM_WARN("format WEBP not implemented yet.");
             fclose(file);
             return false;
         }
         case IM_FILE_AVIF:
         {
-            fprintf(stderr, "\nTODO: Format AVIF not supported yet.\033[0m\n");
+            IM_WARN("format AVIF not implemented yet.");
             fclose(file);
             return false;
         }
         case IM_FILE_JXL:
         {
-            fprintf(stderr, "\nTODO: Format JXL not supported yet.\033[0m\n");
+            IM_WARN("format JXL not implemented yet.");
             fclose(file);
             return false;
         }
         default:
         {
-            fprintf(stderr, "\nUnknown format; not supported.\033[0m\n");
+            IM_ERROR("unknown format; unsupported.");
             fclose(file);
             return false;
         }
@@ -376,7 +363,16 @@ void imWritePtr
         writeQOI(file, data, width, height, channels);
         return;
     }
+    else if(fileFormat == IM_FILE_PNG)
+    {
+        writePNG(file, data, width, height, channels);
+        return;
+    }
+    else if(fileFormat == IM_FILE_BMP)
+    {
+        writeBMP(file, data, width, height, channels);
+        return;
+    }
 
-    fprintf(stderr, "\033[31;1;1mERROR: format not implemented or supported. try QOI "
-            "for now.\033[0m\n");
+    IM_ERROR("format not implemented yet. Try QOI/PNG/BMP.");
 }
