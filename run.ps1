@@ -72,7 +72,7 @@ function compile
     }
 
     Write-Host ""
-    Write-Host "compiling datasurf..." -Fore Cyan
+    Write-Host "compiling imgsurf..." -Fore Cyan
     Write-Host ""
 
     if(-Not (Test-Path "./bin/$build/" -PathType Container))
@@ -85,15 +85,15 @@ function compile
     &$script:compiler @1
     if($LASTEXITCODE -ne 0)
     {
-        Write-Host "`nERROR: $script:compiler failed to compile datasurf.`n" -Fore Red
+        Write-Host "`nERROR: $script:compiler failed to compile imgsurf.`n" -Fore Red
         exit -1
     }
-    Move-Item ./a.exe ./bin/$build/datasurftest.exe -Force
+    Move-Item ./a.exe ./bin/$build/imgsurftest.exe -Force
     if($build -eq "release")
     {
         return;
     }
-    Move-Item ./a.pdb ./bin/$build/datasurftest.pdb -Force
+    Move-Item ./a.pdb ./bin/$build/imgsurftest.pdb -Force
 }
 
 if($build -eq "release")
@@ -121,4 +121,4 @@ if($compile_only -eq "--compile-only")
     exit 0
 }
 
-&./bin/$build/datasurftest
+&./bin/$build/imgsurftest
