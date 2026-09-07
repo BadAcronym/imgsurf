@@ -1,12 +1,17 @@
 #ifndef IMGSURF_PRINT_MACROS
 #define IMGSURF_PRINT_MACROS
 
-// taken from the datasurf implementation
+// (Paulo):
+// __LINE__ is a number, so we need to transform it into a string in the
+// pre-processor with some funky stuff.
 #define __STRINGIFY(x) #x
 #define __TO_STRING(x) __STRINGIFY(x)
 #define __LINE_STR __TO_STRING(__LINE__)
 #define __LOCATION__ "[" __FILE__ ":" __LINE_STR "]"
 
+// to make compatible with c99, without GNU extensions.
+// from Richard Hansen via StackOverflow:
+// https://stackoverflow.com/a/11172679
 #define FIRST(...) FIRST_HELPER(__VA_ARGS__, throwaway)
 #define FIRST_HELPER(first, ...) first
 
