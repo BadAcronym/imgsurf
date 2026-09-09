@@ -13,6 +13,7 @@ else
 fi
 
 args_always="-DBUILD_LINUX \
+-std=c99 \
 -Iinclude/ \
 -Ivendor/datasurf/include/ \
 -Ivendor/datasurf/vendor/puddle/include/ \
