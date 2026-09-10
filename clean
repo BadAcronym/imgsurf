@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [[ -f "./vendor/datasurf/clean" ]]
+then
+    pushd "./vendor/datasurf/" > /dev/null
+    ./clean
+    popd > /dev/null
+fi
+
 echo -e "\033[33mcleaning up imgsurf builds...\033[0m"
 
 if [[ -d ./bin/ ]]
