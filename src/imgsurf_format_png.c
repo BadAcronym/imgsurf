@@ -234,11 +234,13 @@ f_internal uint8_t readChunk_IDAT
 ){
     uint64_t elements = 0;
 
-    if((elements = fread(&idat->data[idat->offset], length, 1, file)) != 1)
+    if((elements = fread(&idat->data[idat->offset], 1, length, file)) != length)
     {
         PD_ERROR("could not read zlib compressed data from IDAT chunk.");
         return PNG_STREAM_END;
     }
+
+    PD_DEBUG("copied %lu bytes into IDAT offset %lu.", elements, idat->offset);
 
     idat->offset += length;
 
@@ -670,6 +672,11 @@ uint8_t* loadPNG
     PD_DEBUG("filter method:      %u", ihdrData.filter);
     PD_DEBUG("interlace method:   %u", ihdrData.interlace);
     PD_DEBUG("compression method: %u", ihdrData.compression);
+
+    if(ihdrData.compression)
+    {
+        PD_ERROR("compression method not DEFLATE.");
+    }
 
     bool streamData = true;
     while(streamData)
