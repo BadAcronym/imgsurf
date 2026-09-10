@@ -1,4 +1,5 @@
 #include "imgsurf_main.h"
+#include <pd_print_macros.h>
 
 #include <stdlib.h>
 
@@ -72,7 +73,7 @@ f_internal bool verifyImage_write
 (
     const char *name
 ){
-    fprintf(stderr, "\ntrying to verify writing loaded image: '%s'\n", name);
+    PD_DEBUG("trying to verify writing loaded image: '%s'", name);
 
     uint32_t width  = 0;
     uint32_t height = 0;
@@ -80,14 +81,14 @@ f_internal bool verifyImage_write
     uint8_t *test = imLoadFile(name, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!test)
     {
-        fprintf(stderr, "\033[1;31mimLoadFile failed on QOI.\033[0m\n");
+        PD_ERROR("imLoadFile could not read QOI.");
         return false;
     }
 
     if(!imWriteFile("assets/reconstructed.qoi", test, width, height,
                     IM_CHANNELS_RGBA, 8, IM_FILE_QOI)
     ){
-        fprintf(stderr, "\033[1;31mimWriteFile failed on QOI.\033[0m\n");
+        PD_ERROR("imWriteFile could not write QOI.");
         free(test);
         return false;
     }
@@ -96,8 +97,7 @@ f_internal bool verifyImage_write
                                            IM_CHANNELS_RGBA, 8);
     if(!reconstructedQOI)
     {
-        fprintf(stderr, "\033[1;31mimLoadFile failed to load reconstructed QOI image."
-                "\033[0m\n");
+        PD_ERROR("imLoadFile could not load reconstructed QOI image.");
         return false;
     }
 
@@ -105,32 +105,32 @@ f_internal bool verifyImage_write
     {
         if(reconstructedQOI[i] != test[i])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.red, expected: "
-                    "%u, got: %u\n", i / 4, reconstructedQOI[i], test[i]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.red, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i], test[i]);
             free(test);
             free(reconstructedQOI);
             return false;
         }
         if(reconstructedQOI[i + 1] != test[i + 1])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.green, expected: "
-                    "%u, got: %u\n", i / 4, reconstructedQOI[i + 1], test[i + 1]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.green, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i + 1], test[i + 1]);
             free(test);
             free(reconstructedQOI);
             return false;
         }
         if(reconstructedQOI[i + 2] != test[i + 2])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.blue, expected: "
-                    "%u, got: %u\n", i / 4, reconstructedQOI[i + 2], test[i + 2]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.blue, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i + 2], test[i + 2]);
             free(test);
             free(reconstructedQOI);
             return false;
         }
         if(reconstructedQOI[i + 3] != test[i + 3])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.alpha, expected"
-                    ": %u, got: %u\n", i / 4, reconstructedQOI[i + 3], test[i + 3]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.alpha, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i + 3], test[i + 3]);
             free(test);
             free(reconstructedQOI);
             return false;
@@ -142,7 +142,7 @@ f_internal bool verifyImage_write
     if(!imWriteFile("assets/reconstructed.png", test, width, height,
                     IM_CHANNELS_RGBA, 8, IM_FILE_PNG)
     ){
-        fprintf(stderr, "\033[1;31mimWriteFile failed on PNG.\033[0m\n");
+        PD_ERROR("imWriteFile could not write PNG.");
         free(test);
         return false;
     }
@@ -151,8 +151,7 @@ f_internal bool verifyImage_write
                                            IM_CHANNELS_RGBA, 8);
     if(!reconstructedPNG)
     {
-        fprintf(stderr, "\033[1;31mimLoadFile failed to load reconstructed PNG image."
-                "\033[0m\n");
+        PD_ERROR("imLoadFile could not load reconstructed PNG image.");
         return false;
     }
 
@@ -160,32 +159,32 @@ f_internal bool verifyImage_write
     {
         if(reconstructedPNG[i] != test[i])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.red, expected: "
-                    "%u, got: %u\n", i / 4, reconstructedPNG[i], test[i]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.red, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i], test[i]);
             free(test);
             free(reconstructedPNG);
             return false;
         }
         if(reconstructedPNG[i + 1] != test[i + 1])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.green, expected: "
-                    "%u, got: %u\n", i / 4, reconstructedPNG[i + 1], test[i + 1]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.green, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i + 1], test[i + 1]);
             free(test);
             free(reconstructedPNG);
             return false;
         }
         if(reconstructedPNG[i + 2] != test[i + 2])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.blue, expected: "
-                    "%u, got: %u\n", i / 4, reconstructedPNG[i + 2], test[i + 2]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.blue, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i + 2], test[i + 2]);
             free(test);
             free(reconstructedPNG);
             return false;
         }
         if(reconstructedPNG[i + 3] != test[i + 3])
         {
-            fprintf(stderr, "\033[1;31mimWriteFile failed @ pixel %lu.alpha, expected"
-                    ": %u, got: %u\n", i / 4, reconstructedPNG[i + 3], test[i + 3]);
+            PD_ERROR("imWriteFile failed @ pixel %lu.alpha, expected: "
+                     "%u, got: %u", i / 4, reconstructedQOI[i + 3], test[i + 3]);
             free(test);
             free(reconstructedPNG);
             return false;
@@ -204,74 +203,62 @@ int main
 
     if(!verifyImage_read("assets/smallTest.qoi", "assets/smallTest.png"))
     {
-        fprintf(stderr, "\033[7;31mERROR: READ test not passed with image "
-                "assets/smallTest!\033[0m\n");
+        PD_FAIL("verifyImage_read with image assets/smallTest.");
         result = false;
     }
     else
     {
-        fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image "
-                "assets/smallTest!\033[0m\n");
+        PD_SUCCESS("verifyImage_read with image assets/smallTest.");
     }
 
     if(!verifyImage_read("assets/black.qoi", "assets/black.png"))
     {
-        fprintf(stderr, "\033[7;31mERROR: READ test not passed with image "
-                "assets/black!\033[0m\n");
+        PD_FAIL("verifyImage_read with image assets/black.");
         result = false;
     }
     else
     {
-        fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image "
-                "assets/black!\033[0m\n");
+        PD_SUCCESS("verifyImage_read with image assets/black.");
     }
 
     if(!verifyImage_read("assets/tux.qoi", "assets/tux.png"))
     {
-        fprintf(stderr, "\033[7;31mERROR: READ test not passed with image "
-                "assets/tux!\033[0m\n");
+        PD_FAIL("verifyImage_read with image assets/tux.");
         result = false;
     }
     else
     {
-        fprintf(stderr, "\033[32;1;1mSUCCESS: READ test passed with image "
-                "assets/tux!\033[0m\n");
+        PD_SUCCESS("verifyImage_read with image assets/tux.");
     }
 
     if(!verifyImage_write("assets/smallTest.qoi"))
     {
-        fprintf(stderr, "\033[7;31mERROR: WRITE test not passed with image "
-                "assets/smallTest!\033[0m\n");
+        PD_FAIL("verifyImage_write with image assets/smallTest.");
         result = false;
     }
     else
     {
-        fprintf(stderr, "\033[32;1;1mSUCCESS: WRITE test passed with image "
-                "assets/smallTest!\033[0m\n");
+        PD_SUCCESS("verifyImage_write with image assets/smallTest.");
     }
 
     if(!verifyImage_write("assets/black.qoi"))
     {
-        fprintf(stderr, "\033[7;31mERROR: WRITE test not passed with image "
-                "assets/black!\033[0m\n");
+        PD_FAIL("verifyImage_write with image assets/black.");
         result = false;
     }
     else
     {
-        fprintf(stderr, "\033[32;1;1mSUCCESS: WRITE test passed with image "
-                "assets/black!\033[0m\n");
+        PD_SUCCESS("verifyImage_write with image assets/black.");
     }
 
     if(!verifyImage_write("assets/tux.qoi"))
     {
-        fprintf(stderr, "\033[7;31mERROR: WRITE test not passed with image "
-                "assets/tux!\033[0m\n");
+        PD_FAIL("verifyImage_write with image assets/tux.");
         result = false;
     }
     else
     {
-        fprintf(stderr, "\033[32;1;1mSUCCESS: WRITE test passed with image "
-                "assets/tux!\033[0m\n");
+        PD_SUCCESS("verifyImage_write with image assets/tux.");
     }
 
     return result;

@@ -724,7 +724,7 @@ uint8_t* loadPNG
         readChunkCRC(file);
     }
 
-    if(!dsReadZlibPtr(imgIdat.data, img, imgIdat.offset))
+    if(!dsReadZlibPtr(imgIdat.data, img))
     {
         PD_ERROR("could not decode zlib compressed image data.");
     }
