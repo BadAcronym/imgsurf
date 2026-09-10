@@ -8,22 +8,21 @@ f_internal bool verifyImage_read
     const char *name_qoi,
     const char *name_png
 ){
-    fprintf(stderr, "\ntrying to verify reading image: %s with %s\n",
-                    name_qoi, name_png);
+    PD_DEBUG("trying to verify reading image: %s with %s", name_qoi, name_png);
     uint32_t width  = 0;
     uint32_t height = 0;
 
     uint8_t *testQOI = imLoadFile(name_qoi, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!testQOI)
     {
-        fprintf(stderr, "\033[1;31m\nimLoadFile failed on QOI.\033[0m\n");
+        PD_FAIL("imLoadFile on QOI.");
         return false;
     }
 
     uint8_t *testPNG = imLoadFile(name_png, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!testPNG)
     {
-        fprintf(stderr, "\033[1;31m\nimLoadFile failed on PNG.\033[0m\n");
+        PD_FAIL("imLoadFile on PNG.");
         free(testQOI);
         return false;
     }
@@ -32,32 +31,32 @@ f_internal bool verifyImage_read
     {
         if(testQOI[i] != testPNG[i])
         {
-            fprintf(stderr, "\033[1;31mimLoadFile failed @ pixel %lu.red, expected: "
-                    "%u, got: %u\n", i / 4, testQOI[i], testPNG[i]);
+            PD_ERROR("imLoadFile failed @ pixel %lu.red, expected: "
+                     "%u, got: %u", i / 4, testQOI[i], testPNG[i]);
             free(testQOI);
             free(testPNG);
             return false;
         }
         if(testQOI[i + 1] != testPNG[i + 1])
         {
-            fprintf(stderr, "\033[1;31mimLoadFile failed @ pixel %lu.green, expected: "
-                    "%u, got: %u\n", i / 4, testQOI[i + 1], testPNG[i + 1]);
+            PD_ERROR("imLoadFile failed @ pixel %lu.green, expected: "
+                     "%u, got: %u", i / 4, testQOI[i + 1], testPNG[i + 1]);
             free(testQOI);
             free(testPNG);
             return false;
         }
         if(testQOI[i + 2] != testPNG[i + 2])
         {
-            fprintf(stderr, "\033[1;31mimLoadFile failed @ pixel %lu.blue, expected: "
-                    "%u, got: %u\n", i / 4, testQOI[i + 2], testPNG[i + 2]);
+            PD_ERROR("imLoadFile failed @ pixel %lu.blue, expected: "
+                     "%u, got: %u", i / 4, testQOI[i + 2], testPNG[i + 2]);
             free(testQOI);
             free(testPNG);
             return false;
         }
         if(testQOI[i + 3] != testPNG[i + 3])
         {
-            fprintf(stderr, "\033[1;31mimLoadFile failed @ pixel %lu.alpha, expected:"
-                    " %u, got: %u\n", i / 4, testQOI[i + 3], testPNG[i + 3]);
+            PD_ERROR("imLoadFile failed @ pixel %lu.alpha, expected: "
+                     "%u, got: %u", i / 4, testQOI[i + 3], testPNG[i + 3]);
             free(testQOI);
             free(testPNG);
             return false;
