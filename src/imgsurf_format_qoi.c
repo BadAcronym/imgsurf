@@ -496,9 +496,9 @@ bool writeQOI
 
             #ifdef IM_LOG_WRITE
             ++run_count;
-            fprintf(stderr, "%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
-                    "%u, %u, %u, %u, runlength: %hhu\n", data - data_start, byte,
-                    prev.red, prev.green, prev.blue, prev.alpha, runlength);
+            PD_DEBUG("%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
+                     "%u, %u, %u, %u, runlength: %hhu", data - data_start, byte,
+                     prev.red, prev.green, prev.blue, prev.alpha, runlength);
             #endif
             runlength = 0;
         }
@@ -507,15 +507,14 @@ bool writeQOI
         {
             if((elements = fwrite(&index, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
-                        "QOI_OP_INDEX.\033[0m\n");
+                PD_ERROR("failed to write data @ QOI_OP_INDEX.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++index_count;
-            fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_INDEX with index: "
-                    "%u\n", data - data_start, index);
+            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_INDEX with index: "
+                     "%u", data - data_start, index);
             #endif
         }
         else if(curr.alpha == prev.alpha &&
@@ -528,16 +527,15 @@ bool writeQOI
 
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write data @ "
-                        "QOI_OP_DIFF.\033[0m\n");
+                PD_ERROR("failed to write data @ QOI_OP_DIFF.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++diff_count;
-            fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_DIFF and diff: "
-                    "%i, %i, %i\n", data - data_start,
-                    (uint8_t)(dr + 2), (uint8_t)(dg + 2), (uint8_t)(db + 2));
+            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_DIFF and diff: "
+                     "%i, %i, %i", data - data_start,
+                     (uint8_t)(dr + 2), (uint8_t)(dg + 2), (uint8_t)(db + 2));
             #endif
         }
         else if(curr.alpha == prev.alpha      &&
@@ -551,24 +549,21 @@ bool writeQOI
 
             if((elements = fwrite(&byte1, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag/dg @ "
-                        "QOI_OP_LUMA.\033[0m\n");
+                PD_ERROR("failed to write tag/dg @ QOI_OP_LUMA.");
                 return false;
             }
 
             if((elements = fwrite(&byte2, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write dr/db data @ "
-                        "QOI_OP_LUMA.\033[0m\n");
+                PD_ERROR("failed to write dr/db data @ QOI_OP_LUMA.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++luma_count;
-            fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_LUMA and encoded diffs: "
-                    "%u, %u, %u\n", data - data_start, (uint8_t)(dg + 32),
-                    (uint8_t)(dr - dg + 8),
-                    (uint8_t)(db - dg + 8));
+            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_LUMA and encoded diffs: "
+                     "%u, %u, %u", data - data_start, (uint8_t)(dg + 32),
+                     (uint8_t)(dr - dg + 8), (uint8_t)(db - dg + 8));
             #endif
         }
         else if(curr.alpha == prev.alpha)
@@ -576,34 +571,31 @@ bool writeQOI
             uint8_t tag  = 0xFE;
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ "
-                        "QOI_OP_RGB.\033[0m\n");
+                PD_ERROR("failed to write tag @ QOI_OP_RGB.");
                 return false;
             }
 
             if((elements = fwrite(&curr.red, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ "
-                        "QOI_OP_RGB.\033[0m\n");
+                PD_ERROR("failed to write red @ QOI_OP_RGB.");
                 return false;
             }
             if((elements = fwrite(&curr.green, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ "
-                        "QOI_OP_RGB.\033[0m\n");
+                PD_ERROR("failed to write green @ QOI_OP_RGB.");
                 return false;
             }
             if((elements = fwrite(&curr.blue, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ "
-                        "QOI_OP_RGB.\033[0m\n");
+                PD_ERROR("failed to write blue @ QOI_OP_RGB.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++rgb_count;
-            fprintf(stderr, "%lx: CURRENT WRITE OP: QOI_OP_RGB with new pixel: "
-                    "%u, %u, %u\n", data - data_start, curr.red, curr.green, curr.blue);
+            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_RGB with new pixel: "
+                     "%u, %u, %u", data - data_start,
+                     curr.red, curr.green, curr.blue);
             #endif
         }
         else
@@ -611,40 +603,35 @@ bool writeQOI
             uint8_t tag  = 0xFF;
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write tag @ "
-                        "QOI_OP_RGBA.\033[0m\n");
+                PD_ERROR("failed to write tag @ QOI_OP_RGBA.");
                 return false;
             }
 
             if((elements = fwrite(&curr.red, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write red @ "
-                        "QOI_OP_RGBA.\033[0m\n");
+                PD_ERROR("failed to write red @ QOI_OP_RGBA.");
                 return false;
             }
             if((elements = fwrite(&curr.green, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write green @ "
-                        "QOI_OP_RGBA.\033[0m\n");
+                PD_ERROR("failed to write green @ QOI_OP_RGBA.");
                 return false;
             }
             if((elements = fwrite(&curr.blue, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write blue @ "
-                        "QOI_OP_RGBA.\033[0m\n");
+                PD_ERROR("failed to write blue @ QOI_OP_RGBA.");
                 return false;
             }
             if((elements = fwrite(&curr.alpha, 1, 1, file)) != 1)
             {
-                fprintf(stderr, "\n\033[31;1;7mERROR: failed to write alpha @ "
-                        "QOI_OP_RGBA.\033[0m\n");
+                PD_ERROR("failed to write alpha @ QOI_OP_RGBA.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++rgba_count;
-            fprintf(stderr, "CURRENT WRITE OP: QOI_OP_RGBA with new pixel: %u, %u, %u, "
-                    "%u\n", curr.red, curr.green, curr.blue, curr.alpha);
+            PD_DEBUG("CURRENT WRITE OP: QOI_OP_RGBA with new pixel: %u, %u, %u, "
+                     "%u", curr.red, curr.green, curr.blue, curr.alpha);
             #endif
         }
 
@@ -653,26 +640,26 @@ bool writeQOI
     }
 
     #ifdef IM_LOG_WRITE
-    fprintf(stderr, "\n\n");
-    fprintf(stderr, "run_count:   %lu\n", run_count);
-    fprintf(stderr, "diff_count:  %lu\n", diff_count);
-    fprintf(stderr, "index_count: %lu\n", index_count);
-    fprintf(stderr, "luma_count:  %lu\n", luma_count);
-    fprintf(stderr, "rgb_count:   %lu\n", rgb_count);
-    fprintf(stderr, "rgba_count:  %lu\n", rgba_count);
+    PD_DEBUG("\n");
+    PD_DEBUG("run_count:   %lu", run_count);
+    PD_DEBUG("diff_count:  %lu", diff_count);
+    PD_DEBUG("index_count: %lu", index_count);
+    PD_DEBUG("luma_count:  %lu", luma_count);
+    PD_DEBUG("rgb_count:   %lu", rgb_count);
+    PD_DEBUG("rgba_count:  %lu", rgba_count);
     #endif
 
     uint64_t EOS0 = 0x00;
     if((elements = fwrite(&EOS0, 7, 1, file)) != 1)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x00 tag.\033[0m\n");
+        PD_ERROR("failed to write EOS 0x00 tag.");
         return false;
     }
 
     uint8_t EOS1 = 0x01;
     if((elements = fwrite(&EOS1, 1, 1, file)) != 1)
     {
-        fprintf(stderr, "\n\033[31;1;7mERROR: failed to write EOS 0x01 tag.\033[0m\n");
+        PD_ERROR("failed to write EOS 0x01 tag.");
         return false;
     }
 
