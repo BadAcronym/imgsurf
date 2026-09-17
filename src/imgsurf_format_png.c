@@ -731,10 +731,13 @@ uint8_t* loadPNG
         readChunkCRC(file);
     }
 
-    if(!dsReadZlibPtr(imgIdat.data, img, length))
+    if(!dsReadZlibPtr(imgIdat.data, img, *width * *height * 4))
     {
         PD_ERROR("could not decode zlib compressed image data.");
     }
+
+    // that wasn't actually the image data. this data is still filter-compressed,
+    // so I need to figure out what to do with this.
 
     if(chunkHeader.data)
     {
