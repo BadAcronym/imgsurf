@@ -22,7 +22,7 @@ src/imgsurf_format_png.c \
 src/imgsurf_format_qoi.c \
 src/imgsurf_main.c \
 src/imgsurftest_main.c \
-vendor/datasurf/src/datasurf_formats.c \
+vendor/datasurf/src/datasurf_zlib.c \
 vendor/datasurf/src/datasurf_huffman.c \
 vendor/datasurf/src/datasurf_algo_deflate.c \
 vendor/datasurf/vendor/puddle/src/string_view.c \
