@@ -4,6 +4,18 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#define IM_QOI_INDEX \
+(prev.red * 3 + prev.green * 5 + \
+prev.blue * 7 + prev.alpha * 11) % 64
+
+#define QOI_OP_RGB    254
+#define QOI_OP_RGBA   255
+
+#define QOI_OP_INDEX  0
+#define QOI_OP_DIFF   1
+#define QOI_OP_LUMA   2
+#define QOI_OP_RUN    3
+
 f_internal bool samePixel
 (
     pixel pixel1,
