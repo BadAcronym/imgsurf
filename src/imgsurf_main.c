@@ -3,15 +3,6 @@
 #include "pd_print_macros.h"
 #include "pd_path.h"
 
-bool same_pixel
-(
-    pixel pixel1,
-    pixel pixel2
-){
-    return (pixel1.red  == pixel2.red  && pixel1.green == pixel2.green &&
-            pixel1.blue == pixel2.blue && pixel1.alpha == pixel2.alpha);
-}
-
 f_internal void findFormat
 (
     const char *path,

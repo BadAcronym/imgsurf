@@ -4,6 +4,15 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+f_internal bool samePixel
+(
+    pixel pixel1,
+    pixel pixel2
+){
+    return (pixel1.red  == pixel2.red  && pixel1.green == pixel2.green &&
+            pixel1.blue == pixel2.blue && pixel1.alpha == pixel2.alpha);
+}
+
 uint8_t* loadQOI
 (
     FILE        *file,
@@ -461,7 +470,7 @@ bool writeQOI
         uint8_t index = (curr.red  * 3 + curr.green * 5
                        + curr.blue * 7 + curr.alpha * 11) % 64;
 
-        if(same_pixel(curr, prev))
+        if(samePixel(curr, prev))
         {
             ++runlength;
             if(runlength == 62 || data + channelcount == data_end)
@@ -503,7 +512,7 @@ bool writeQOI
             runlength = 0;
         }
 
-        if(same_pixel(curr, seen[index]))
+        if(samePixel(curr, seen[index]))
         {
             if((elements = fwrite(&index, 1, 1, file)) != 1)
             {

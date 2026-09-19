@@ -56,12 +56,6 @@ typedef struct pixel
 }
 pixel;
 
-bool same_pixel
-(
-    pixel pixel1,
-    pixel pixel2
-);
-
 uint8_t* loadBMP
 (
     FILE        *file,
