@@ -25,7 +25,7 @@ src/imgsurftest_main.c \
 vendor/datasurf/src/datasurf_zlib.c \
 vendor/datasurf/src/datasurf_huffman.c \
 vendor/datasurf/src/datasurf_algo_deflate.c \
-vendor/datasurf/vendor/puddle/src/string_view.c \
+vendor/datasurf/vendor/puddle/src/pd_string_view.c \
 vendor/datasurf/vendor/puddle/src/linux_pd_path.c \
 -Wextra -Wall -Wpedantic -Wconversion -Wshadow -Wsign-compare -Wtype-limits -Wunused \
 -fuse-ld=mold"

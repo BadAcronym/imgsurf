@@ -1,8 +1,9 @@
 #include "imgsurf_main.h"
-#include "pd_print_macros.h"
 
-#include "string_view.h"
 #include "datasurf_main.h"
+
+#include "pd_print_macros.h"
+#include "pd_string_view.h"
 
 #define PNG_STREAM_END      0
 #define PNG_STREAM_CONTINUE 1
@@ -731,7 +732,8 @@ uint8_t* loadPNG
         readChunkCRC(file);
     }
 
-    if(!dsReadZlibPtr(imgIdat.data, img, *width * *height * 4))
+    DeflateInfo dfInfo = dsReadZlibPtr(imgIdat.data, img, *width * *height * 4);
+    if(!dfInfo.success)
     {
         PD_ERROR("could not decode zlib compressed image data.");
     }
