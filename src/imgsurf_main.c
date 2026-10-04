@@ -108,7 +108,7 @@ uint8_t* imLoadFile
         return 0;
     }
 
-    StringView path_sv = cstr_sv(path);
+    StringView path_sv = pdCstrSV(path);
     uint8_t    code    = pdVerifyPath(path_sv);
     if(code == PD_TYPE_ERROR)
     {

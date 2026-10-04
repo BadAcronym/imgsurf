@@ -114,7 +114,7 @@ f_internal StringView readChunkHeader
     }
 
     PD_DEBUG("identified chunk: (%s)", result);
-    return cstr_sv(result);
+    return pdCstrSV(result);
 
 cleanup:
     free(result);
@@ -552,8 +552,8 @@ f_internal bool readChunk_tEXt
         }
     }
 
-    StringView keyword = cstr_sv(keywordBuf);
-    StringView value   = cstr_sv(valueBuf);
+    StringView keyword = pdCstrSV(keywordBuf);
+    StringView value   = pdCstrSV(valueBuf);
 
     PD_DEBUG("identified keyword: '"PRI_SV"'\n", ARG_SV(keyword));
     PD_DEBUG("value: '"PRI_SV"'\n", ARG_SV(value));
@@ -623,18 +623,18 @@ uint8_t* loadPNG
         }
     }
 
-    StringView IHDR = cstr_sv("IHDR");
-    StringView PLTE = cstr_sv("PLTE");
-    StringView IDAT = cstr_sv("IDAT");
-    StringView IEND = cstr_sv("IEND");
-    StringView cHRM = cstr_sv("cHRM");
-    StringView bKGD = cstr_sv("bKGD");
-    StringView tIME = cstr_sv("tIME");
-    StringView tEXt = cstr_sv("tEXt");
+    StringView IHDR = pdCstrSV("IHDR");
+    StringView PLTE = pdCstrSV("PLTE");
+    StringView IDAT = pdCstrSV("IDAT");
+    StringView IEND = pdCstrSV("IEND");
+    StringView cHRM = pdCstrSV("cHRM");
+    StringView bKGD = pdCstrSV("bKGD");
+    StringView tIME = pdCstrSV("tIME");
+    StringView tEXt = pdCstrSV("tEXt");
 
     uint32_t   length      = 0;
     StringView chunkHeader = readChunkHeader(file, &length);
-    if(chunkHeader.data && !sv_same(chunkHeader, IHDR))
+    if(chunkHeader.data && !pdSVSame(chunkHeader, IHDR))
     {
         PD_ERROR("could not read IHDR header at beginning of PNG stream.\n"
                  "Read chunk header: '"PRI_SV"'", ARG_SV(chunkHeader));
@@ -642,7 +642,7 @@ uint8_t* loadPNG
         return 0;
     }
 
-    uint8_t *img = 0;
+    uint8_t *imgFiltered = 0;
 
     IHDRData ihdrData = {0};
     if(!readChunk_IHDR(file, &ihdrData))
@@ -655,7 +655,7 @@ uint8_t* loadPNG
     *width  = ihdrData.width;
     *height = ihdrData.height;
 
-    img = malloc(*width * *height * 4);
+    imgFiltered = malloc(*width * *height * 5);
 
     IDATdata imgIdat     = {0};
     cHRMData chrmData    = {0};
@@ -694,32 +694,32 @@ uint8_t* loadPNG
             PD_ERROR("could not successfully read chunk header.");
             goto error;
         }
-        else if(sv_same(chunkHeader, PLTE))
+        else if(pdSVSame(chunkHeader, PLTE))
         {
             palette    = malloc(length * sizeof(RGB8));
             streamData = readChunk_PLTE(file, length, palette);
         }
-        else if(sv_same(chunkHeader, IDAT))
+        else if(pdSVSame(chunkHeader, IDAT))
         {
             streamData = readChunk_IDAT(file, length, &imgIdat);
         }
-        else if(sv_same(chunkHeader, IEND))
+        else if(pdSVSame(chunkHeader, IEND))
         {
             streamData = false;
         }
-        else if(sv_same(chunkHeader, cHRM))
+        else if(pdSVSame(chunkHeader, cHRM))
         {
             streamData = readChunk_cHRM(file, &chrmData);
         }
-        else if(sv_same(chunkHeader, bKGD))
+        else if(pdSVSame(chunkHeader, bKGD))
         {
             streamData = readChunk_bKGD(file, ihdrData.colorType, palette, &background);
         }
-        else if(sv_same(chunkHeader, tIME))
+        else if(pdSVSame(chunkHeader, tIME))
         {
             streamData = readChunk_tIME(file);
         }
-        else if(sv_same(chunkHeader, tEXt))
+        else if(pdSVSame(chunkHeader, tEXt))
         {
             streamData = readChunk_tEXt(file, length);
         }
@@ -732,7 +732,7 @@ uint8_t* loadPNG
         readChunkCRC(file);
     }
 
-    DeflateInfo dfInfo = dsReadZlibPtr(imgIdat.data, img, *width * *height * 4);
+    DeflateInfo dfInfo = dsReadZlibPtr(imgIdat.data, imgFiltered, *width * *height * 5);
     if(!dfInfo.success)
     {
         PD_ERROR("could not decode zlib compressed image data.");
@@ -750,7 +750,7 @@ uint8_t* loadPNG
     {
         free(palette);
     }
-    return img;
+    return imgFiltered;
 
 error:
     if(chunkHeader.data)
@@ -762,7 +762,7 @@ error:
     {
         free(palette);
     }
-    free(img);
+    free(imgFiltered);
     return 0;
 }
 
