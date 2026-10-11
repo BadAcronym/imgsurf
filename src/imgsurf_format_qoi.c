@@ -1,5 +1,5 @@
 #include "imgsurf_main.h"
-#include "pd_print_macros.h"
+#include "im_print_macros.h"
 
 #include <stdlib.h>
 #include <inttypes.h>
@@ -43,14 +43,14 @@ uint8_t* loadQOI
     {
         if((elements = fread(&magicByte, 1, 1, file)) != 1)
         {
-            PD_ERROR("could not read header at byte %u.", i);
+            IM_ERROR("could not read header at byte %u.", i);
             if(feof(file))
             {
-                PD_ERROR("unexpected end of file.");
+                IM_ERROR("unexpected end of file.");
             }
             else if(ferror(file))
             {
-                PD_ERROR("could not read file.");
+                IM_ERROR("could not read file.");
             }
 
             return 0;
@@ -58,7 +58,7 @@ uint8_t* loadQOI
 
         if(magicByte != magic[i])
         {
-            PD_ERROR("QOI header at byte %u corrupted. Got: %u, expected: %u",
+            IM_ERROR("QOI header at byte %u corrupted. Got: %u, expected: %u",
                      i, (uint8_t)magicByte, (uint8_t)magic[i]);
             return 0;
         }
@@ -69,7 +69,7 @@ uint8_t* loadQOI
     {
         if((byte = fgetc(file)) == EOF)
         {
-            PD_ERROR("QOI header at byte %u corrupted.", 4 + i);
+            IM_ERROR("QOI header at byte %u corrupted.", 4 + i);
             return 0;
         }
         *width += (uint32_t)(byte << (3 - i) * 8);
@@ -79,7 +79,7 @@ uint8_t* loadQOI
     {
         if((byte = fgetc(file)) == EOF)
         {
-            PD_ERROR("QOI header at byte %u corrupted.", 8 + i);
+            IM_ERROR("QOI header at byte %u corrupted.", 8 + i);
             return 0;
         }
         *height += (uint32_t)(byte << (3 - i) * 8);
@@ -87,13 +87,13 @@ uint8_t* loadQOI
 
     if((byte = fgetc(file)) == EOF)
     {
-        PD_ERROR("QOI header at byte 12 corrupted.");
+        IM_ERROR("QOI header at byte 12 corrupted.");
     }
     bool discardAlpha = byte == 3;
 
     if((byte = fgetc(file)) == EOF)
     {
-        PD_ERROR("QOI header at byte 13 corrupted.");
+        IM_ERROR("QOI header at byte 13 corrupted.");
         return 0;
     }
     // uint8_t colourspace = byte;
@@ -113,7 +113,7 @@ uint8_t* loadQOI
     uint8_t* image = malloc(pixelcount * bpp);
     if(!image)
     {
-        PD_ERROR("failed to allocate image. Requested bytes: %lu", pixelcount * bpp);
+        IM_ERROR("failed to allocate image. Requested bytes: %lu", pixelcount * bpp);
         return 0;
     }
 
@@ -140,19 +140,19 @@ uint8_t* loadQOI
             {
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read red @ QOI_OP_RGB");
+                    IM_ERROR("failed to read red @ QOI_OP_RGB");
                 }
                 prev.red = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read green @ QOI_OP_RGB");
+                    IM_ERROR("failed to read green @ QOI_OP_RGB");
                 }
                 prev.green = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read blue @ QOI_OP_RGB");
+                    IM_ERROR("failed to read blue @ QOI_OP_RGB");
                 }
                 prev.blue = (uint8_t)byte;
 
@@ -167,7 +167,7 @@ uint8_t* loadQOI
 
                 #ifdef IM_LOG_READ
                 ++rgb_count;
-                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_RGB with new pixel: %u, %u, %u",
+                IM_DEBUG("%lx: CURRENT READ OP: QOI_OP_RGB with new pixel: %u, %u, %u",
                          data - data_start, prev.red, prev.green, prev.blue);
                 #endif
                 seen[IM_QOI_INDEX] = prev;
@@ -176,25 +176,25 @@ uint8_t* loadQOI
             {
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read red @ QOI_OP_RGBA");
+                    IM_ERROR("failed to read red @ QOI_OP_RGBA");
                 }
                 prev.red = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read green @ QOI_OP_RGBA");
+                    IM_ERROR("failed to read green @ QOI_OP_RGBA");
                 }
                 prev.green = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read blue @ QOI_OP_RGBA");
+                    IM_ERROR("failed to read blue @ QOI_OP_RGBA");
                 }
                 prev.blue = (uint8_t)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read alpha @ QOI_OP_RGBA");
+                    IM_ERROR("failed to read alpha @ QOI_OP_RGBA");
                 }
                 prev.alpha = (uint8_t)byte;
 
@@ -209,7 +209,7 @@ uint8_t* loadQOI
 
                 #ifdef IM_LOG_READ
                 ++rgba_count;
-                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_RGBA with new pixel: "
+                IM_DEBUG("%lx: CURRENT READ OP: QOI_OP_RGBA with new pixel: "
                          "%u, %u, %u, %u", data - data_start,
                          prev.red, prev.green, prev.blue, prev.alpha);
                 #endif
@@ -237,7 +237,7 @@ uint8_t* loadQOI
                 seen[IM_QOI_INDEX] = prev;
                 #ifdef IM_LOG_READ
                 ++diff_count;
-                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_DIFF with diff: %u, %u, %u",
+                IM_DEBUG("%lx: CURRENT READ OP: QOI_OP_DIFF with diff: %u, %u, %u",
                          data - data_start, diffRed, diffGreen, diffBlue);
                 #endif
             }
@@ -247,7 +247,7 @@ uint8_t* loadQOI
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to read diffs @ QOI_OP_LUMA.");
+                    IM_ERROR("failed to read diffs @ QOI_OP_LUMA.");
                 }
                 uint8_t diffRed  = (0xF0 & byte) >> 4;
                 uint8_t diffBlue = (0xF  & byte);
@@ -268,7 +268,7 @@ uint8_t* loadQOI
                 seen[IM_QOI_INDEX] = prev;
                 #ifdef IM_LOG_READ
                 ++luma_count;
-                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_LUMA with encoded diffs: "
+                IM_DEBUG("%lx: CURRENT READ OP: QOI_OP_LUMA with encoded diffs: "
                          "%u, %u, %u", data - data_start, (uint8_t)(diffGreen),
                          (uint8_t)(diffRed), (uint8_t)(diffBlue));
                 #endif
@@ -299,7 +299,7 @@ uint8_t* loadQOI
                 #ifdef IM_LOG_READ
                 data += (runlength - 1) * bpp;
                 ++run_count;
-                PD_DEBUG("%lx: (%x) CURRENT READ OP: QOI_OP_RUN with pixel: "
+                IM_DEBUG("%lx: (%x) CURRENT READ OP: QOI_OP_RUN with pixel: "
                          "%u, %u, %u and runlength %hhu", data - data_start, byte,
                          prev.red, prev.green, prev.blue, runlength);
                 #endif
@@ -316,7 +316,7 @@ uint8_t* loadQOI
                         {
                             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
                             {
-                                PD_ERROR("QOI end-of-stream reached early.");
+                                IM_ERROR("QOI end-of-stream reached early.");
                                 return image;
                             }
                         }
@@ -339,13 +339,13 @@ uint8_t* loadQOI
                 }
                 #ifdef IM_LOG_READ
                 ++index_count;
-                PD_DEBUG("%lx: CURRENT READ OP: QOI_OP_INDEX with index: %u",
+                IM_DEBUG("%lx: CURRENT READ OP: QOI_OP_INDEX with index: %u",
                          data - data_start, byte % 0x40);
                 #endif
             }
             else
             {
-                PD_ERROR("could not read QOI_OP.");
+                IM_ERROR("could not read QOI_OP.");
                 return image;
             }
             #ifdef IM_LOG_READ
@@ -355,14 +355,14 @@ uint8_t* loadQOI
     }
 
     #ifdef IM_LOG_READ
-    PD_DEBUG("\n\nREAD BACK (actual):\n");
-    PD_DEBUG("run_count:   %lu", run_count);
-    PD_DEBUG("diff_count:  %lu", diff_count);
-    PD_DEBUG("index_count: %lu", index_count);
-    PD_DEBUG("luma_count:  %lu", luma_count);
-    PD_DEBUG("rgb_count:   %lu", rgb_count);
-    PD_DEBUG("rgba_count:  %lu", rgba_count);
-    PD_DEBUG("\n");
+    IM_DEBUG("\n\nREAD BACK (actual):\n");
+    IM_DEBUG("run_count:   %lu", run_count);
+    IM_DEBUG("diff_count:  %lu", diff_count);
+    IM_DEBUG("index_count: %lu", index_count);
+    IM_DEBUG("luma_count:  %lu", luma_count);
+    IM_DEBUG("rgb_count:   %lu", rgb_count);
+    IM_DEBUG("rgba_count:  %lu", rgba_count);
+    IM_DEBUG("\n");
     #endif
 
     int byteBuffer[8];
@@ -374,7 +374,7 @@ uint8_t* loadQOI
             if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
             {
                 #ifdef IM_LOG_READ
-                PD_DEBUG("QOI end-of-stream reached.");
+                IM_DEBUG("QOI end-of-stream reached.");
                 #endif
                 return image;
             }
@@ -404,7 +404,7 @@ bool writeQOI
 
     if((elements = fwrite("qoif", 4, 1, file)) != 1)
     {
-        PD_ERROR("failed to write magic bytes to header.");
+        IM_ERROR("failed to write magic bytes to header.");
         return false;
     }
 
@@ -413,7 +413,7 @@ bool writeQOI
         uint8_t width_shifted = (width >> (i * 8)) & 0xFF;
         if((elements = fwrite(&width_shifted, 1, 1, file)) != 1)
         {
-            PD_ERROR("failed to write width @ byte: %u.", i);
+            IM_ERROR("failed to write width @ byte: %u.", i);
             return false;
         }
     }
@@ -423,20 +423,20 @@ bool writeQOI
         uint8_t height_shifted = (height >> (i * 8)) & 0xFF;
         if((elements = fwrite(&height_shifted, 1, 1, file)) != 1)
         {
-            PD_ERROR("failed to write height @ byte: %u.", i);
+            IM_ERROR("failed to write height @ byte: %u.", i);
             return false;
         }
     }
 
     if((elements = fwrite(&channelcount, 1, 1, file)) != 1)
     {
-        PD_ERROR("failed to write channelcount.");
+        IM_ERROR("failed to write channelcount.");
         return false;
     }
 
     if((elements = fwrite(&colourspace, 1, 1, file)) != 1)
     {
-        PD_ERROR("failed to write colourspace.");
+        IM_ERROR("failed to write colourspace.");
         return false;
     }
 
@@ -490,16 +490,16 @@ bool writeQOI
                 uint8_t byte = 0xC0 | (runlength - 1);
                 if((elements = fwrite(&byte, 1, 1, file)) != 1)
                 {
-                    PD_ERROR("failed to write data @ QOI_OP_RUN.");
+                    IM_ERROR("failed to write data @ QOI_OP_RUN.");
                     return false;
                 }
 
                 #ifdef IM_LOG_WRITE
                 ++run_count;
-                PD_DEBUG("%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
+                IM_DEBUG("%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
                          "%u, %u, %u, %u, runlength: %hhu", data - data_start, byte,
                          prev.red, prev.green, prev.blue, prev.alpha, runlength);
-                PD_DEBUG("data_end is: %lx", data_end - data_start);
+                IM_DEBUG("data_end is: %lx", data_end - data_start);
                 #endif
                 runlength = 0;
             }
@@ -511,13 +511,13 @@ bool writeQOI
             uint8_t byte = 0xC0 | (runlength - 1);
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write data @ QOI_OP_RUN.");
+                IM_ERROR("failed to write data @ QOI_OP_RUN.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++run_count;
-            PD_DEBUG("%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
+            IM_DEBUG("%lx: (%x) CURRENT WRITE OP: QOI_OP_RUN with pixel: "
                      "%u, %u, %u, %u, runlength: %hhu", data - data_start, byte,
                      prev.red, prev.green, prev.blue, prev.alpha, runlength);
             #endif
@@ -528,13 +528,13 @@ bool writeQOI
         {
             if((elements = fwrite(&index, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write data @ QOI_OP_INDEX.");
+                IM_ERROR("failed to write data @ QOI_OP_INDEX.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++index_count;
-            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_INDEX with index: "
+            IM_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_INDEX with index: "
                      "%u", data - data_start, index);
             #endif
         }
@@ -548,13 +548,13 @@ bool writeQOI
 
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write data @ QOI_OP_DIFF.");
+                IM_ERROR("failed to write data @ QOI_OP_DIFF.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++diff_count;
-            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_DIFF and diff: "
+            IM_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_DIFF and diff: "
                      "%i, %i, %i", data - data_start,
                      (uint8_t)(dr + 2), (uint8_t)(dg + 2), (uint8_t)(db + 2));
             #endif
@@ -570,19 +570,19 @@ bool writeQOI
 
             if((elements = fwrite(&byte1, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write tag/dg @ QOI_OP_LUMA.");
+                IM_ERROR("failed to write tag/dg @ QOI_OP_LUMA.");
                 return false;
             }
 
             if((elements = fwrite(&byte2, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write dr/db data @ QOI_OP_LUMA.");
+                IM_ERROR("failed to write dr/db data @ QOI_OP_LUMA.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++luma_count;
-            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_LUMA and encoded diffs: "
+            IM_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_LUMA and encoded diffs: "
                      "%u, %u, %u", data - data_start, (uint8_t)(dg + 32),
                      (uint8_t)(dr - dg + 8), (uint8_t)(db - dg + 8));
             #endif
@@ -592,29 +592,29 @@ bool writeQOI
             uint8_t tag  = 0xFE;
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write tag @ QOI_OP_RGB.");
+                IM_ERROR("failed to write tag @ QOI_OP_RGB.");
                 return false;
             }
 
             if((elements = fwrite(&curr.red, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write red @ QOI_OP_RGB.");
+                IM_ERROR("failed to write red @ QOI_OP_RGB.");
                 return false;
             }
             if((elements = fwrite(&curr.green, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write green @ QOI_OP_RGB.");
+                IM_ERROR("failed to write green @ QOI_OP_RGB.");
                 return false;
             }
             if((elements = fwrite(&curr.blue, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write blue @ QOI_OP_RGB.");
+                IM_ERROR("failed to write blue @ QOI_OP_RGB.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++rgb_count;
-            PD_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_RGB with new pixel: "
+            IM_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_RGB with new pixel: "
                      "%u, %u, %u", data - data_start,
                      curr.red, curr.green, curr.blue);
             #endif
@@ -624,34 +624,34 @@ bool writeQOI
             uint8_t tag  = 0xFF;
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write tag @ QOI_OP_RGBA.");
+                IM_ERROR("failed to write tag @ QOI_OP_RGBA.");
                 return false;
             }
 
             if((elements = fwrite(&curr.red, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write red @ QOI_OP_RGBA.");
+                IM_ERROR("failed to write red @ QOI_OP_RGBA.");
                 return false;
             }
             if((elements = fwrite(&curr.green, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write green @ QOI_OP_RGBA.");
+                IM_ERROR("failed to write green @ QOI_OP_RGBA.");
                 return false;
             }
             if((elements = fwrite(&curr.blue, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write blue @ QOI_OP_RGBA.");
+                IM_ERROR("failed to write blue @ QOI_OP_RGBA.");
                 return false;
             }
             if((elements = fwrite(&curr.alpha, 1, 1, file)) != 1)
             {
-                PD_ERROR("failed to write alpha @ QOI_OP_RGBA.");
+                IM_ERROR("failed to write alpha @ QOI_OP_RGBA.");
                 return false;
             }
 
             #ifdef IM_LOG_WRITE
             ++rgba_count;
-            PD_DEBUG("CURRENT WRITE OP: QOI_OP_RGBA with new pixel: %u, %u, %u, "
+            IM_DEBUG("CURRENT WRITE OP: QOI_OP_RGBA with new pixel: %u, %u, %u, "
                      "%u", curr.red, curr.green, curr.blue, curr.alpha);
             #endif
         }
@@ -661,26 +661,26 @@ bool writeQOI
     }
 
     #ifdef IM_LOG_WRITE
-    PD_DEBUG("\n");
-    PD_DEBUG("run_count:   %lu", run_count);
-    PD_DEBUG("diff_count:  %lu", diff_count);
-    PD_DEBUG("index_count: %lu", index_count);
-    PD_DEBUG("luma_count:  %lu", luma_count);
-    PD_DEBUG("rgb_count:   %lu", rgb_count);
-    PD_DEBUG("rgba_count:  %lu", rgba_count);
+    IM_DEBUG("\n");
+    IM_DEBUG("run_count:   %lu", run_count);
+    IM_DEBUG("diff_count:  %lu", diff_count);
+    IM_DEBUG("index_count: %lu", index_count);
+    IM_DEBUG("luma_count:  %lu", luma_count);
+    IM_DEBUG("rgb_count:   %lu", rgb_count);
+    IM_DEBUG("rgba_count:  %lu", rgba_count);
     #endif
 
     uint64_t EOS0 = 0x00;
     if((elements = fwrite(&EOS0, 7, 1, file)) != 1)
     {
-        PD_ERROR("failed to write EOS 0x00 tag.");
+        IM_ERROR("failed to write EOS 0x00 tag.");
         return false;
     }
 
     uint8_t EOS1 = 0x01;
     if((elements = fwrite(&EOS1, 1, 1, file)) != 1)
     {
-        PD_ERROR("failed to write EOS 0x01 tag.");
+        IM_ERROR("failed to write EOS 0x01 tag.");
         return false;
     }
 

@@ -29,12 +29,6 @@
 #define IM_FILE_PNG  5
 #define IM_FILE_MAX  5
 
-#define IM_TYPE_FILE      0
-#define IM_TYPE_DIRECTORY 1
-#define IM_TYPE_ERROR     2
-#define IM_TYPE_OTHER     3
-#define IM_TYPE_MAX       3
-
 typedef struct pixel
 {
     uint8_t red;
