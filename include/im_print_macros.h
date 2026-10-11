@@ -1,5 +1,5 @@
-#ifndef DATASURF_PRINT_MACROS
-#define DATASURF_PRINT_MACROS
+#ifndef IMGSURF_PRINT_MACROS
+#define IMGSURF_PRINT_MACROS
 
 #include <stdio.h>
 #include <stdlib.h>
