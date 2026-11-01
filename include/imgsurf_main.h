@@ -1,7 +1,8 @@
 #ifndef IM_HEADER
 #define IM_HEADER
 
-#include <stdint.h>
+#include "pd_int_types.h"
+
 #include <stdio.h>
 
 // #define IM_LOG_READ
@@ -31,103 +32,103 @@
 
 typedef struct pixel
 {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint8_t alpha;
+    u08 red;
+    u08 green;
+    u08 blue;
+    u08 alpha;
 }
 pixel;
 
-uint8_t* loadBMP
+u08* loadBMP
 (
-    FILE        *file,
-    uint32_t    *width,
-    uint32_t    *height,
-    uint8_t     channels
+    FILE *file,
+    u32  *width,
+    u32  *height,
+    u08  channels
 );
 
 bool writeBMP
 (
-    FILE     *file,
-    uint8_t  *data,
-    uint32_t width,
-    uint32_t height,
-    uint8_t  channels
+    FILE *file,
+    u08  *data,
+    u32  width,
+    u32  height,
+    u08  channels
 );
 
-uint8_t* loadPNG
+u08* loadPNG
 (
-    FILE        *file,
-    uint32_t    *width,
-    uint32_t    *height,
-    uint8_t     channels
+    FILE *file,
+    u32  *width,
+    u32  *height,
+    u08  channels
 );
 
 bool writePNG
 (
-    FILE     *file,
-    uint8_t  *data,
-    uint32_t width,
-    uint32_t height,
-    uint8_t  channels
+    FILE *file,
+    u08  *data,
+    u32  width,
+    u32  height,
+    u08  channels
 );
 
-uint8_t* loadQOI
+u08* loadQOI
 (
-    FILE        *file,
-    uint32_t    *width,
-    uint32_t    *height,
-    uint8_t     channels
+    FILE *file,
+    u32  *width,
+    u32  *height,
+    u08  channels
 );
 
 bool writeQOI
 (
-    FILE     *file,
-    uint8_t  *data,
-    uint32_t width,
-    uint32_t height,
-    uint8_t  channels
+    FILE *file,
+    u08  *data,
+    u32  width,
+    u32  height,
+    u08  channels
 );
 
-extern uint8_t* imLoadFile
+extern u08* imLoadFile
 (
     const char *path,
-    uint32_t   *width,
-    uint32_t   *height,
-    uint8_t    channels,
-    uint8_t    bitdepth
+    u32        *width,
+    u32        *height,
+    u08        channels,
+    u08        bitdepth
 );
 
-extern uint8_t* imLoadPtr
+extern u08* imLoadPtr
 (
-    FILE       *file,
-    uint8_t    fileFormat,
-    uint32_t   *width,
-    uint32_t   *height,
-    uint8_t    channels,
-    uint8_t    bitdepth
+    FILE *file,
+    u08  fileFormat,
+    u32  *width,
+    u32  *height,
+    u08  channels,
+    u08  bitdepth
 );
 
 extern bool imWriteFile
 (
     const char *path,
     void       *data,
-    uint32_t   width,
-    uint32_t   height,
-    uint8_t    channels,
-    uint8_t    bitdepth,
-    uint8_t    fileFormat
+    u32        width,
+    u32        height,
+    u08        channels,
+    u08        bitdepth,
+    u08        fileFormat
 );
 
 extern void imWritePtr
 (
-    FILE     *file,
-    void     *data,
-    uint8_t  fileFormat,
-    uint32_t width,
-    uint32_t height,
-    uint8_t  channels,
-    uint8_t  bitdepth
+    FILE  *file,
+    void  *data,
+    u08   fileFormat,
+    u32   width,
+    u32   height,
+    u08   channels,
+    u08   bitdepth
 );
 
 #endif

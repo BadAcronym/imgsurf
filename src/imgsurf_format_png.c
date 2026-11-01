@@ -14,66 +14,75 @@
 #define IM_PNG_TYPE_GREYSCALE_ALPHA  4
 #define IM_PNG_TYPE_TRUECOLOUR_ALPHA 6
 
+s_global StringView IHDR = { .data = "IHDR", .size = 4};
+s_global StringView PLTE = { .data = "PLTE", .size = 4};
+s_global StringView IDAT = { .data = "IDAT", .size = 4};
+s_global StringView IEND = { .data = "IEND", .size = 4};
+s_global StringView cHRM = { .data = "cHRM", .size = 4};
+s_global StringView bKGD = { .data = "bKGD", .size = 4};
+s_global StringView tIME = { .data = "tIME", .size = 4};
+s_global StringView tEXt = { .data = "tEXt", .size = 4};
+
 typedef struct RGB8
 {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
+    u08 red;
+    u08 green;
+    u08 blue;
 }
 RGB8;
 
 typedef struct RGB16
 {
-    uint16_t red;
-    uint16_t green;
-    uint16_t blue;
+    u16 red;
+    u16 green;
+    u16 blue;
 }
 RGB16;
 
 typedef struct IHDRData
 {
-    uint32_t width;
-    uint32_t height;
-    uint8_t  bitdepth;
-    uint8_t  colorType;
-    uint8_t  compression;
-    uint8_t  filter;
-    uint8_t  interlace;
+    u32 width;
+    u32 height;
+    u08 bitdepth;
+    u08 colorType;
+    u08 compression;
+    u08 filter;
+    u08 interlace;
 }
 IHDRData;
 
 typedef struct IDATdata
 {
-    uint8_t  *data;
-    uint64_t offset;
+    u08 *data;
+    u64 offset;
 }
 IDATdata;
 
 typedef struct cHRMData
 {
-    uint32_t whitePointX;
-    uint32_t whitePointY;
-    uint32_t redX;
-    uint32_t redY;
-    uint32_t greenX;
-    uint32_t greenY;
-    uint32_t blueX;
-    uint32_t blueY;
+    u32 whitePointX;
+    u32 whitePointY;
+    u32 redX;
+    u32 redY;
+    u32 greenX;
+    u32 greenY;
+    u32 blueX;
+    u32 blueY;
 }
 cHRMData;
 
 f_internal StringView readChunkHeader
 (
-    FILE     *file,
-    uint32_t *length
+    FILE *file,
+    u32  *length
 ){
     *length = 0;
     char *result = calloc(5, 1);
 
-    uint8_t byte     = 0;
-    size_t  elements = 0;
+    u08 byte     = 0;
+    size elements = 0;
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -81,19 +90,19 @@ f_internal StringView readChunkHeader
             goto cleanup;
         }
 
-        *length += ((uint32_t)byte << (3 - i) * 8);
+        *length += ((u32)byte << (3 - i) * 8);
     }
 
     IM_DEBUG("---------------------------------");
     IM_DEBUG("---------------------------------");
     IM_DEBUG("next chunk length: %u", *length);
 
-    if(*length > INT32_MAX)
+    if(*length > I32MAX)
     {
-        IM_ERROR("chunk length %u exceeds maximum of %u.", *length, INT32_MAX);
+        IM_ERROR("chunk length %u exceeds maximum of %u.", *length, I32MAX);
     }
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -121,18 +130,18 @@ cleanup:
     return(StringView){0};
 }
 
-f_internal uint8_t readChunk_IHDR
+f_internal u08 readChunk_IHDR
 (
     FILE     *file,
     IHDRData *data
 ){
-    size_t  elements = 0;
-    uint8_t byte     = 0;
+    size elements = 0;
+    u08  byte     = 0;
 
     data->width  = 0;
     data->height = 0;
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -140,10 +149,10 @@ f_internal uint8_t readChunk_IHDR
             return PNG_STREAM_END;
         }
 
-        data->width += ((uint32_t)byte << (3 - i) * 8);
+        data->width += ((u32)byte << (3 - i) * 8);
     }
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -151,7 +160,7 @@ f_internal uint8_t readChunk_IHDR
             return PNG_STREAM_END;
         }
 
-        data->height += ((uint32_t)byte << (3 - i) * 8);
+        data->height += ((u32)byte << (3 - i) * 8);
     }
 
     if((elements = fread(&data->bitdepth, 1, 1, file)) != 1)
@@ -187,11 +196,11 @@ f_internal uint8_t readChunk_IHDR
     return PNG_STREAM_CONTINUE;
 }
 
-f_internal uint8_t readChunk_PLTE
+f_internal u08 readChunk_PLTE
 (
-    FILE     *file,
-    uint32_t length,
-    RGB8     *palette
+    FILE *file,
+    u32  length,
+    RGB8 *palette
 ){
     if(length > 255)
     {
@@ -204,8 +213,8 @@ f_internal uint8_t readChunk_PLTE
         return PNG_STREAM_END;
     }
 
-    size_t elements = 0;
-    for(uint32_t i = 0; i < length; i += 3)
+    size elements = 0;
+    for(u32 i = 0; i < length; i += 3)
     {
         if((elements = fread(&palette[i].red, 1, 1, file)) != 1)
         {
@@ -227,13 +236,13 @@ f_internal uint8_t readChunk_PLTE
     return PNG_STREAM_CONTINUE;
 }
 
-f_internal uint8_t readChunk_IDAT
+f_internal u08 readChunk_IDAT
 (
     FILE     *file,
-    uint32_t length,
+    u32      length,
     IDATdata *idat
 ){
-    uint64_t elements = 0;
+    u64 elements = 0;
 
     if((elements = fread(&idat->data[idat->offset], 1, length, file)) != length)
     {
@@ -248,13 +257,13 @@ f_internal uint8_t readChunk_IDAT
     return PNG_STREAM_CONTINUE;
 }
 
-f_internal uint8_t readChunk_cHRM
+f_internal u08 readChunk_cHRM
 (
     FILE     *file,
     cHRMData *data
 ){
-    size_t  elements = 0;
-    uint8_t byte     = 0;
+    size elements = 0;
+    u08  byte     = 0;
 
     data->whitePointX = 0;
     data->whitePointY = 0;
@@ -265,7 +274,7 @@ f_internal uint8_t readChunk_cHRM
     data->blueX       = 0;
     data->blueY       = 0;
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -273,9 +282,9 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->whitePointX += ((uint32_t)byte << (3 - i) * 8);
+        data->whitePointX += ((u32)byte << (3 - i) * 8);
     }
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -283,10 +292,10 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->whitePointY += ((uint32_t)byte << (3 - i) * 8);
+        data->whitePointY += ((u32)byte << (3 - i) * 8);
     }
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -294,9 +303,9 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->redX += ((uint32_t)byte << (3 - i) * 8);
+        data->redX += ((u32)byte << (3 - i) * 8);
     }
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -304,10 +313,10 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->redY += ((uint32_t)byte << (3 - i) * 8);
+        data->redY += ((u32)byte << (3 - i) * 8);
     }
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -315,9 +324,9 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->greenX += ((uint32_t)byte << (3 - i) * 8);
+        data->greenX += ((u32)byte << (3 - i) * 8);
     }
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -325,10 +334,10 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->greenY += ((uint32_t)byte << (3 - i) * 8);
+        data->greenY += ((u32)byte << (3 - i) * 8);
     }
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -336,9 +345,9 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->blueX += ((uint32_t)byte << (3 - i) * 8);
+        data->blueX += ((u32)byte << (3 - i) * 8);
     }
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -346,21 +355,21 @@ f_internal uint8_t readChunk_cHRM
             return PNG_STREAM_END;
         }
 
-        data->blueY += ((uint32_t)byte << (3 - i) * 8);
+        data->blueY += ((u32)byte << (3 - i) * 8);
     }
 
     return PNG_STREAM_CONTINUE;
 }
 
-f_internal uint8_t readChunk_bKGD
+f_internal u08 readChunk_bKGD
 (
-    FILE          *file,
-    const uint8_t colorType,
-    const RGB8    *palette,
-    RGB16         *background
+    FILE       *file,
+    const u08  colorType,
+    const RGB8 *palette,
+    RGB16      *background
 ){
-    size_t  elements = 0;
-    uint8_t byte     = 0;
+    size elements = 0;
+    u08  byte     = 0;
 
     background->red   = 0;
     background->green = 0;
@@ -383,7 +392,7 @@ f_internal uint8_t readChunk_bKGD
     else if(colorType == IM_PNG_TYPE_GREYSCALE ||
             colorType == IM_PNG_TYPE_GREYSCALE_ALPHA
     ){
-        for(uint8_t i = 0; i < 2; ++i)
+        for(u08 i = 0; i < 2; ++i)
         {
             if((elements = fread(&byte, 1, 1, file)) != 1)
             {
@@ -391,15 +400,15 @@ f_internal uint8_t readChunk_bKGD
                 return PNG_STREAM_END;
             }
 
-            background->red   += (uint16_t)((uint16_t)byte << (1 - i) * 8);
-            background->green += (uint16_t)((uint16_t)byte << (1 - i) * 8);
-            background->blue  += (uint16_t)((uint16_t)byte << (1 - i) * 8);
+            background->red   += (u16)((u16)byte << (1 - i) * 8);
+            background->green += (u16)((u16)byte << (1 - i) * 8);
+            background->blue  += (u16)((u16)byte << (1 - i) * 8);
         }
 
         return PNG_STREAM_CONTINUE;
     }
 
-    for(uint8_t i = 0; i < 2; ++i)
+    for(u08 i = 0; i < 2; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -407,9 +416,9 @@ f_internal uint8_t readChunk_bKGD
             return PNG_STREAM_END;
         }
 
-        background->red += ((uint16_t)byte << (1 - i) * 8);
+        background->red += ((u16)byte << (1 - i) * 8);
     }
-    for(uint8_t i = 0; i < 2; ++i)
+    for(u08 i = 0; i < 2; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -417,9 +426,9 @@ f_internal uint8_t readChunk_bKGD
             return PNG_STREAM_END;
         }
 
-        background->green += ((uint16_t)byte << (1 - i) * 8);
+        background->green += ((u16)byte << (1 - i) * 8);
     }
-    for(uint8_t i = 0; i < 2; ++i)
+    for(u08 i = 0; i < 2; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -427,27 +436,27 @@ f_internal uint8_t readChunk_bKGD
             return PNG_STREAM_END;
         }
 
-        background->blue += ((uint16_t)byte << (1 - i) * 8);
+        background->blue += ((u16)byte << (1 - i) * 8);
     }
 
     return PNG_STREAM_CONTINUE;
 }
 
-f_internal uint8_t readChunk_tIME
+f_internal u08 readChunk_tIME
 (
     FILE *file
 ){
-    uint64_t elements = 0;
-    uint8_t  byte     = 0;
+    u64 elements = 0;
+    u08 byte     = 0;
 
-    uint16_t year   = 0;
-    uint8_t  month  = 0;
-    uint8_t  day    = 0;
-    uint8_t  hour   = 0;
-    uint8_t  minute = 0;
-    uint8_t  second = 0;
+    u16 year   = 0;
+    u08 month  = 0;
+    u08 day    = 0;
+    u08 hour   = 0;
+    u08 minute = 0;
+    u08 second = 0;
 
-    for(uint8_t i = 0; i < 2; ++i)
+    for(u08 i = 0; i < 2; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -455,7 +464,7 @@ f_internal uint8_t readChunk_tIME
             return PNG_STREAM_END;
         }
 
-        year += ((uint16_t)byte << (1 - i) * 8);
+        year += ((u16)byte << (1 - i) * 8);
     }
 
     if((elements = fread(&byte, 1, 1, file)) != 1)
@@ -498,11 +507,11 @@ f_internal uint8_t readChunk_tIME
 
 f_internal bool readChunk_tEXt
 (
-    FILE     *file,
-    uint32_t length
+    FILE *file,
+    u32  length
 ){
-    uint64_t elements    = 0;
-    uint32_t byteCounter = 0;
+    u64 elements    = 0;
+    u32 byteCounter = 0;
     // keyword, 1 - 79 bytes, one of:
     // title
     // author
@@ -519,7 +528,7 @@ f_internal bool readChunk_tEXt
     // others...?
 
     char keywordBuf[80] = {0};
-    for(uint32_t i = 0; i < 79; ++i)
+    for(u32 i = 0; i < 79; ++i)
     {
         if((elements = fread(&keywordBuf[i], 1, 1, file)) != 1)
         {
@@ -534,11 +543,11 @@ f_internal bool readChunk_tEXt
         }
     }
 
-    uint32_t readLength = length - byteCounter;
+    u32 readLength = length - byteCounter;
 
     char valueBuf[readLength + 1];
     valueBuf[readLength] = '\0';
-    for(uint32_t i = 0; i < readLength; ++i)
+    for(u32 i = 0; i < readLength; ++i)
     {
         if((elements = fread(&valueBuf[i], 1, 1, file)) != 1)
         {
@@ -566,11 +575,11 @@ f_internal bool readChunkCRC
     FILE *file
 ){
     // actually verify these bytes and not just skip them
-    size_t   elements = 0;
-    uint8_t  byte     = 0;
-    uint32_t CRC      = 0;
+    size elements = 0;
+    u08  byte     = 0;
+    u32  CRC      = 0;
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -578,27 +587,27 @@ f_internal bool readChunkCRC
             return PNG_STREAM_END;
         }
 
-        CRC += ((uint32_t)byte << (3 - i) * 8);
+        CRC += ((u32)byte << (3 - i) * 8);
     }
 
     return PNG_STREAM_CONTINUE;
 }
 
-uint8_t* loadPNG
+u08* loadPNG
 (
-    FILE     *file,
-    uint32_t *width,
-    uint32_t *height,
-    uint8_t  channels
+    FILE *file,
+    u32  *width,
+    u32  *height,
+    u08  channels
 ){
-    uint8_t header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+    u08 header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
     *width  = 0;
     *height = 0;
 
-    size_t  elements = 0;
-    uint8_t byte     = 0;
+    size elements = 0;
+    u08  byte     = 0;
 
-    for(uint8_t i = 0; i < 8; ++i)
+    for(u08 i = 0; i < 8; ++i)
     {
         if((elements = fread(&byte, 1, 1, file)) != 1)
         {
@@ -618,21 +627,12 @@ uint8_t* loadPNG
         if(byte != header[i])
         {
             IM_ERROR("PNG header at byte %u corrupted. Got: %u, expected: %u",
-                     i, (uint8_t)byte, (uint8_t)header[i]);
+                     i, (u08)byte, (u08)header[i]);
             return 0;
         }
     }
 
-    StringView IHDR = pdCstrSV("IHDR");
-    StringView PLTE = pdCstrSV("PLTE");
-    StringView IDAT = pdCstrSV("IDAT");
-    StringView IEND = pdCstrSV("IEND");
-    StringView cHRM = pdCstrSV("cHRM");
-    StringView bKGD = pdCstrSV("bKGD");
-    StringView tIME = pdCstrSV("tIME");
-    StringView tEXt = pdCstrSV("tEXt");
-
-    uint32_t   length      = 0;
+    u32 length = 0;
     StringView chunkHeader = readChunkHeader(file, &length);
     if(chunkHeader.data && !pdSVSame(chunkHeader, IHDR))
     {
@@ -642,7 +642,7 @@ uint8_t* loadPNG
         return 0;
     }
 
-    uint8_t *imgFiltered = 0;
+    u08 *imgFiltered = 0;
 
     IHDRData ihdrData = {0};
     if(!readChunk_IHDR(file, &ihdrData))
@@ -768,11 +768,11 @@ error:
 
 bool writePNG
 (
-    FILE     *file,
-    uint8_t  *data,
-    uint32_t width,
-    uint32_t height,
-    uint8_t  channels
+    FILE *file,
+    u08  *data,
+    u32  width,
+    u32  height,
+    u08  channels
 ){
     (void)file;
     (void)data;

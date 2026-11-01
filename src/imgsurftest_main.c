@@ -9,17 +9,17 @@ f_internal bool verifyImage_read
     const char *name_png
 ){
     IM_DEBUG("trying to verify reading image: %s with %s", name_qoi, name_png);
-    uint32_t width  = 0;
-    uint32_t height = 0;
+    u32 width  = 0;
+    u32 height = 0;
 
-    uint8_t *testQOI = imLoadFile(name_qoi, &width, &height, IM_CHANNELS_RGBA, 8);
+    u08 *testQOI = imLoadFile(name_qoi, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!testQOI)
     {
         IM_FAIL("imLoadFile on QOI.");
         return false;
     }
 
-    uint8_t *testPNG = imLoadFile(name_png, &width, &height, IM_CHANNELS_RGBA, 8);
+    u08 *testPNG = imLoadFile(name_png, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!testPNG)
     {
         IM_FAIL("imLoadFile on PNG.");
@@ -27,7 +27,7 @@ f_internal bool verifyImage_read
         return false;
     }
 
-    for(uint64_t i = 0; i < width * height * 4; i += 4)
+    for(u64 i = 0; i < width * height * 4; i += 4)
     {
         if(testQOI[i] != testPNG[i])
         {
@@ -74,10 +74,10 @@ f_internal bool verifyImage_write
 ){
     IM_DEBUG("trying to verify writing loaded image: '%s'", name);
 
-    uint32_t width  = 0;
-    uint32_t height = 0;
+    u32 width  = 0;
+    u32 height = 0;
 
-    uint8_t *test = imLoadFile(name, &width, &height, IM_CHANNELS_RGBA, 8);
+    u08 *test = imLoadFile(name, &width, &height, IM_CHANNELS_RGBA, 8);
     if(!test)
     {
         IM_ERROR("imLoadFile could not read QOI.");
@@ -92,7 +92,7 @@ f_internal bool verifyImage_write
         return false;
     }
 
-    uint8_t *reconstructedQOI = imLoadFile("assets/reconstructed.qoi", &width, &height,
+    u08 *reconstructedQOI = imLoadFile("assets/reconstructed.qoi", &width, &height,
                                            IM_CHANNELS_RGBA, 8);
     if(!reconstructedQOI)
     {
@@ -100,7 +100,7 @@ f_internal bool verifyImage_write
         return false;
     }
 
-    for(uint64_t i = 0; i < width * height * 4; i += 4)
+    for(u64 i = 0; i < width * height * 4; i += 4)
     {
         if(reconstructedQOI[i] != test[i])
         {
@@ -146,7 +146,7 @@ f_internal bool verifyImage_write
         return false;
     }
 
-    uint8_t *reconstructedPNG = imLoadFile("assets/reconstructed.png", &width, &height,
+    u08 *reconstructedPNG = imLoadFile("assets/reconstructed.png", &width, &height,
                                            IM_CHANNELS_RGBA, 8);
     if(!reconstructedPNG)
     {
@@ -154,7 +154,7 @@ f_internal bool verifyImage_write
         return false;
     }
 
-    for(uint64_t i = 0; i < width * height * 4; i += 4)
+    for(u64 i = 0; i < width * height * 4; i += 4)
     {
         if(reconstructedPNG[i] != test[i])
         {
