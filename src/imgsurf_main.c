@@ -6,11 +6,11 @@
 f_internal void findFormat
 (
     const char *path,
-    uint8_t    *format
+    u08        *format
 ){
-    uint32_t dot = 0;
+    u32 dot = 0;
 
-    uint32_t i = 0;
+    u32 i = 0;
     while(path[i] != '\0')
     {
         if(path[i] == '.')
@@ -67,11 +67,11 @@ f_internal void findFormat
 
 f_internal bool verifyArgs
 (
-    uint8_t format,
-    uint8_t channels,
-    uint8_t bitdepth
+    u08 format,
+    u08 channels,
+    u08 bitdepth
 ){
-    if(format == UINT8_MAX)
+    if(format == U08MAX)
     {
         IM_ERROR("file format unsupported. Use .qoi/.png/.bmp/.webp/.avif/.jxl");
         return false;
@@ -91,16 +91,16 @@ f_internal bool verifyArgs
     return true;
 }
 
-uint8_t* imLoadFile
+u08* imLoadFile
 (
     const char *path,
-    uint32_t   *width,
-    uint32_t   *height,
-    uint8_t    channels,
-    uint8_t    bitdepth
+    u32        *width,
+    u32        *height,
+    u08        channels,
+    u08        bitdepth
 ){
-    uint8_t *image = 0;
-    uint8_t format = UINT8_MAX;
+    u08 *image = 0;
+    u08 format = U08MAX;
 
     findFormat(path, &format);
     if(!verifyArgs(format, channels, bitdepth))
@@ -109,7 +109,7 @@ uint8_t* imLoadFile
     }
 
     StringView path_sv = pdCstrSV(path);
-    uint8_t    code    = pdVerifyPath(path_sv);
+    u08        code    = pdVerifyPath(path_sv);
     if(code == PD_TYPE_ERROR)
     {
         IM_ERROR("path '%s' is not valid.", path);
@@ -196,14 +196,14 @@ uint8_t* imLoadFile
     return image;
 }
 
-uint8_t* imLoadPtr
+u08* imLoadPtr
 (
-    FILE       *file,
-    uint8_t    fileFormat,
-    uint32_t   *width,
-    uint32_t   *height,
-    uint8_t    channels,
-    uint8_t    bitdepth
+    FILE *file,
+    u08  fileFormat,
+    u32  *width,
+    u32  *height,
+    u08  channels,
+    u08  bitdepth
 ){
     if(fileFormat == IM_FILE_QOI)
     {
@@ -231,11 +231,11 @@ bool imWriteFile
 (
     const char *path,
     void       *data,
-    uint32_t   width,
-    uint32_t   height,
-    uint8_t    channels,
-    uint8_t    bitdepth,
-    uint8_t    fileFormat
+    u32        width,
+    u32        height,
+    u08        channels,
+    u08        bitdepth,
+    u08        fileFormat
 ){
     if(!data)
     {
@@ -243,7 +243,7 @@ bool imWriteFile
         return false;
     }
 
-    uint8_t readFileFormat = UINT8_MAX;
+    u08 readFileFormat = U08MAX;
     findFormat(path, &readFileFormat);
     if(!verifyArgs(readFileFormat, channels, bitdepth))
     {
@@ -338,13 +338,13 @@ bool imWriteFile
 
 void imWritePtr
 (
-    FILE     *file,
-    void     *data,
-    uint8_t  fileFormat,
-    uint32_t width,
-    uint32_t height,
-    uint8_t  channels,
-    uint8_t  bitdepth
+    FILE *file,
+    void *data,
+    u08  fileFormat,
+    u32  width,
+    u32  height,
+    u08  channels,
+    u08  bitdepth
 ){
     if(fileFormat == IM_FILE_QOI)
     {

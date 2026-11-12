@@ -2,7 +2,6 @@
 #include "im_print_macros.h"
 
 #include <stdlib.h>
-#include <inttypes.h>
 
 #define IM_QOI_INDEX \
 (prev.red * 3 + prev.green * 5 + \
@@ -25,21 +24,21 @@ f_internal bool samePixel
             pixel1.blue == pixel2.blue && pixel1.alpha == pixel2.alpha);
 }
 
-uint8_t* loadQOI
+u08* loadQOI
 (
-    FILE        *file,
-    uint32_t    *width,
-    uint32_t    *height,
-    uint8_t     channels
+    FILE *file,
+    u32  *width,
+    u32  *height,
+    u08  channels
 ){
     char magic[5] = "qoif";
     *width  = 0;
     *height = 0;
 
-    size_t elements  = 0;
-    char   magicByte = 0;
+    size elements  = 0;
+    char magicByte = 0;
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((elements = fread(&magicByte, 1, 1, file)) != 1)
         {
@@ -59,30 +58,30 @@ uint8_t* loadQOI
         if(magicByte != magic[i])
         {
             IM_ERROR("QOI header at byte %u corrupted. Got: %u, expected: %u",
-                     i, (uint8_t)magicByte, (uint8_t)magic[i]);
+                     i, (u08)magicByte, (u08)magic[i]);
             return 0;
         }
     }
 
     int byte = 0;
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((byte = fgetc(file)) == EOF)
         {
             IM_ERROR("QOI header at byte %u corrupted.", 4 + i);
             return 0;
         }
-        *width += (uint32_t)(byte << (3 - i) * 8);
+        *width += (u32)(byte << (3 - i) * 8);
     }
 
-    for(uint8_t i = 0; i < 4; ++i)
+    for(u08 i = 0; i < 4; ++i)
     {
         if((byte = fgetc(file)) == EOF)
         {
             IM_ERROR("QOI header at byte %u corrupted.", 8 + i);
             return 0;
         }
-        *height += (uint32_t)(byte << (3 - i) * 8);
+        *height += (u32)(byte << (3 - i) * 8);
     }
 
     if((byte = fgetc(file)) == EOF)
@@ -96,21 +95,21 @@ uint8_t* loadQOI
         IM_ERROR("QOI header at byte 13 corrupted.");
         return 0;
     }
-    // uint8_t colourspace = byte;
+    // u08 colourspace = byte;
 
     // this is not really correct. but we'll see
     bool flipRnB = channels == IM_CHANNELS_BGR ||
                    channels == IM_CHANNELS_BGRA;
 
-    uint64_t pixelcount = *width * *height;
-    uint8_t  bpp        = discardAlpha ? 3 : 4;
+    u64 pixelcount = *width * *height;
+    u08 bpp        = discardAlpha ? 3 : 4;
 
     #ifdef IM_LOG_READ
-    uint8_t *data = (uint8_t*)file;
-    uint8_t *data_start = (uint8_t*)file;
+    u08 *data = (u08*)file;
+    u08 *data_start = (u08*)file;
     #endif
 
-    uint8_t* image = malloc(pixelcount * bpp);
+    u08* image = malloc(pixelcount * bpp);
     if(!image)
     {
         IM_ERROR("failed to allocate image. Requested bytes: %lu", pixelcount * bpp);
@@ -120,21 +119,21 @@ uint8_t* loadQOI
     pixel prev     = {0, 0, 0, 255};
     pixel seen[64] = {0};
 
-    uint64_t loopWidth  = *width * bpp;
-    uint64_t loopHeight = *height;
+    u64 loopWidth  = *width * bpp;
+    u64 loopHeight = *height;
 
     #ifdef IM_LOG_READ
-    uint64_t run_count   = 0;
-    uint64_t diff_count  = 0;
-    uint64_t index_count = 0;
-    uint64_t luma_count  = 0;
-    uint64_t rgb_count   = 0;
-    uint64_t rgba_count  = 0;
+    u64 run_count   = 0;
+    u64 diff_count  = 0;
+    u64 index_count = 0;
+    u64 luma_count  = 0;
+    u64 rgb_count   = 0;
+    u64 rgba_count  = 0;
     #endif
 
-    for(uint64_t y = 0; y < loopHeight; y++)
+    for(u64 y = 0; y < loopHeight; y++)
     {
-        for(uint64_t x = 0; x < loopWidth && ((byte = fgetc(file)) != EOF); x += bpp)
+        for(u64 x = 0; x < loopWidth && ((byte = fgetc(file)) != EOF); x += bpp)
         {
             if(byte == QOI_OP_RGB)
             {
@@ -142,19 +141,19 @@ uint8_t* loadQOI
                 {
                     IM_ERROR("failed to read red @ QOI_OP_RGB");
                 }
-                prev.red = (uint8_t)byte;
+                prev.red = (u08)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
                     IM_ERROR("failed to read green @ QOI_OP_RGB");
                 }
-                prev.green = (uint8_t)byte;
+                prev.green = (u08)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
                     IM_ERROR("failed to read blue @ QOI_OP_RGB");
                 }
-                prev.blue = (uint8_t)byte;
+                prev.blue = (u08)byte;
 
                 image[y * loopWidth + x]     = flipRnB ? prev.blue : prev.red;
                 image[y * loopWidth + x + 1] = prev.green;
@@ -178,25 +177,25 @@ uint8_t* loadQOI
                 {
                     IM_ERROR("failed to read red @ QOI_OP_RGBA");
                 }
-                prev.red = (uint8_t)byte;
+                prev.red = (u08)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
                     IM_ERROR("failed to read green @ QOI_OP_RGBA");
                 }
-                prev.green = (uint8_t)byte;
+                prev.green = (u08)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
                     IM_ERROR("failed to read blue @ QOI_OP_RGBA");
                 }
-                prev.blue = (uint8_t)byte;
+                prev.blue = (u08)byte;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
                     IM_ERROR("failed to read alpha @ QOI_OP_RGBA");
                 }
-                prev.alpha = (uint8_t)byte;
+                prev.alpha = (u08)byte;
 
                 image[y * loopWidth + x]     = flipRnB ? prev.blue : prev.red;
                 image[y * loopWidth + x + 1] = prev.green;
@@ -217,9 +216,9 @@ uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_DIFF)
             {
-                uint8_t diffRed   = (0x30 & byte) >> 4;
-                uint8_t diffGreen = (0xC  & byte) >> 2;
-                uint8_t diffBlue  =  0x3  & byte;
+                u08 diffRed   = (0x30 & byte) >> 4;
+                u08 diffGreen = (0xC  & byte) >> 2;
+                u08 diffBlue  =  0x3  & byte;
 
                 prev.red   += diffRed   - 2;
                 prev.green += diffGreen - 2;
@@ -243,14 +242,14 @@ uint8_t* loadQOI
             }
             else if((byte >> 6) == QOI_OP_LUMA)
             {
-                uint8_t diffGreen = byte & 0x3F;
+                u08 diffGreen = byte & 0x3F;
 
                 if((elements = fread(&byte, 1, 1, file)) != 1)
                 {
                     IM_ERROR("failed to read diffs @ QOI_OP_LUMA.");
                 }
-                uint8_t diffRed  = (0xF0 & byte) >> 4;
-                uint8_t diffBlue = (0xF  & byte);
+                u08 diffRed  = (0xF0 & byte) >> 4;
+                u08 diffBlue = (0xF  & byte);
 
                 prev.green += diffGreen - 32;
                 prev.red   += diffGreen + diffRed  - 40;
@@ -269,16 +268,16 @@ uint8_t* loadQOI
                 #ifdef IM_LOG_READ
                 ++luma_count;
                 IM_DEBUG("%lx: CURRENT READ OP: QOI_OP_LUMA with encoded diffs: "
-                         "%u, %u, %u", data - data_start, (uint8_t)(diffGreen),
-                         (uint8_t)(diffRed), (uint8_t)(diffBlue));
+                         "%u, %u, %u", data - data_start, (u08)(diffGreen),
+                         (u08)(diffRed), (u08)(diffBlue));
                 #endif
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                uint8_t  runlength = (byte & 0x3F) + 1;
-                uint64_t index     = y * loopWidth + x;
+                u08  runlength = (byte & 0x3F) + 1;
+                u64 index     = y * loopWidth + x;
 
-                uint8_t j  = 0;
+                u08 j  = 0;
                 bool under = index + j * bpp < loopHeight * loopWidth;
 
                 for(; j < runlength && under; ++j)
@@ -309,8 +308,8 @@ uint8_t* loadQOI
                 if(byte == 0x00)
                 {
                     int byteBuffer[8];
-                    uint8_t zeroCounter = 0;
-                    for(uint8_t i = 0; i < 6 && (byteBuffer[i] = fgetc(file)) == 0; ++i)
+                    u08 zeroCounter = 0;
+                    for(u08 i = 0; i < 6 && (byteBuffer[i] = fgetc(file)) == 0; ++i)
                     {
                         if(++zeroCounter == 6)
                         {
@@ -321,7 +320,7 @@ uint8_t* loadQOI
                             }
                         }
                     }
-                    for(uint8_t i = 0; i < zeroCounter + 1; ++i)
+                    for(u08 i = 0; i < zeroCounter + 1; ++i)
                     {
                         ungetc(byteBuffer[zeroCounter - i], file);
                     }
@@ -366,8 +365,8 @@ uint8_t* loadQOI
     #endif
 
     int byteBuffer[8];
-    uint8_t zeroCounter = 0;
-    for(uint8_t i = 0; i < 7 && (byteBuffer[i] = fgetc(file)) == 0x00; ++i)
+    u08 zeroCounter = 0;
+    for(u08 i = 0; i < 7 && (byteBuffer[i] = fgetc(file)) == 0x00; ++i)
     {
         if(++zeroCounter == 7)
         {
@@ -386,21 +385,21 @@ uint8_t* loadQOI
 
 bool writeQOI
 (
-    FILE     *file,
-    uint8_t  *data,
-    uint32_t width,
-    uint32_t height,
-    uint8_t  channels
+    FILE *file,
+    u08  *data,
+    u32  width,
+    u32  height,
+    u08  channels
 ){
     #ifdef IM_LOG_WRITE
-    uint8_t *data_start  = data;
+    u08 *data_start  = data;
     #endif
-    uint8_t channelcount = (channels == IM_CHANNELS_RGBA ||
-                            channels == IM_CHANNELS_BGRA) ? 4 : 3;
+    u08 channelcount = (channels == IM_CHANNELS_RGBA ||
+                        channels == IM_CHANNELS_BGRA) ? 4 : 3;
 
     // colourspace ignored
-    uint8_t colourspace = 0;
-    size_t  elements    = 0;
+    u08  colourspace = 0;
+    size elements    = 0;
 
     if((elements = fwrite("qoif", 4, 1, file)) != 1)
     {
@@ -408,9 +407,9 @@ bool writeQOI
         return false;
     }
 
-    for(int8_t i = 3; i > -1; --i)
+    for(i08 i = 3; i > -1; --i)
     {
-        uint8_t width_shifted = (width >> (i * 8)) & 0xFF;
+        u08 width_shifted = (width >> (i * 8)) & 0xFF;
         if((elements = fwrite(&width_shifted, 1, 1, file)) != 1)
         {
             IM_ERROR("failed to write width @ byte: %u.", i);
@@ -418,9 +417,9 @@ bool writeQOI
         }
     }
 
-    for(int8_t i = 3; i > -1; --i)
+    for(i08 i = 3; i > -1; --i)
     {
-        uint8_t height_shifted = (height >> (i * 8)) & 0xFF;
+        u08 height_shifted = (height >> (i * 8)) & 0xFF;
         if((elements = fwrite(&height_shifted, 1, 1, file)) != 1)
         {
             IM_ERROR("failed to write height @ byte: %u.", i);
@@ -445,27 +444,26 @@ bool writeQOI
 
     bool useAlpha = channelcount == 3;
 
-    bool flipRnB  = channels == IM_CHANNELS_BGR  ||
-                    channels == IM_CHANNELS_BGRA;
+    bool flipRnB  = channels == IM_CHANNELS_BGR || channels == IM_CHANNELS_BGRA;
 
     #ifdef IM_LOG_WRITE
-    uint64_t run_count   = 0;
-    uint64_t diff_count  = 0;
-    uint64_t index_count = 0;
-    uint64_t luma_count  = 0;
-    uint64_t rgb_count   = 0;
-    uint64_t rgba_count  = 0;
+    u64 run_count   = 0;
+    u64 diff_count  = 0;
+    u64 index_count = 0;
+    u64 luma_count  = 0;
+    u64 rgb_count   = 0;
+    u64 rgba_count  = 0;
     #endif
 
-    uint8_t *data_end = data + width * height * channelcount;
-    uint8_t runlength = 0;
+    u08 *data_end = data + width * height * channelcount;
+    u08 runlength = 0;
 
     for(; data < data_end; data += channelcount)
     {
         pixel curr = {0, 0, 0, 255};
 
-        uint8_t og_r = *data;
-        uint8_t og_b = *(data + 2);
+        u08 og_r = *data;
+        u08 og_b = *(data + 2);
 
         curr.red   = flipRnB ? og_b : og_r;
         curr.green = *(data + 1);
@@ -475,19 +473,19 @@ bool writeQOI
             curr.alpha = *(data + 3);
         }
 
-        uint8_t dr = curr.red   - prev.red;
-        uint8_t dg = curr.green - prev.green;
-        uint8_t db = curr.blue  - prev.blue;
+        u08 dr = curr.red   - prev.red;
+        u08 dg = curr.green - prev.green;
+        u08 db = curr.blue  - prev.blue;
 
-        uint8_t index = (curr.red  * 3 + curr.green * 5
-                       + curr.blue * 7 + curr.alpha * 11) % 64;
+        u08 index = (curr.red  * 3 + curr.green * 5 +
+                     curr.blue * 7 + curr.alpha * 11) % 64;
 
         if(samePixel(curr, prev))
         {
             ++runlength;
             if(runlength == 62 || data + channelcount == data_end)
             {
-                uint8_t byte = 0xC0 | (runlength - 1);
+                u08 byte = 0xC0 | (runlength - 1);
                 if((elements = fwrite(&byte, 1, 1, file)) != 1)
                 {
                     IM_ERROR("failed to write data @ QOI_OP_RUN.");
@@ -508,7 +506,7 @@ bool writeQOI
 
         if(runlength > 0)
         {
-            uint8_t byte = 0xC0 | (runlength - 1);
+            u08 byte = 0xC0 | (runlength - 1);
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
                 IM_ERROR("failed to write data @ QOI_OP_RUN.");
@@ -539,12 +537,12 @@ bool writeQOI
             #endif
         }
         else if(curr.alpha == prev.alpha &&
-                (uint8_t)(dr + 2) < 0x4  &&
-                (uint8_t)(dg + 2) < 0x4  &&
-                (uint8_t)(db + 2) < 0x4
+                (u08)(dr + 2) < 0x4  &&
+                (u08)(dg + 2) < 0x4  &&
+                (u08)(db + 2) < 0x4
         ){
-            uint8_t byte = (uint8_t)(0x40 | ((uint8_t)(dr + 2) << 4) |
-                                     ((uint8_t)(dg + 2) << 2) | (uint8_t)(db + 2));
+            u08 byte = (u08)(0x40 | ((u08)(dr + 2) << 4) |
+                        ((u08)(dg + 2) << 2) | (u08)(db + 2));
 
             if((elements = fwrite(&byte, 1, 1, file)) != 1)
             {
@@ -556,17 +554,17 @@ bool writeQOI
             ++diff_count;
             IM_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_DIFF and diff: "
                      "%i, %i, %i", data - data_start,
-                     (uint8_t)(dr + 2), (uint8_t)(dg + 2), (uint8_t)(db + 2));
+                     (u08)(dr + 2), (u08)(dg + 2), (u08)(db + 2));
             #endif
         }
-        else if(curr.alpha == prev.alpha      &&
-                (uint8_t)(dg + 32)     < 0x40 &&
-                (uint8_t)(dr - dg + 8) < 0x10 &&
-                (uint8_t)(db - dg + 8) < 0x10
+        else if(curr.alpha == prev.alpha  &&
+                (u08)(dg + 32)     < 0x40 &&
+                (u08)(dr - dg + 8) < 0x10 &&
+                (u08)(db - dg + 8) < 0x10
         ){
-            uint8_t byte1 = 0x80 | (uint8_t)(dg + 32);
-            uint8_t byte2 = (uint8_t)(((uint8_t)(dr - dg + 8) << 4) |
-                            (uint8_t)(db - dg + 8));
+            u08 byte1 = 0x80 | (u08)(dg + 32);
+            u08 byte2 = (u08)(((u08)(dr - dg + 8) << 4) |
+                              (u08)(db - dg + 8));
 
             if((elements = fwrite(&byte1, 1, 1, file)) != 1)
             {
@@ -583,13 +581,13 @@ bool writeQOI
             #ifdef IM_LOG_WRITE
             ++luma_count;
             IM_DEBUG("%lx: CURRENT WRITE OP: QOI_OP_LUMA and encoded diffs: "
-                     "%u, %u, %u", data - data_start, (uint8_t)(dg + 32),
-                     (uint8_t)(dr - dg + 8), (uint8_t)(db - dg + 8));
+                     "%u, %u, %u", data - data_start, (u08)(dg + 32),
+                     (u08)(dr - dg + 8), (u08)(db - dg + 8));
             #endif
         }
         else if(curr.alpha == prev.alpha)
         {
-            uint8_t tag  = 0xFE;
+            u08 tag = 0xFE;
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
                 IM_ERROR("failed to write tag @ QOI_OP_RGB.");
@@ -621,7 +619,7 @@ bool writeQOI
         }
         else
         {
-            uint8_t tag  = 0xFF;
+            u08 tag = 0xFF;
             if((elements = fwrite(&tag, 1, 1, file)) != 1)
             {
                 IM_ERROR("failed to write tag @ QOI_OP_RGBA.");
@@ -670,14 +668,14 @@ bool writeQOI
     IM_DEBUG("rgba_count:  %lu", rgba_count);
     #endif
 
-    uint64_t EOS0 = 0x00;
+    u64 EOS0 = 0x00;
     if((elements = fwrite(&EOS0, 7, 1, file)) != 1)
     {
         IM_ERROR("failed to write EOS 0x00 tag.");
         return false;
     }
 
-    uint8_t EOS1 = 0x01;
+    u08 EOS1 = 0x01;
     if((elements = fwrite(&EOS1, 1, 1, file)) != 1)
     {
         IM_ERROR("failed to write EOS 0x01 tag.");
