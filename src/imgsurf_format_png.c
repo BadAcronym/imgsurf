@@ -173,6 +173,7 @@ f_internal u08 readChunk_IDAT
               "remaining buffer of %"PRIu64"bytes.", length, file->size - *index);
 
     memcpy(&idat->data[idat->offset], &file->data[*index], length);
+    *index += length;
 
     IM_DEBUG("copied %"PRIu32" bytes into IDAT offset %"PRIu64".",
              length, idat->offset);
