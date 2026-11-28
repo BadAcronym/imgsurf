@@ -1,6 +1,7 @@
 #include "imgsurf_main.h"
 #include "im_print_macros.h"
 
+#include "pd_util.h"
 #include "pd_path.h"
 
 f_internal void findFormat
@@ -91,6 +92,8 @@ f_internal bool verifyArgs
     return true;
 }
 
+// TODO: probably want to peek n bytes and figure out magic bytes, same as peekfile.
+// That way, we don't have to trust the file extension.
 u08* imLoadFile
 (
     const char *path,
@@ -126,8 +129,8 @@ u08* imLoadFile
         return 0;
     }
 
-    FILE *file = fopen(path, "rb");
-    if(!file)
+    BinBuffer file = pdReadBinFile(path);
+    if(!file.data)
     {
         IM_ERROR("could not open file '%s' for reading.", path);
         return 0;
@@ -140,11 +143,10 @@ u08* imLoadFile
             if(bitdepth != 8)
             {
                 IM_ERROR("only a bitdepth of 8 is supported by QOI.");
-                fclose(file);
                 return 0;
             }
 
-            image = loadQOI(file, width, height, channels);
+            image = loadQOI(&file, width, height, channels);
 
             break;
         }
@@ -153,57 +155,53 @@ u08* imLoadFile
             if(bitdepth > 2 && bitdepth != 4 && bitdepth != 8 && bitdepth != 16)
             {
                 IM_ERROR("only bitdepths of 1, 2, 4, 8 or 16 are supported by PNG.");
-                fclose(file);
                 return 0;
             }
 
-            image = loadPNG(file, width, height, channels);
+            image = loadPNG(&file, width, height, channels);
 
             break;
         }
         case IM_FILE_BMP:
         {
-            image = loadBMP(file, width, height, channels);
+            image = loadBMP(&file, width, height, channels);
             break;
         }
         case IM_FILE_WEBP:
         {
             IM_WARN("format WEBP not implemented yet.");
-            fclose(file);
             return 0;
         }
         case IM_FILE_AVIF:
         {
             IM_WARN("format AVIF not implemented yet.");
-            fclose(file);
             return 0;
         }
         case IM_FILE_JXL:
         {
             IM_WARN("format JXL not implemented yet.");
-            fclose(file);
             return 0;
         }
         default:
         {
             IM_ERROR("unknown format; unsupported.");
-            fclose(file);
             return 0;
         }
     }
 
-    fclose(file);
+    free(file.data);
     return image;
 }
 
+// TODO: instead of having to pass a file format, probably peek from here.
 u08* imLoadPtr
 (
-    FILE *file,
-    u08  fileFormat,
-    u32  *width,
-    u32  *height,
-    u08  channels,
-    u08  bitdepth
+    BinBuffer *file,
+    u08       fileFormat,
+    u32       *width,
+    u32       *height,
+    u08       channels,
+    u08       bitdepth
 ){
     if(fileFormat == IM_FILE_QOI)
     {

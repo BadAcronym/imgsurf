@@ -595,174 +595,174 @@ f_internal bool readChunkCRC
 
 u08* loadPNG
 (
-    FILE *file,
-    u32  *width,
-    u32  *height,
-    u08  channels
+    BinBuffer *file,
+    u32       *width,
+    u32       *height,
+    u08       channels
 ){
-    u08 header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
-    *width  = 0;
-    *height = 0;
-
-    size elements = 0;
-    u08  byte     = 0;
-
-    for(u08 i = 0; i < 8; ++i)
-    {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read header at byte %u.", i);
-            if(feof(file))
-            {
-                IM_ERROR("unexpected end of file.");
-            }
-            else if(ferror(file))
-            {
-                IM_ERROR("could not read file.");
-            }
-
-            return 0;
-        }
-
-        if(byte != header[i])
-        {
-            IM_ERROR("PNG header at byte %u corrupted. Got: %u, expected: %u",
-                     i, (u08)byte, (u08)header[i]);
-            return 0;
-        }
-    }
-
-    u32 length = 0;
-    StringView chunkHeader = readChunkHeader(file, &length);
-    if(chunkHeader.data && !pdSVSame(chunkHeader, IHDR))
-    {
-        IM_ERROR("could not read IHDR header at beginning of PNG stream.\n"
-                 "Read chunk header: '"PRI_SV"'", ARG_SV(chunkHeader));
-        free((void*)chunkHeader.data);
-        return 0;
-    }
-
-    u08 *imgFiltered = 0;
-
-    IHDRData ihdrData = {0};
-    if(!readChunk_IHDR(file, &ihdrData))
-    {
-        IM_ERROR("could not read IHDR header data.");
-        free((void*)chunkHeader.data);
-        return 0;
-    }
-
-    *width  = ihdrData.width;
-    *height = ihdrData.height;
-
-    imgFiltered = malloc(*width * *height * 5);
-
-    IDATdata imgIdat     = {0};
-    cHRMData chrmData    = {0};
-    RGB8     *palette    = 0;
-    RGB16    background  = {0};
-
-    imgIdat.data = malloc(*width * *height * 4);
-
-    readChunkCRC(file);
-
-    IM_DEBUG("width:              %u", ihdrData.width);
-    IM_DEBUG("height:             %u", ihdrData.height);
-    IM_DEBUG("bitdepth:           %u", ihdrData.bitdepth);
-    IM_DEBUG("color type:         %u", ihdrData.colorType);
-    IM_DEBUG("filter method:      %u", ihdrData.filter);
-    IM_DEBUG("interlace method:   %u", ihdrData.interlace);
-    IM_DEBUG("compression method: %u", ihdrData.compression);
-
-    if(ihdrData.compression)
-    {
-        IM_ERROR("compression method not DEFLATE.");
-    }
-
-    bool streamData = true;
-    while(streamData)
-    {
-        if(chunkHeader.data)
-        {
-            free((void*)chunkHeader.data);
-            chunkHeader.size = 0;
-        }
-        chunkHeader = readChunkHeader(file, &length);
-
-        if(!chunkHeader.data)
-        {
-            IM_ERROR("could not successfully read chunk header.");
-            goto error;
-        }
-        else if(pdSVSame(chunkHeader, PLTE))
-        {
-            palette    = malloc(length * sizeof(RGB8));
-            streamData = readChunk_PLTE(file, length, palette);
-        }
-        else if(pdSVSame(chunkHeader, IDAT))
-        {
-            streamData = readChunk_IDAT(file, length, &imgIdat);
-        }
-        else if(pdSVSame(chunkHeader, IEND))
-        {
-            streamData = false;
-        }
-        else if(pdSVSame(chunkHeader, cHRM))
-        {
-            streamData = readChunk_cHRM(file, &chrmData);
-        }
-        else if(pdSVSame(chunkHeader, bKGD))
-        {
-            streamData = readChunk_bKGD(file, ihdrData.colorType, palette, &background);
-        }
-        else if(pdSVSame(chunkHeader, tIME))
-        {
-            streamData = readChunk_tIME(file);
-        }
-        else if(pdSVSame(chunkHeader, tEXt))
-        {
-            streamData = readChunk_tEXt(file, length);
-        }
-        else
-        {
-            IM_ERROR("chunk type '"PRI_SV"' not implemented.", ARG_SV(chunkHeader));
-            goto error;
-        }
-
-        readChunkCRC(file);
-    }
-
-    DeflateInfo dfInfo = dsReadZlibPtr(imgIdat.data, imgFiltered, *width * *height * 5);
-    if(!dfInfo.success)
-    {
-        IM_ERROR("could not decode zlib compressed image data.");
-    }
-
-    // that wasn't actually the image data. this data is still filter-compressed,
-    // so I need to figure out what to do with this.
-
-    if(chunkHeader.data)
-    {
-        free((void*)chunkHeader.data);
-        chunkHeader.size = 0;
-    }
-    if(palette)
-    {
-        free(palette);
-    }
-    return imgFiltered;
-
-error:
-    if(chunkHeader.data)
-    {
-        free((void*)chunkHeader.data);
-        chunkHeader.size = 0;
-    }
-    if(palette)
-    {
-        free(palette);
-    }
-    free(imgFiltered);
+//     u08 header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+//     *width  = 0;
+//     *height = 0;
+//
+//     size elements = 0;
+//     u08  byte     = 0;
+//
+//     for(u08 i = 0; i < 8; ++i)
+//     {
+//         if((elements = fread(&byte, 1, 1, file)) != 1)
+//         {
+//             IM_ERROR("could not read header at byte %u.", i);
+//             if(feof(file))
+//             {
+//                 IM_ERROR("unexpected end of file.");
+//             }
+//             else if(ferror(file))
+//             {
+//                 IM_ERROR("could not read file.");
+//             }
+//
+//             return 0;
+//         }
+//
+//         if(byte != header[i])
+//         {
+//             IM_ERROR("PNG header at byte %u corrupted. Got: %u, expected: %u",
+//                      i, (u08)byte, (u08)header[i]);
+//             return 0;
+//         }
+//     }
+//
+//     u32 length = 0;
+//     StringView chunkHeader = readChunkHeader(file, &length);
+//     if(chunkHeader.data && !pdSVSame(chunkHeader, IHDR))
+//     {
+//         IM_ERROR("could not read IHDR header at beginning of PNG stream.\n"
+//                  "Read chunk header: '"PRI_SV"'", ARG_SV(chunkHeader));
+//         free((void*)chunkHeader.data);
+//         return 0;
+//     }
+//
+//     u08 *imgFiltered = 0;
+//
+//     IHDRData ihdrData = {0};
+//     if(!readChunk_IHDR(file, &ihdrData))
+//     {
+//         IM_ERROR("could not read IHDR header data.");
+//         free((void*)chunkHeader.data);
+//         return 0;
+//     }
+//
+//     *width  = ihdrData.width;
+//     *height = ihdrData.height;
+//
+//     imgFiltered = malloc(*width * *height * 5);
+//
+//     IDATdata imgIdat     = {0};
+//     cHRMData chrmData    = {0};
+//     RGB8     *palette    = 0;
+//     RGB16    background  = {0};
+//
+//     imgIdat.data = malloc(*width * *height * 4);
+//
+//     readChunkCRC(file);
+//
+//     IM_DEBUG("width:              %u", ihdrData.width);
+//     IM_DEBUG("height:             %u", ihdrData.height);
+//     IM_DEBUG("bitdepth:           %u", ihdrData.bitdepth);
+//     IM_DEBUG("color type:         %u", ihdrData.colorType);
+//     IM_DEBUG("filter method:      %u", ihdrData.filter);
+//     IM_DEBUG("interlace method:   %u", ihdrData.interlace);
+//     IM_DEBUG("compression method: %u", ihdrData.compression);
+//
+//     if(ihdrData.compression)
+//     {
+//         IM_ERROR("compression method not DEFLATE.");
+//     }
+//
+//     bool streamData = true;
+//     while(streamData)
+//     {
+//         if(chunkHeader.data)
+//         {
+//             free((void*)chunkHeader.data);
+//             chunkHeader.size = 0;
+//         }
+//         chunkHeader = readChunkHeader(file, &length);
+//
+//         if(!chunkHeader.data)
+//         {
+//             IM_ERROR("could not successfully read chunk header.");
+//             goto error;
+//         }
+//         else if(pdSVSame(chunkHeader, PLTE))
+//         {
+//             palette    = malloc(length * sizeof(RGB8));
+//             streamData = readChunk_PLTE(file, length, palette);
+//         }
+//         else if(pdSVSame(chunkHeader, IDAT))
+//         {
+//             streamData = readChunk_IDAT(file, length, &imgIdat);
+//         }
+//         else if(pdSVSame(chunkHeader, IEND))
+//         {
+//             streamData = false;
+//         }
+//         else if(pdSVSame(chunkHeader, cHRM))
+//         {
+//             streamData = readChunk_cHRM(file, &chrmData);
+//         }
+//         else if(pdSVSame(chunkHeader, bKGD))
+//         {
+//             streamData = readChunk_bKGD(file, ihdrData.colorType, palette, &background);
+//         }
+//         else if(pdSVSame(chunkHeader, tIME))
+//         {
+//             streamData = readChunk_tIME(file);
+//         }
+//         else if(pdSVSame(chunkHeader, tEXt))
+//         {
+//             streamData = readChunk_tEXt(file, length);
+//         }
+//         else
+//         {
+//             IM_ERROR("chunk type '"PRI_SV"' not implemented.", ARG_SV(chunkHeader));
+//             goto error;
+//         }
+//
+//         readChunkCRC(file);
+//     }
+//
+//     DeflateInfo dfInfo = dsReadZlibPtr(imgIdat.data, imgFiltered, *width * *height * 5);
+//     if(!dfInfo.success)
+//     {
+//         IM_ERROR("could not decode zlib compressed image data.");
+//     }
+//
+//     // that wasn't actually the image data. this data is still filter-compressed,
+//     // so I need to figure out what to do with this.
+//
+//     if(chunkHeader.data)
+//     {
+//         free((void*)chunkHeader.data);
+//         chunkHeader.size = 0;
+//     }
+//     if(palette)
+//     {
+//         free(palette);
+//     }
+//     return imgFiltered;
+//
+// error:
+//     if(chunkHeader.data)
+//     {
+//         free((void*)chunkHeader.data);
+//         chunkHeader.size = 0;
+//     }
+//     if(palette)
+//     {
+//         free(palette);
+//     }
+//     free(imgFiltered);
     return 0;
 }
 

@@ -3,10 +3,10 @@
 
 u08* loadBMP
 (
-    FILE *file,
-    u32  *width,
-    u32  *height,
-    u08  channels
+    BinBuffer *file,
+    u32       *width,
+    u32       *height,
+    u08       channels
 ){
     IM_WARN("BMP loading not implemented yet.");
     return 0;

@@ -1,6 +1,7 @@
 #ifndef IM_HEADER
 #define IM_HEADER
 
+#include "pd_util.h"
 #include "pd_int_types.h"
 
 #include <stdio.h>
@@ -16,11 +17,11 @@
 #define s_global      static
 #define f_internal    static
 
-#define IM_CHANNELS_RGBA 0
-#define IM_CHANNELS_BGRA 1
-#define IM_CHANNELS_RGB  2
-#define IM_CHANNELS_BGR  3
-#define IM_CHANNELS_MAX  3
+#define IM_CHANNELS_4      0
+#define IM_CHANNELS_4_FLIP 1
+#define IM_CHANNELS_3      2
+#define IM_CHANNELS_3_FLIP 3
+#define IM_CHANNELS_MAX    3
 
 #define IM_FILE_QOI  0
 #define IM_FILE_BMP  1
@@ -41,10 +42,10 @@ pixel;
 
 u08* loadBMP
 (
-    FILE *file,
-    u32  *width,
-    u32  *height,
-    u08  channels
+    BinBuffer *file,
+    u32       *width,
+    u32       *height,
+    u08       channels
 );
 
 bool writeBMP
@@ -58,10 +59,10 @@ bool writeBMP
 
 u08* loadPNG
 (
-    FILE *file,
-    u32  *width,
-    u32  *height,
-    u08  channels
+    BinBuffer *file,
+    u32       *width,
+    u32       *height,
+    u08       channels
 );
 
 bool writePNG
@@ -75,10 +76,10 @@ bool writePNG
 
 u08* loadQOI
 (
-    FILE *file,
-    u32  *width,
-    u32  *height,
-    u08  channels
+    BinBuffer *file,
+    u32       *width,
+    u32       *height,
+    u08       channels
 );
 
 bool writeQOI
@@ -101,12 +102,12 @@ extern u08* imLoadFile
 
 extern u08* imLoadPtr
 (
-    FILE *file,
-    u08  fileFormat,
-    u32  *width,
-    u32  *height,
-    u08  channels,
-    u08  bitdepth
+    BinBuffer *file,
+    u08       fileFormat,
+    u32       *width,
+    u32       *height,
+    u08       channels,
+    u08       bitdepth
 );
 
 extern bool imWriteFile

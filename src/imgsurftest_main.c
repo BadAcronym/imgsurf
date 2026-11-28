@@ -12,14 +12,14 @@ f_internal bool verifyImage_read
     u32 width  = 0;
     u32 height = 0;
 
-    u08 *testQOI = imLoadFile(name_qoi, &width, &height, IM_CHANNELS_RGBA, 8);
+    u08 *testQOI = imLoadFile(name_qoi, &width, &height, IM_CHANNELS_4, 8);
     if(!testQOI)
     {
         IM_FAIL("imLoadFile on QOI.");
         return false;
     }
 
-    u08 *testPNG = imLoadFile(name_png, &width, &height, IM_CHANNELS_RGBA, 8);
+    u08 *testPNG = imLoadFile(name_png, &width, &height, IM_CHANNELS_4, 8);
     if(!testPNG)
     {
         IM_FAIL("imLoadFile on PNG.");
@@ -77,15 +77,15 @@ f_internal bool verifyImage_write
     u32 width  = 0;
     u32 height = 0;
 
-    u08 *test = imLoadFile(name, &width, &height, IM_CHANNELS_RGBA, 8);
+    u08 *test = imLoadFile(name, &width, &height, IM_CHANNELS_4, 8);
     if(!test)
     {
         IM_ERROR("imLoadFile could not read QOI.");
         return false;
     }
 
-    if(!imWriteFile("assets/reconstructed.qoi", test, width, height,
-                    IM_CHANNELS_RGBA, 8, IM_FILE_QOI)
+    if(!imWriteFile("assets/reconstructed.qoi", test, width, height, IM_CHANNELS_4,
+                    8, IM_FILE_QOI)
     ){
         IM_ERROR("imWriteFile could not write QOI.");
         free(test);
@@ -93,7 +93,7 @@ f_internal bool verifyImage_write
     }
 
     u08 *reconstructedQOI = imLoadFile("assets/reconstructed.qoi", &width, &height,
-                                           IM_CHANNELS_RGBA, 8);
+                                           IM_CHANNELS_4_FLIP, 8);
     if(!reconstructedQOI)
     {
         IM_ERROR("imLoadFile could not load reconstructed QOI image.");
@@ -139,7 +139,7 @@ f_internal bool verifyImage_write
     free(reconstructedQOI);
 
     if(!imWriteFile("assets/reconstructed.png", test, width, height,
-                    IM_CHANNELS_RGBA, 8, IM_FILE_PNG)
+                    IM_CHANNELS_4, 8, IM_FILE_PNG)
     ){
         IM_ERROR("imWriteFile could not write PNG.");
         free(test);
@@ -147,7 +147,7 @@ f_internal bool verifyImage_write
     }
 
     u08 *reconstructedPNG = imLoadFile("assets/reconstructed.png", &width, &height,
-                                           IM_CHANNELS_RGBA, 8);
+                                           IM_CHANNELS_4, 8);
     if(!reconstructedPNG)
     {
         IM_ERROR("imLoadFile could not load reconstructed PNG image.");
