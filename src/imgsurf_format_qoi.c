@@ -2,6 +2,9 @@
 #include "im_print_macros.h"
 
 #include <stdlib.h>
+#include <inttypes.h>
+
+#define IM_LOG_READ
 
 #define IM_QOI_INDEX \
 (prev.red * 3 + prev.green * 5 + \
@@ -26,80 +29,42 @@ f_internal bool samePixel
 
 u08* loadQOI
 (
-    FILE *file,
-    u32  *width,
-    u32  *height,
-    u08  channels
+    BinBuffer *file,
+    u32       *width,
+    u32       *height,
+    u08       channels
 ){
     char magic[5] = "qoif";
     *width  = 0;
     *height = 0;
 
-    size elements  = 0;
-    char magicByte = 0;
-
+    u64 index = 0;
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&magicByte, 1, 1, file)) != 1)
+        if(file->data[index++] != magic[i])
         {
-            IM_ERROR("could not read header at byte %u.", i);
-            if(feof(file))
-            {
-                IM_ERROR("unexpected end of file.");
-            }
-            else if(ferror(file))
-            {
-                IM_ERROR("could not read file.");
-            }
-
+            IM_ERROR("QOI header at byte %u corrupted. Got: 0x%X, expected: 0x%X",
+                     i, file->data[index - 1], magic[i]);
             return 0;
         }
-
-        if(magicByte != magic[i])
-        {
-            IM_ERROR("QOI header at byte %u corrupted. Got: %u, expected: %u",
-                     i, (u08)magicByte, (u08)magic[i]);
-            return 0;
-        }
-    }
-
-    int byte = 0;
-    for(u08 i = 0; i < 4; ++i)
-    {
-        if((byte = fgetc(file)) == EOF)
-        {
-            IM_ERROR("QOI header at byte %u corrupted.", 4 + i);
-            return 0;
-        }
-        *width += (u32)(byte << (3 - i) * 8);
     }
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((byte = fgetc(file)) == EOF)
-        {
-            IM_ERROR("QOI header at byte %u corrupted.", 8 + i);
-            return 0;
-        }
-        *height += (u32)(byte << (3 - i) * 8);
+        *width += (u32)(file->data[index++] << (3 - i) * 8);
     }
 
-    if((byte = fgetc(file)) == EOF)
+    for(u08 i = 0; i < 4; ++i)
     {
-        IM_ERROR("QOI header at byte 12 corrupted.");
+        *height += (u32)(file->data[index++] << (3 - i) * 8);
     }
-    bool discardAlpha = byte == 3;
 
-    if((byte = fgetc(file)) == EOF)
-    {
-        IM_ERROR("QOI header at byte 13 corrupted.");
-        return 0;
-    }
+    bool discardAlpha = file->data[index++] == 3;
+
     // u08 colourspace = byte;
 
-    // this is not really correct. but we'll see
-    bool flipRnB = channels == IM_CHANNELS_BGR ||
-                   channels == IM_CHANNELS_BGRA;
+    bool flipRnB = channels == IM_CHANNELS_3_FLIP ||
+                   channels == IM_CHANNELS_4_FLIP;
 
     u64 pixelcount = *width * *height;
     u08 bpp        = discardAlpha ? 3 : 4;
@@ -133,27 +98,16 @@ u08* loadQOI
 
     for(u64 y = 0; y < loopHeight; y++)
     {
-        for(u64 x = 0; x < loopWidth && ((byte = fgetc(file)) != EOF); x += bpp)
+        for(u64 x = 0; x < loopWidth; x += bpp)
         {
+            u08 byte = file->data[index++];
+            IM_ASSERT(index < file->size, "exceeding file size.");
+
             if(byte == QOI_OP_RGB)
             {
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read red @ QOI_OP_RGB");
-                }
-                prev.red = (u08)byte;
-
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read green @ QOI_OP_RGB");
-                }
-                prev.green = (u08)byte;
-
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read blue @ QOI_OP_RGB");
-                }
-                prev.blue = (u08)byte;
+                prev.red   = file->data[index++];
+                prev.green = file->data[index++];
+                prev.blue  = file->data[index++];
 
                 image[y * loopWidth + x]     = flipRnB ? prev.blue : prev.red;
                 image[y * loopWidth + x + 1] = prev.green;
@@ -173,29 +127,10 @@ u08* loadQOI
             }
             else if(byte == QOI_OP_RGBA)
             {
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read red @ QOI_OP_RGBA");
-                }
-                prev.red = (u08)byte;
-
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read green @ QOI_OP_RGBA");
-                }
-                prev.green = (u08)byte;
-
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read blue @ QOI_OP_RGBA");
-                }
-                prev.blue = (u08)byte;
-
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read alpha @ QOI_OP_RGBA");
-                }
-                prev.alpha = (u08)byte;
+                prev.red   = file->data[index++];
+                prev.green = file->data[index++];
+                prev.blue  = file->data[index++];
+                prev.alpha = file->data[index++];
 
                 image[y * loopWidth + x]     = flipRnB ? prev.blue : prev.red;
                 image[y * loopWidth + x + 1] = prev.green;
@@ -218,7 +153,7 @@ u08* loadQOI
             {
                 u08 diffRed   = (0x30 & byte) >> 4;
                 u08 diffGreen = (0xC  & byte) >> 2;
-                u08 diffBlue  =  0x3  & byte;
+                u08 diffBlue  = (0x3  & byte);
 
                 prev.red   += diffRed   - 2;
                 prev.green += diffGreen - 2;
@@ -244,10 +179,7 @@ u08* loadQOI
             {
                 u08 diffGreen = byte & 0x3F;
 
-                if((elements = fread(&byte, 1, 1, file)) != 1)
-                {
-                    IM_ERROR("failed to read diffs @ QOI_OP_LUMA.");
-                }
+                byte = file->data[index++];
                 u08 diffRed  = (0xF0 & byte) >> 4;
                 u08 diffBlue = (0xF  & byte);
 
@@ -274,21 +206,26 @@ u08* loadQOI
             }
             else if((byte >> 6) == QOI_OP_RUN)
             {
-                u08  runlength = (byte & 0x3F) + 1;
-                u64 index     = y * loopWidth + x;
+                u08 runlength = (byte & 0x3F) + 1;
+                u64 runIndex  = y * loopWidth + x;
 
-                u08 j  = 0;
-                bool under = index + j * bpp < loopHeight * loopWidth;
+                IM_ASSERT(runIndex + runlength * bpp <
+                          *width * *height * bpp,
+                          "run into index %"PRIu64" will overflow the output buffer of "
+                          "size %" PRIu64 ".", runIndex + (runlength + bpp - 1) * bpp,
+                          (u64)*width * (u64)*height * bpp);
 
-                for(; j < runlength && under; ++j)
+                u08 j = 0;
+                for(; j < runlength; ++j)
                 {
-                    image[index + j * bpp]     = flipRnB ? prev.blue : prev.red;
-                    image[index + j * bpp + 1] = prev.green;
-                    image[index + j * bpp + 2] = flipRnB ? prev.red  : prev.blue;
+
+                    image[runIndex + j * bpp]     = flipRnB ? prev.blue : prev.red;
+                    image[runIndex + j * bpp + 1] = prev.green;
+                    image[runIndex + j * bpp + 2] = flipRnB ? prev.red  : prev.blue;
 
                     if(!discardAlpha)
                     {
-                        image[index + j * bpp + 3] = prev.alpha;
+                        image[runIndex + j * bpp + 3] = prev.alpha;
                     }
                 }
                 x += (runlength - 1) * bpp;
@@ -309,11 +246,20 @@ u08* loadQOI
                 {
                     int byteBuffer[8];
                     u08 zeroCounter = 0;
-                    for(u08 i = 0; i < 6 && (byteBuffer[i] = fgetc(file)) == 0; ++i)
+                    for(u08 i = 0; i < 6; ++i)
                     {
-                        if(++zeroCounter == 6)
+                        // TODO: double-check this logic.
+                        byteBuffer[i] = file->data[index++];
+                        if(byteBuffer[i] != 0)
                         {
-                            if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
+                            break;
+                        }
+
+                        ++zeroCounter;
+                        if(zeroCounter == 6)
+                        {
+                            byteBuffer[i + 1] = file->data[index++];
+                            if(byteBuffer[i + 1] == 0x01)
                             {
                                 IM_ERROR("QOI end-of-stream reached early.");
                                 return image;
@@ -322,7 +268,7 @@ u08* loadQOI
                     }
                     for(u08 i = 0; i < zeroCounter + 1; ++i)
                     {
-                        ungetc(byteBuffer[zeroCounter - i], file);
+                        --index;
                     }
                 }
 
@@ -366,11 +312,19 @@ u08* loadQOI
 
     int byteBuffer[8];
     u08 zeroCounter = 0;
-    for(u08 i = 0; i < 7 && (byteBuffer[i] = fgetc(file)) == 0x00; ++i)
+    for(u08 i = 0; i < 7; ++i)
     {
-        if(++zeroCounter == 7)
+        byteBuffer[i] = file->data[index++];
+        if(byteBuffer[i] != 0)
         {
-            if((byteBuffer[i + 1] = fgetc(file)) == 0x01)
+            break;
+        }
+
+        ++zeroCounter;
+        if(zeroCounter == 7)
+        {
+            byteBuffer[i + 1] = file->data[index++];
+            if(byteBuffer[i + 1] == 0x01)
             {
                 #ifdef IM_LOG_READ
                 IM_DEBUG("QOI end-of-stream reached.");
@@ -394,8 +348,9 @@ bool writeQOI
     #ifdef IM_LOG_WRITE
     u08 *data_start  = data;
     #endif
-    u08 channelcount = (channels == IM_CHANNELS_RGBA ||
-                        channels == IM_CHANNELS_BGRA) ? 4 : 3;
+
+    u08 channelcount = (channels == IM_CHANNELS_4||
+                        channels == IM_CHANNELS_4_FLIP) ? 4 : 3;
 
     // colourspace ignored
     u08  colourspace = 0;
@@ -444,7 +399,7 @@ bool writeQOI
 
     bool useAlpha = channelcount == 3;
 
-    bool flipRnB  = channels == IM_CHANNELS_BGR || channels == IM_CHANNELS_BGRA;
+    bool flipRnB  = channels == IM_CHANNELS_3_FLIP || channels == IM_CHANNELS_4_FLIP;
 
     #ifdef IM_LOG_WRITE
     u64 run_count   = 0;
