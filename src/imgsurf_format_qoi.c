@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#define IM_LOG_READ
-
 #define IM_QOI_INDEX \
 (prev.red * 3 + prev.green * 5 + \
 prev.blue * 7 + prev.alpha * 11) % 64
@@ -61,7 +59,9 @@ u08* loadQOI
 
     bool discardAlpha = file->data[index++] == 3;
 
+    // we don't use this right now
     // u08 colourspace = byte;
+    ++index;
 
     bool flipRnB = channels == IM_CHANNELS_3_FLIP ||
                    channels == IM_CHANNELS_4_FLIP;
@@ -209,8 +209,7 @@ u08* loadQOI
                 u08 runlength = (byte & 0x3F) + 1;
                 u64 runIndex  = y * loopWidth + x;
 
-                IM_ASSERT(runIndex + runlength * bpp <
-                          *width * *height * bpp,
+                IM_ASSERT(runIndex + (runlength - 1) * bpp < *width * *height * bpp,
                           "run into index %"PRIu64" will overflow the output buffer of "
                           "size %" PRIu64 ".", runIndex + (runlength + bpp - 1) * bpp,
                           (u64)*width * (u64)*height * bpp);
@@ -346,10 +345,10 @@ bool writeQOI
     u08  channels
 ){
     #ifdef IM_LOG_WRITE
-    u08 *data_start  = data;
+    u08 *data_start = data;
     #endif
 
-    u08 channelcount = (channels == IM_CHANNELS_4||
+    u08 channelcount = (channels == IM_CHANNELS_4 ||
                         channels == IM_CHANNELS_4_FLIP) ? 4 : 3;
 
     // colourspace ignored
@@ -398,7 +397,6 @@ bool writeQOI
     pixel seen[64] = {0};
 
     bool useAlpha = channelcount == 3;
-
     bool flipRnB  = channels == IM_CHANNELS_3_FLIP || channels == IM_CHANNELS_4_FLIP;
 
     #ifdef IM_LOG_WRITE
