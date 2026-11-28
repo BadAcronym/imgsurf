@@ -5,6 +5,9 @@
 
 #include "pd_string_view.h"
 
+#include <memory.h>
+#include <inttypes.h>
+
 #define PNG_STREAM_END      0
 #define PNG_STREAM_CONTINUE 1
 
@@ -73,24 +76,16 @@ cHRMData;
 
 f_internal StringView readChunkHeader
 (
-    FILE *file,
-    u32  *length
+    BinBuffer *file,
+    u64       *index,
+    u32       *length
 ){
     *length = 0;
     char *result = calloc(5, 1);
 
-    u08 byte     = 0;
-    size elements = 0;
-
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read chunk length.");
-            goto cleanup;
-        }
-
-        *length += ((u32)byte << (3 - i) * 8);
+        *length += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
 
     IM_DEBUG("---------------------------------");
@@ -104,103 +99,47 @@ f_internal StringView readChunkHeader
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read chunk header at byte %u.", i);
-            if(feof(file))
-            {
-                IM_ERROR("unexpected end of file.");
-            }
-            else if(ferror(file))
-            {
-                IM_ERROR("could not read file.");
-            }
-
-            goto cleanup;
-        }
-
-        result[i] = (char)byte;
+        result[i] = (char)file->data[(*index)++];
     }
 
     IM_DEBUG("identified chunk: (%s)", result);
     return pdCstrSV(result);
-
-cleanup:
-    free(result);
-    return(StringView){0};
 }
 
 f_internal u08 readChunk_IHDR
 (
-    FILE     *file,
-    IHDRData *data
+    BinBuffer *file,
+    u64       *index,
+    IHDRData  *data
 ){
-    size elements = 0;
-    u08  byte     = 0;
-
     data->width  = 0;
     data->height = 0;
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read width from IHDR chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->width += ((u32)byte << (3 - i) * 8);
+        data->width += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read height from IHDR chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->height += ((u32)byte << (3 - i) * 8);
+        data->height += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
 
-    if((elements = fread(&data->bitdepth, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read bitdepth from IHDR chunk.");
-        return PNG_STREAM_END;
-    }
-
-    if((elements = fread(&data->colorType, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read color type from IHDR chunk.");
-        return PNG_STREAM_END;
-    }
-
-    if((elements = fread(&data->compression, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read compression method from IHDR chunk.");
-        return PNG_STREAM_END;
-    }
-
-    if((elements = fread(&data->filter, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read filter method from IHDR chunk.");
-        return PNG_STREAM_END;
-    }
-
-    if((elements = fread(&data->interlace, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read interlace method from IHDR chunk.");
-        return PNG_STREAM_END;
-    }
+    data->bitdepth    = file->data[(*index)++];
+    data->colorType   = file->data[(*index)++];
+    data->compression = file->data[(*index)++];
+    data->filter      = file->data[(*index)++];
+    data->interlace   = file->data[(*index)++];
 
     return PNG_STREAM_CONTINUE;
 }
 
 f_internal u08 readChunk_PLTE
 (
-    FILE *file,
-    u32  length,
-    RGB8 *palette
+    BinBuffer *file,
+    u64       *index,
+    u32       length,
+    RGB8      *palette
 ){
     if(length > 255)
     {
@@ -213,24 +152,11 @@ f_internal u08 readChunk_PLTE
         return PNG_STREAM_END;
     }
 
-    size elements = 0;
     for(u32 i = 0; i < length; i += 3)
     {
-        if((elements = fread(&palette[i].red, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read red palette value %u from PLTE chunk.", i);
-            return PNG_STREAM_END;
-        }
-        if((elements = fread(&palette[i].green, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read green palette value %u from PLTE chunk.", i);
-            return PNG_STREAM_END;
-        }
-        if((elements = fread(&palette[i].blue, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read blue palette value %u from PLTE chunk.", i);
-            return PNG_STREAM_END;
-        }
+        palette[i].red   = file->data[(*index)++];
+        palette[i].green = file->data[(*index)++];
+        palette[i].blue  = file->data[(*index)++];
     }
 
     return PNG_STREAM_CONTINUE;
@@ -238,19 +164,18 @@ f_internal u08 readChunk_PLTE
 
 f_internal u08 readChunk_IDAT
 (
-    FILE     *file,
-    u32      length,
-    IDATdata *idat
+    BinBuffer *file,
+    u64       *index,
+    u32       length,
+    IDATdata  *idat
 ){
-    u64 elements = 0;
+    IM_ASSERT(*index + length < file->size, "cannot copy %"PRIu32" bytes from a "
+              "remaining buffer of %"PRIu64"bytes.", length, file->size - *index);
 
-    if((elements = fread(&idat->data[idat->offset], 1, length, file)) != length)
-    {
-        IM_ERROR("could not read zlib compressed data from IDAT chunk.");
-        return PNG_STREAM_END;
-    }
+    memcpy(&idat->data[idat->offset], &file->data[*index], length);
 
-    IM_DEBUG("copied %lu bytes into IDAT offset %lu.", elements, idat->offset);
+    IM_DEBUG("copied %"PRIu32" bytes into IDAT offset %"PRIu64".",
+             length, idat->offset);
 
     idat->offset += length;
 
@@ -259,12 +184,10 @@ f_internal u08 readChunk_IDAT
 
 f_internal u08 readChunk_cHRM
 (
-    FILE     *file,
-    cHRMData *data
+    BinBuffer *file,
+    u64       *index,
+    cHRMData  *data
 ){
-    size elements = 0;
-    u08  byte     = 0;
-
     data->whitePointX = 0;
     data->whitePointY = 0;
     data->redX        = 0;
@@ -276,86 +199,39 @@ f_internal u08 readChunk_cHRM
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read white point X from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->whitePointX += ((u32)byte << (3 - i) * 8);
+        data->whitePointX += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read white point Y from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->whitePointY += ((u32)byte << (3 - i) * 8);
+        data->whitePointY += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read red X from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->redX += ((u32)byte << (3 - i) * 8);
-    }
-    for(u08 i = 0; i < 4; ++i)
-    {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read red Y from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->redY += ((u32)byte << (3 - i) * 8);
+        data->redX += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read green X from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->greenX += ((u32)byte << (3 - i) * 8);
-    }
-    for(u08 i = 0; i < 4; ++i)
-    {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read green Y from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->greenY += ((u32)byte << (3 - i) * 8);
+        data->redY += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
 
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read blue X from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
-
-        data->blueX += ((u32)byte << (3 - i) * 8);
+        data->greenX += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
     for(u08 i = 0; i < 4; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read blue Y from cHRM chunk.");
-            return PNG_STREAM_END;
-        }
+        data->greenY += ((u32)file->data[(*index)++] << (3 - i) * 8);
+    }
 
-        data->blueY += ((u32)byte << (3 - i) * 8);
+    for(u08 i = 0; i < 4; ++i)
+    {
+        data->blueX += ((u32)file->data[(*index)++] << (3 - i) * 8);
+    }
+    for(u08 i = 0; i < 4; ++i)
+    {
+        data->blueY += ((u32)file->data[(*index)++] << (3 - i) * 8);
     }
 
     return PNG_STREAM_CONTINUE;
@@ -363,25 +239,19 @@ f_internal u08 readChunk_cHRM
 
 f_internal u08 readChunk_bKGD
 (
-    FILE       *file,
+    BinBuffer  *file,
+    u64        *index,
     const u08  colorType,
     const RGB8 *palette,
     RGB16      *background
 ){
-    size elements = 0;
-    u08  byte     = 0;
-
     background->red   = 0;
     background->green = 0;
     background->blue  = 0;
 
     if(colorType == IM_PNG_TYPE_INDEXED)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read palette index from bKGD chunk.");
-            return PNG_STREAM_END;
-        }
+        u08 byte = file->data[(*index)++];
 
         background->red   = palette[byte].red;
         background->green = palette[byte].green;
@@ -394,11 +264,7 @@ f_internal u08 readChunk_bKGD
     ){
         for(u08 i = 0; i < 2; ++i)
         {
-            if((elements = fread(&byte, 1, 1, file)) != 1)
-            {
-                IM_ERROR("could not read grey from bKGD chunk.");
-                return PNG_STREAM_END;
-            }
+            u08 byte = file->data[(*index)++];
 
             background->red   += (u16)((u16)byte << (1 - i) * 8);
             background->green += (u16)((u16)byte << (1 - i) * 8);
@@ -410,33 +276,15 @@ f_internal u08 readChunk_bKGD
 
     for(u08 i = 0; i < 2; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read red from bKGD chunk.");
-            return PNG_STREAM_END;
-        }
-
-        background->red += ((u16)byte << (1 - i) * 8);
+        background->red += ((u16)file->data[(*index)++] << (1 - i) * 8);
     }
     for(u08 i = 0; i < 2; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read green from bKGD chunk.");
-            return PNG_STREAM_END;
-        }
-
-        background->green += ((u16)byte << (1 - i) * 8);
+        background->green += ((u16)file->data[(*index)++] << (1 - i) * 8);
     }
     for(u08 i = 0; i < 2; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read blue from bKGD chunk.");
-            return PNG_STREAM_END;
-        }
-
-        background->blue += ((u16)byte << (1 - i) * 8);
+        background->blue += ((u16)file->data[(*index)++] << (1 - i) * 8);
     }
 
     return PNG_STREAM_CONTINUE;
@@ -444,11 +292,9 @@ f_internal u08 readChunk_bKGD
 
 f_internal u08 readChunk_tIME
 (
-    FILE *file
+    BinBuffer *file,
+    u64       *index
 ){
-    u64 elements = 0;
-    u08 byte     = 0;
-
     u16 year   = 0;
     u08 month  = 0;
     u08 day    = 0;
@@ -458,59 +304,24 @@ f_internal u08 readChunk_tIME
 
     for(u08 i = 0; i < 2; ++i)
     {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read year from tIME chunk.");
-            return PNG_STREAM_END;
-        }
-
-        year += ((u16)byte << (1 - i) * 8);
+        year += ((u16)file->data[(*index)++] << (1 - i) * 8);
     }
 
-    if((elements = fread(&byte, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read month from tIME chunk.");
-        return PNG_STREAM_END;
-    }
-    month = byte;
-
-    if((elements = fread(&byte, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read day from tIME chunk.");
-        return PNG_STREAM_END;
-    }
-    day = byte;
-
-    if((elements = fread(&byte, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read hour from tIME chunk.");
-        return PNG_STREAM_END;
-    }
-    hour = byte;
-
-    if((elements = fread(&byte, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read minute from tIME chunk.");
-        return PNG_STREAM_END;
-    }
-    minute = byte;
-
-    if((elements = fread(&byte, 1, 1, file)) != 1)
-    {
-        IM_ERROR("could not read second from tIME chunk.");
-        return PNG_STREAM_END;
-    }
-    second = byte;
+    month  = file->data[(*index)++];
+    day    = file->data[(*index)++];
+    hour   = file->data[(*index)++];
+    minute = file->data[(*index)++];
+    second = file->data[(*index)++];
 
     return PNG_STREAM_CONTINUE;
 }
 
 f_internal bool readChunk_tEXt
 (
-    FILE *file,
-    u32  length
+    BinBuffer *file,
+    u64       *index,
+    u32       length
 ){
-    u64 elements    = 0;
     u32 byteCounter = 0;
     // keyword, 1 - 79 bytes, one of:
     // title
@@ -530,11 +341,7 @@ f_internal bool readChunk_tEXt
     char keywordBuf[80] = {0};
     for(u32 i = 0; i < 79; ++i)
     {
-        if((elements = fread(&keywordBuf[i], 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read keyword from tEXt chunk.");
-            return PNG_STREAM_END;
-        }
+        keywordBuf[i] = (char)file->data[(*index)++];
         ++byteCounter;
 
         if(keywordBuf[i] == '\0')
@@ -549,11 +356,7 @@ f_internal bool readChunk_tEXt
     valueBuf[readLength] = '\0';
     for(u32 i = 0; i < readLength; ++i)
     {
-        if((elements = fread(&valueBuf[i], 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read keyword data from tEXt chunk.");
-            return PNG_STREAM_END;
-        }
+        valueBuf[i] = (char)file->data[(*index)++];
 
         if(valueBuf[i] == '\0')
         {
@@ -572,24 +375,26 @@ f_internal bool readChunk_tEXt
 
 f_internal bool readChunkCRC
 (
-    FILE *file
+    BinBuffer *file,
+    u64       *index
 ){
     // actually verify these bytes and not just skip them
-    size elements = 0;
-    u08  byte     = 0;
-    u32  CRC      = 0;
+    // u32 CRC = 0;
 
-    for(u08 i = 0; i < 4; ++i)
-    {
-        if((elements = fread(&byte, 1, 1, file)) != 1)
-        {
-            IM_ERROR("could not read CRC.");
-            return PNG_STREAM_END;
-        }
+    // for(u08 i = 0; i < 4; ++i)
+    // {
+    //     if((elements = fread(&byte, 1, 1, file)) != 1)
+    //     {
+    //         IM_ERROR("could not read CRC.");
+    //         return PNG_STREAM_END;
+    //     }
+    //
+    //     CRC += ((u32)byte << (3 - i) * 8);
+    // }
 
-        CRC += ((u32)byte << (3 - i) * 8);
-    }
-
+    //
+    (*index) += 4;
+    //
     return PNG_STREAM_CONTINUE;
 }
 
@@ -600,169 +405,154 @@ u08* loadPNG
     u32       *height,
     u08       channels
 ){
-//     u08 header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
-//     *width  = 0;
-//     *height = 0;
-//
-//     size elements = 0;
-//     u08  byte     = 0;
-//
-//     for(u08 i = 0; i < 8; ++i)
-//     {
-//         if((elements = fread(&byte, 1, 1, file)) != 1)
-//         {
-//             IM_ERROR("could not read header at byte %u.", i);
-//             if(feof(file))
-//             {
-//                 IM_ERROR("unexpected end of file.");
-//             }
-//             else if(ferror(file))
-//             {
-//                 IM_ERROR("could not read file.");
-//             }
-//
-//             return 0;
-//         }
-//
-//         if(byte != header[i])
-//         {
-//             IM_ERROR("PNG header at byte %u corrupted. Got: %u, expected: %u",
-//                      i, (u08)byte, (u08)header[i]);
-//             return 0;
-//         }
-//     }
-//
-//     u32 length = 0;
-//     StringView chunkHeader = readChunkHeader(file, &length);
-//     if(chunkHeader.data && !pdSVSame(chunkHeader, IHDR))
-//     {
-//         IM_ERROR("could not read IHDR header at beginning of PNG stream.\n"
-//                  "Read chunk header: '"PRI_SV"'", ARG_SV(chunkHeader));
-//         free((void*)chunkHeader.data);
-//         return 0;
-//     }
-//
-//     u08 *imgFiltered = 0;
-//
-//     IHDRData ihdrData = {0};
-//     if(!readChunk_IHDR(file, &ihdrData))
-//     {
-//         IM_ERROR("could not read IHDR header data.");
-//         free((void*)chunkHeader.data);
-//         return 0;
-//     }
-//
-//     *width  = ihdrData.width;
-//     *height = ihdrData.height;
-//
-//     imgFiltered = malloc(*width * *height * 5);
-//
-//     IDATdata imgIdat     = {0};
-//     cHRMData chrmData    = {0};
-//     RGB8     *palette    = 0;
-//     RGB16    background  = {0};
-//
-//     imgIdat.data = malloc(*width * *height * 4);
-//
-//     readChunkCRC(file);
-//
-//     IM_DEBUG("width:              %u", ihdrData.width);
-//     IM_DEBUG("height:             %u", ihdrData.height);
-//     IM_DEBUG("bitdepth:           %u", ihdrData.bitdepth);
-//     IM_DEBUG("color type:         %u", ihdrData.colorType);
-//     IM_DEBUG("filter method:      %u", ihdrData.filter);
-//     IM_DEBUG("interlace method:   %u", ihdrData.interlace);
-//     IM_DEBUG("compression method: %u", ihdrData.compression);
-//
-//     if(ihdrData.compression)
-//     {
-//         IM_ERROR("compression method not DEFLATE.");
-//     }
-//
-//     bool streamData = true;
-//     while(streamData)
-//     {
-//         if(chunkHeader.data)
-//         {
-//             free((void*)chunkHeader.data);
-//             chunkHeader.size = 0;
-//         }
-//         chunkHeader = readChunkHeader(file, &length);
-//
-//         if(!chunkHeader.data)
-//         {
-//             IM_ERROR("could not successfully read chunk header.");
-//             goto error;
-//         }
-//         else if(pdSVSame(chunkHeader, PLTE))
-//         {
-//             palette    = malloc(length * sizeof(RGB8));
-//             streamData = readChunk_PLTE(file, length, palette);
-//         }
-//         else if(pdSVSame(chunkHeader, IDAT))
-//         {
-//             streamData = readChunk_IDAT(file, length, &imgIdat);
-//         }
-//         else if(pdSVSame(chunkHeader, IEND))
-//         {
-//             streamData = false;
-//         }
-//         else if(pdSVSame(chunkHeader, cHRM))
-//         {
-//             streamData = readChunk_cHRM(file, &chrmData);
-//         }
-//         else if(pdSVSame(chunkHeader, bKGD))
-//         {
-//             streamData = readChunk_bKGD(file, ihdrData.colorType, palette, &background);
-//         }
-//         else if(pdSVSame(chunkHeader, tIME))
-//         {
-//             streamData = readChunk_tIME(file);
-//         }
-//         else if(pdSVSame(chunkHeader, tEXt))
-//         {
-//             streamData = readChunk_tEXt(file, length);
-//         }
-//         else
-//         {
-//             IM_ERROR("chunk type '"PRI_SV"' not implemented.", ARG_SV(chunkHeader));
-//             goto error;
-//         }
-//
-//         readChunkCRC(file);
-//     }
-//
-//     DeflateInfo dfInfo = dsReadZlibPtr(imgIdat.data, imgFiltered, *width * *height * 5);
-//     if(!dfInfo.success)
-//     {
-//         IM_ERROR("could not decode zlib compressed image data.");
-//     }
-//
-//     // that wasn't actually the image data. this data is still filter-compressed,
-//     // so I need to figure out what to do with this.
-//
-//     if(chunkHeader.data)
-//     {
-//         free((void*)chunkHeader.data);
-//         chunkHeader.size = 0;
-//     }
-//     if(palette)
-//     {
-//         free(palette);
-//     }
-//     return imgFiltered;
-//
-// error:
-//     if(chunkHeader.data)
-//     {
-//         free((void*)chunkHeader.data);
-//         chunkHeader.size = 0;
-//     }
-//     if(palette)
-//     {
-//         free(palette);
-//     }
-//     free(imgFiltered);
+    u08 header[8] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+    *width  = 0;
+    *height = 0;
+
+    u64 index = 0;
+
+    for(u08 i = 0; i < 8; ++i)
+    {
+        if(file->data[index++] != header[i])
+        {
+            IM_ERROR("PNG header at byte %u corrupted. Got: 0x%X, expected: 0x%X",
+                     i, file->data[index - 1], header[i]);
+            return 0;
+        }
+    }
+
+    u32 length = 0;
+    StringView chunkHeader = readChunkHeader(file, &index, &length);
+    if(chunkHeader.data && !pdSVSame(chunkHeader, IHDR))
+    {
+        IM_ERROR("could not read IHDR header at beginning of PNG stream.\n"
+                 "Read chunk header: '"PRI_SV"'", ARG_SV(chunkHeader));
+        free((void*)chunkHeader.data);
+        return 0;
+    }
+
+    u08 *imgFiltered = 0;
+
+    IHDRData ihdrData = {0};
+    if(!readChunk_IHDR(file, &index, &ihdrData))
+    {
+        IM_ERROR("could not read IHDR header data.");
+        free((void*)chunkHeader.data);
+        return 0;
+    }
+
+    *width  = ihdrData.width;
+    *height = ihdrData.height;
+
+    imgFiltered = malloc(*width * *height * 5);
+
+    IDATdata imgIdat     = {0};
+    cHRMData chrmData    = {0};
+    RGB8     *palette    = 0;
+    RGB16    background  = {0};
+
+    imgIdat.data = malloc(*width * *height * 4);
+
+    readChunkCRC(file, &index);
+
+    IM_DEBUG("width:              %u", ihdrData.width);
+    IM_DEBUG("height:             %u", ihdrData.height);
+    IM_DEBUG("bitdepth:           %u", ihdrData.bitdepth);
+    IM_DEBUG("color type:         %u", ihdrData.colorType);
+    IM_DEBUG("filter method:      %u", ihdrData.filter);
+    IM_DEBUG("interlace method:   %u", ihdrData.interlace);
+    IM_DEBUG("compression method: %u", ihdrData.compression);
+
+    if(ihdrData.compression)
+    {
+        IM_ERROR("compression method not DEFLATE.");
+    }
+
+    bool streamData = true;
+    while(streamData)
+    {
+        if(chunkHeader.data)
+        {
+            free((void*)chunkHeader.data);
+            chunkHeader.size = 0;
+        }
+        chunkHeader = readChunkHeader(file, &index, &length);
+
+        if(!chunkHeader.data)
+        {
+            IM_ERROR("could not successfully read chunk header.");
+            goto error;
+        }
+        else if(pdSVSame(chunkHeader, PLTE))
+        {
+            palette    = malloc(length * sizeof(RGB8));
+            streamData = readChunk_PLTE(file, &index, length, palette);
+        }
+        else if(pdSVSame(chunkHeader, IDAT))
+        {
+            streamData = readChunk_IDAT(file, &index, length, &imgIdat);
+        }
+        else if(pdSVSame(chunkHeader, IEND))
+        {
+            streamData = false;
+        }
+        else if(pdSVSame(chunkHeader, cHRM))
+        {
+            streamData = readChunk_cHRM(file, &index, &chrmData);
+        }
+        else if(pdSVSame(chunkHeader, bKGD))
+        {
+            streamData = readChunk_bKGD(file, &index, ihdrData.colorType,
+                                        palette, &background);
+        }
+        else if(pdSVSame(chunkHeader, tIME))
+        {
+            streamData = readChunk_tIME(file, &index);
+        }
+        else if(pdSVSame(chunkHeader, tEXt))
+        {
+            streamData = readChunk_tEXt(file, &index, length);
+        }
+        else
+        {
+            IM_ERROR("chunk type '"PRI_SV"' not implemented.", ARG_SV(chunkHeader));
+            goto error;
+        }
+
+        readChunkCRC(file, &index);
+    }
+
+    DeflateInfo dfInfo = dsReadZlibPtr(imgIdat.data, imgFiltered, *width * *height * 5);
+    if(!dfInfo.success)
+    {
+        IM_ERROR("could not decode zlib compressed image data.");
+    }
+
+    // that wasn't actually the image data. this data is still filter-compressed,
+    // so I need to figure out what to do with this.
+
+    if(chunkHeader.data)
+    {
+        free((void*)chunkHeader.data);
+        chunkHeader.size = 0;
+    }
+    if(palette)
+    {
+        free(palette);
+    }
+    return imgFiltered;
+
+error:
+    if(chunkHeader.data)
+    {
+        free((void*)chunkHeader.data);
+        chunkHeader.size = 0;
+    }
+    if(palette)
+    {
+        free(palette);
+    }
+    free(imgFiltered);
     return 0;
 }
 
